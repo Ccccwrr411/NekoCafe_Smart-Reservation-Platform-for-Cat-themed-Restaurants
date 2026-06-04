@@ -1,0 +1,241 @@
+// pages/reservation/reservation.js
+const { get, post } = require('../../utils/request')
+const { TABLE_STATUS_MAP, genTimeSlots, formatDistance } = require('../../utils/util')
+
+Page({
+  data: {
+    storeId: null,
+    storeName: '',
+    stores: [],           // 所有门店列表
+    showStorePicker: false, // 门店选择弹层
+
+    tables: [],
+    loading: true,
+    selectedTable: null,
+
+    // 预约表单
+    reserveDate: '',
+    reserveTime: '',
+    persons: 2,
+    duration: 2,
+
+    // 时间选择
+    timeSlots: [],
+    dateList: [],
+
+    // 筛选
+    filterType: 'all',
+    tableTypes: ['all', '双人桌', '四人桌', '包间', '吧台位'],
+    tableTypeLabels: { all: '全部', '双人桌': '双人', '四人桌': '四人', '包间': '包间', '吧台位': '吧台' },
+
+    TABLE_STATUS_MAP
+  },
+
+  onLoad(options) {
+    // 生成未来7天日期
+    const dateList = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() + i)
+      const month = d.getMonth() + 1
+      const day = d.getDate()
+      dateList.push({
+        full: `${d.getFullYear()}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        label: i === 0 ? '今天' : i === 1 ? '明天' : `${month}/${day}`
+      })
+    }
+
+    this.setData({
+      timeSlots: genTimeSlots(),
+      dateList,
+      reserveDate: dateList[0].full,
+      reserveTime: '14:00'
+    })
+
+    // 优先从 URL 参数获取（从首页卡片跳转过来）
+    if (options.storeId) {
+      this.setData({
+        storeId: options.storeId,
+        storeName: decodeURIComponent(options.storeName || 'NekoCafé')
+      })
+      const app = getApp()
+      app.globalData.currentStore = { id: options.storeId, name: decodeURIComponent(options.storeName || 'NekoCafé') }
+    }
+    // 否则用全局缓存的当前门店
+    else {
+      const app = getApp()
+      if (app.globalData.currentStore) {
+        this.setData({
+          storeId: app.globalData.currentStore.id,
+          storeName: app.globalData.currentStore.name
+        })
+      }
+    }
+
+    this.loadStores()
+  },
+
+  onShow() {
+    // 每次显示时同步全局门店（可能在其他页面切换了）
+    const app = getApp()
+    if (app.globalData.currentStore && (!this.data.storeId || app.globalData.currentStore.id !== this.data.storeId)) {
+      this.setData({
+        storeId: app.globalData.currentStore.id,
+        storeName: app.globalData.currentStore.name
+      })
+      this.loadTables()
+    }
+    // 如果仍然没有门店，自动弹出选择器
+    if (!this.data.storeId && this.data.stores.length > 0) {
+      this.setData({ showStorePicker: true })
+    }
+  },
+
+  // 加载所有门店
+  loadStores() {
+    get('/api/stores').then(res => {
+      if (res.code === 0) {
+        const stores = res.data.map(s => ({
+          ...s,
+          distanceText: formatDistance(s.distance)
+        }))
+        this.setData({ stores })
+
+        // 如果还没有选中门店，用第一个作为默认
+        if (!this.data.storeId && stores.length > 0) {
+          const first = stores[0]
+          this.setData({
+            storeId: first.id,
+            storeName: first.name
+          })
+          const app = getApp()
+          app.globalData.currentStore = { id: first.id, name: first.name }
+          this.loadTables()
+        } else if (this.data.storeId) {
+          this.loadTables()
+        }
+      }
+    })
+  },
+
+  // 点击门店头部 → 弹出切换面板
+  onStoreHeaderTap() {
+    this.setData({ showStorePicker: true })
+  },
+
+  // 隐藏门店选择器
+  hideStorePicker() {
+    this.setData({ showStorePicker: false })
+  },
+
+  // 切换门店
+  onStoreSelect(e) {
+    const store = e.currentTarget.dataset.store
+    if (store.id === this.data.storeId) {
+      this.hideStorePicker()
+      return
+    }
+    this.setData({
+      storeId: store.id,
+      storeName: store.name,
+      selectedTable: null,  // 清空已选桌位
+      loading: true,
+      showStorePicker: false
+    })
+    const app = getApp()
+    app.globalData.currentStore = { id: store.id, name: store.name }
+    this.loadTables()
+  },
+
+  loadTables() {
+    if (!this.data.storeId) return
+    this.setData({ loading: true })
+    get(`/api/tables?storeId=${this.data.storeId}`).then(res => {
+      if (res.code === 0) {
+        this.setData({ tables: res.data, loading: false })
+      }
+    })
+  },
+
+  // 筛选桌型
+  onFilterChange(e) {
+    this.setData({ filterType: e.currentTarget.dataset.type, selectedTable: null })
+  },
+
+  // 选择桌位
+  onTableSelect(e) {
+    const table = e.currentTarget.dataset.table
+    if (table.status !== 'available') {
+      wx.showToast({ title: table.status === 'booked' ? '该桌已被预约' : '该桌暂停使用', icon: 'none' })
+      return
+    }
+    this.setData({ selectedTable: table })
+  },
+
+  // 日期选择
+  onDateSelect(e) {
+    this.setData({ reserveDate: e.currentTarget.dataset.date })
+  },
+
+  // 时间选择
+  onTimeChange(e) {
+    const timeSlots = this.data.timeSlots
+    this.setData({ reserveTime: timeSlots[e.detail.value] })
+  },
+
+  // 人数调整
+  onPersonsMinus() {
+    if (this.data.persons <= 1) return
+    this.setData({ persons: this.data.persons - 1 })
+  },
+  onPersonsPlus() {
+    const max = this.data.selectedTable ? this.data.selectedTable.capacity : 8
+    if (this.data.persons >= max) {
+      wx.showToast({ title: `该桌最多坐${max}人`, icon: 'none' }); return
+    }
+    this.setData({ persons: this.data.persons + 1 })
+  },
+
+  // 时长调整
+  onDurationMinus() {
+    if (this.data.duration <= 1) return
+    this.setData({ duration: this.data.duration - 1 })
+  },
+  onDurationPlus() {
+    if (this.data.duration >= 4) { wx.showToast({ title: '最长预约4小时', icon: 'none' }); return }
+    this.setData({ duration: this.data.duration + 1 })
+  },
+
+  // 提交预约
+  onSubmit() {
+    const { selectedTable, reserveDate, reserveTime, persons, storeId } = this.data
+    if (!selectedTable) { wx.showToast({ title: '请先选择桌位', icon: 'none' }); return }
+
+    wx.showModal({
+      title: '确认预约',
+      content: `${reserveDate} ${reserveTime}\n${selectedTable.name}（${selectedTable.type}）\n${persons}人`,
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '提交中...' })
+        post('/api/reservation/create', {
+          storeId,
+          tableId: selectedTable.id,
+          reserveDate,
+          reserveTime,
+          persons,
+          duration: this.data.duration
+        }).then(result => {
+          wx.hideLoading()
+          if (result.code === 0) {
+            const app = getApp()
+            app.globalData.selectedTable = selectedTable
+            wx.showToast({ title: '预约成功！', icon: 'success' })
+            setTimeout(() => {
+              wx.navigateTo({ url: `/pages/menu/menu?storeId=${storeId}&tableId=${selectedTable.id}` })
+            }, 800)
+          }
+        }).catch(() => wx.hideLoading())
+      }
+    })
+  }
+})

@@ -1,0 +1,26 @@
+/* pages/review/review.wxss */
+.section-label { font-size: 28rpx; font-weight: 600; color: var(--color-text); margin-bottom: 16rpx; }
+.star-row { display: flex; gap: 16rpx; justify-content: center; padding: 10rpx 0; }
+.star { font-size: 72rpx; }
+.star-on  { color: #FFB300; }
+.star-off { color: #E0E0E0; }
+.tag-wrap { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.tag-btn {
+  padding: 12rpx 28rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  border: 2rpx solid var(--color-border);
+  color: var(--color-text-sub);
+}
+.tag-btn-active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.review-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  font-size: 26rpx;
+  color: var(--color-text);
+  line-height: 1.6;
+}

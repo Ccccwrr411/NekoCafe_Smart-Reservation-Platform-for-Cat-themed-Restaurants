@@ -1,0 +1,167 @@
+<!--pages/menu/menu.wxml-->
+<view class="container menu-container">
+
+  <!-- ══ 门店选择头部 ══ -->
+  <view class="menu-store-bar" bindtap="onStoreHeaderTap">
+    <text class="menu-store-icon">📍</text>
+    <text class="menu-store-name">{{storeName || '请选择门店'}}</text>
+    <text class="menu-store-arrow">▾</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-wrap"><text>加载菜单中...</text></view>
+
+  <view wx:else class="menu-layout">
+
+    <!-- ══ 左侧分类导航 ══ -->
+    <scroll-view class="cat-sidebar" scroll-y>
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="cat-item {{activeCategoryId === item.id ? 'cat-active' : ''}}"
+        bindtap="onCategoryClick"
+        data-id="{{item.id}}"
+      >
+        <text class="cat-icon">{{item.icon}}</text>
+        <text class="cat-name">{{item.name}}</text>
+      </view>
+    </scroll-view>
+
+    <!-- ══ 右侧菜品列表 ══ -->
+    <scroll-view class="dish-list" scroll-y>
+      <block wx:for="{{categories}}" wx:key="id">
+        <view id="cat-{{item.id}}" class="dish-group-title">{{item.icon}} {{item.name}}</view>
+
+        <view
+          wx:for="{{items}}"
+          wx:for-item="dish"
+          wx:key="id"
+          wx:if="{{dish.categoryId === item.id}}"
+          class="dish-item"
+        >
+          <!-- 商品图片 -->
+          <image class="dish-img" src="{{dish.imageUrl}}" mode="aspectFill" />
+
+          <!-- 商品信息 -->
+          <view class="dish-info">
+            <view class="dish-name-row">
+              <text class="dish-name">{{dish.name}}</text>
+              <view wx:if="{{dish.isHot}}" class="dish-badge badge-hot">🔥热销</view>
+              <view wx:if="{{dish.isNew}}" class="dish-badge badge-new">✨新品</view>
+            </view>
+            <text class="dish-desc">{{dish.desc}}</text>
+            <view class="dish-sales">销量 {{dish.sales}} · ⭐ {{dish.rating}}</view>
+            <view class="dish-bottom">
+              <text class="dish-price">¥{{dish.price}}</text>
+
+              <!-- 购物车操作 -->
+              <view class="cart-control">
+                <view
+                  wx:if="{{cart.length > 0}}"
+                  class="cart-minus"
+                  bindtap="onMinusCart"
+                  data-item="{{dish}}"
+                >－</view>
+                <text wx:if="{{cart.length > 0}}" class="cart-qty">
+                  {{cart.find ? '' : ''}}
+                </text>
+                <!-- 用 block 遍历找数量 -->
+                <block wx:for="{{cart}}" wx:for-item="ci" wx:key="id">
+                  <text wx:if="{{ci.id === dish.id}}" class="cart-qty">{{ci.qty}}</text>
+                </block>
+                <view class="cart-add" bindtap="onAddCart" data-item="{{dish}}">＋</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 底部占位（避免被购物车遮挡） -->
+      <view style="height: 160rpx;"></view>
+    </scroll-view>
+  </view>
+
+  <!-- ══ 底部购物车栏 ══ -->
+  <view class="cart-bar">
+    <!-- 购物车图标 -->
+    <view class="cart-icon-wrap" bindtap="toggleCartDetail">
+      <view class="cart-icon">🛒</view>
+      <view wx:if="{{cartCount > 0}}" class="cart-badge">{{cartCount}}</view>
+    </view>
+
+    <!-- 金额信息 -->
+    <view class="cart-price-info" bindtap="toggleCartDetail">
+      <text wx:if="{{cartCount > 0}}" class="cart-total">¥{{cartTotal}}</text>
+      <text wx:else class="cart-empty-hint">从左侧添加菜品</text>
+    </view>
+
+    <!-- 结算按钮 -->
+    <view
+      class="cart-checkout {{cartCount === 0 ? 'checkout-disabled' : ''}}"
+      bindtap="goOrder"
+    >去结算</view>
+  </view>
+
+  <!-- ══ 购物车详情弹层 ══ -->
+  <view wx:if="{{showCartDetail}}" class="cart-mask" bindtap="toggleCartDetail"></view>
+  <view wx:if="{{showCartDetail}}" class="cart-detail-panel">
+    <view class="cart-panel-header">
+      <text class="panel-title">已选菜品</text>
+      <text class="panel-clear" bindtap="clearCart">🗑 清空</text>
+    </view>
+    <scroll-view scroll-y class="cart-detail-list">
+      <view
+        wx:for="{{cart}}"
+        wx:key="id"
+        class="cart-detail-item"
+      >
+        <text class="cd-name">{{item.name}}</text>
+        <view class="cd-right">
+          <text class="cd-price">¥{{item.price}}</text>
+          <view class="cart-control-sm">
+            <view class="cs-btn" bindtap="onMinusCart" data-item="{{item}}">－</view>
+            <text class="cs-qty">{{item.qty}}</text>
+            <view class="cs-btn" bindtap="onAddCart" data-item="{{item}}">＋</view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="cart-panel-footer">
+      <text>合计：</text>
+      <text class="panel-total">¥{{cartTotal}}</text>
+    </view>
+  </view>
+
+  <!-- ══ 门店选择弹层 ══ -->
+  <view wx:if="{{showStorePicker}}" class="picker-mask" bindtap="hideStorePicker"></view>
+  <view wx:if="{{showStorePicker}}" class="store-picker-panel">
+    <view class="picker-header">
+      <text class="picker-header-title">选择门店</text>
+      <text class="picker-header-close" bindtap="hideStorePicker">✕</text>
+    </view>
+    <scroll-view scroll-y class="picker-list">
+      <view
+        wx:for="{{stores}}"
+        wx:key="id"
+        class="picker-store-item {{storeId === item.id ? 'picker-store-active' : ''}}"
+        bindtap="onStoreSelect"
+        data-store="{{item}}"
+      >
+        <view class="picker-store-left">
+          <image class="picker-store-img" src="{{item.imageUrl}}" mode="aspectFill" />
+          <view class="picker-store-info">
+            <text class="picker-store-name">{{item.name}}</text>
+            <text class="picker-store-addr">{{item.address}}</text>
+            <view class="picker-store-tags">
+              <text wx:for="{{item.tags}}" wx:key="*this" wx:for-item="t" class="picker-tag">{{t}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="picker-store-right">
+          <text class="picker-store-dist">{{item.distanceText}}</text>
+          <text wx:if="{{storeId === item.id}}" class="picker-check">✓</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+</view>

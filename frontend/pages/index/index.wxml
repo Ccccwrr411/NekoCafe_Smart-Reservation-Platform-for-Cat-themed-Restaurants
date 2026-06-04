@@ -1,0 +1,193 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+
+  <!-- ══ 顶部问候栏 ══ -->
+  <view class="header">
+    <view class="header-left">
+      <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+      <view>
+        <text class="greeting">Hi，{{userInfo.nickName || '小猫咪'}} 👋</text>
+        <view class="member-badge">
+          <text>{{userInfo.memberLevelIcon || '🥈'}} {{userInfo.memberLevel || '银卡会员'}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="header-right" bindtap="goProfile">
+      <text class="points">{{userInfo.points || 0}} 积分</text>
+    </view>
+  </view>
+
+  <!-- ══ 搜索栏 ══ -->
+  <view class="search-bar">
+    <view class="search-inner">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索门店、地址、猫咪品种..."
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+      />
+    </view>
+  </view>
+
+  <!-- ══ Banner 轮播 ══ -->
+  <swiper
+    class="banner"
+    autoplay
+    interval="3000"
+    circular
+    bindchange="onBannerChange"
+    indicator-dots
+    indicator-color="rgba(255,255,255,0.5)"
+    indicator-active-color="#ffffff"
+  >
+    <swiper-item wx:for="{{banners}}" wx:key="id">
+      <image class="banner-img" src="{{item.imageUrl}}" mode="aspectFill" />
+      <view class="banner-title">{{item.title}}</view>
+    </swiper-item>
+  </swiper>
+
+  <!-- ══ 快捷入口 ══ -->
+  <view class="quick-entry card">
+    <view class="entry-item" bindtap="goReservation">
+      <view class="entry-icon">📅</view>
+      <text>立即预约</text>
+    </view>
+    <view class="entry-item" bindtap="goMenu">
+      <view class="entry-icon">🍜</view>
+      <text>在线点单</text>
+    </view>
+    <view class="entry-item" bindtap="goCats">
+      <view class="entry-icon">🐱</view>
+      <text>猫咪档案</text>
+    </view>
+    <view class="entry-item" bindtap="goCoupons">
+      <view class="entry-icon">🎁</view>
+      <text>我的优惠</text>
+    </view>
+  </view>
+
+  <!-- ══ AI 智能推荐 ══ -->
+  <view wx:if="{{showRecommend && recommend}}" class="recommend-section card">
+    <view class="recommend-header">
+      <view class="recommend-title-row">
+        <text class="recommend-icon">🤖</text>
+        <text class="recommend-title">AI 智能推荐</text>
+      </view>
+      <text class="recommend-close" bindtap="dismissRecommend">✕</text>
+    </view>
+    <text class="recommend-reason">{{recommend.reason}}</text>
+
+    <!-- 推荐桌位 -->
+    <view class="recommend-sub-title">🐾 推荐桌位（猫咪性格匹配）</view>
+    <scroll-view scroll-x class="recommend-scroll">
+      <view
+        wx:for="{{recommend.tables}}"
+        wx:key="id"
+        class="recommend-card rec-table-card"
+        bindtap="onRecommendTableTap"
+        data-table="{{item}}"
+      >
+        <view class="rec-table-header">
+          <text class="rec-table-name">{{item.name}}</text>
+          <text class="rec-table-type">{{item.type}}</text>
+        </view>
+        <text class="rec-cat-name">🐱 {{item.catName}}（{{item.catBreed}}）</text>
+        <text class="rec-match-score">匹配度 {{item.matchScore}}%</text>
+        <text class="rec-match-reason">{{item.matchReason}}</text>
+      </view>
+    </scroll-view>
+
+    <!-- 推荐菜品 -->
+    <view class="recommend-sub-title">🍽 猜你喜欢</view>
+    <scroll-view scroll-x class="recommend-scroll">
+      <view
+        wx:for="{{recommend.dishes}}"
+        wx:key="id"
+        class="recommend-card rec-dish-card"
+        bindtap="onRecommendDishTap"
+        data-dish="{{item}}"
+      >
+        <image class="rec-dish-img" src="{{item.imageUrl}}" mode="aspectFill" />
+        <text class="rec-dish-name">{{item.name}}</text>
+        <view class="rec-dish-bottom">
+          <text class="rec-dish-price">¥{{item.price}}</text>
+          <view wx:if="{{item.isHot}}" class="rec-dish-hot">🔥热销</view>
+        </view>
+        <text class="rec-dish-reason">{{item.reason}}</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- ══ 门店列表 ══ -->
+  <view class="section-title-row">
+    <text class="section-title">附近门店</text>
+    <view class="sort-toggle {{sortByNearest ? 'sort-active' : ''}}" bindtap="onToggleSortByDistance">
+      <text class="sort-icon">{{locating ? '📍' : '📏'}}</text>
+      <text>{{sortByNearest ? '距我最近 ✓' : '默认排序'}}</text>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 门店卡片列表 -->
+  <view wx:else>
+    <view
+      wx:for="{{stores}}"
+      wx:key="id"
+      class="store-card card"
+      bindtap="onStoreClick"
+      data-store="{{item}}"
+    >
+      <!-- 门店图片 -->
+      <image class="store-img" src="{{item.imageUrl}}" mode="aspectFill" />
+
+      <!-- 状态角标 -->
+      <view class="store-badge {{item.status === 'open' ? 'badge-open' : 'badge-closed'}}">
+        {{item.status === 'open' ? '营业中' : '已打烊'}}
+      </view>
+
+      <!-- 门店信息 -->
+      <view class="store-info">
+        <view class="store-name-row">
+          <text class="store-name">{{item.name}}</text>
+          <view class="store-rating">⭐ {{item.rating}}</view>
+        </view>
+
+        <text class="store-address">📍 {{item.address}}</text>
+
+        <view class="store-meta">
+          <text class="meta-item">🐾 {{item.catCount}} 只猫咪</text>
+          <text class="meta-item">💰 人均 ¥{{item.avgPrice}}</text>
+          <text class="meta-item">📍 {{item.distanceText}}</text>
+        </view>
+
+        <!-- 标签 -->
+        <view class="tag-row">
+          <text
+            wx:for="{{item.tags}}"
+            wx:for-item="tag"
+            wx:key="*this"
+            class="tag tag-primary"
+          >{{tag}}</text>
+        </view>
+
+        <!-- 营业时间 + 预约按钮 -->
+        <view class="store-bottom">
+          <text class="open-time">🕙 {{item.openTime}}</text>
+          <view class="btn-reserve" bindtap="onStoreClick" data-store="{{item}}">立即预约</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{stores.length === 0}}" class="empty-state">
+      <text>😿 没有找到相关门店</text>
+    </view>
+  </view>
+
+</view>
