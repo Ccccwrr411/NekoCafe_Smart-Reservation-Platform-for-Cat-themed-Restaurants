@@ -1,0 +1,126 @@
+<!--pages/dashboard/dashboard.wxml-->
+<view class="container">
+
+  <!-- ══ 顶部 Banner ══ -->
+  <view class="dash-banner">
+    <view class="banner-left">
+      <text class="dash-title">📊 数据看板</text>
+      <text class="dash-sub">{{storeName}} · {{userName}}（{{userRole}}）</text>
+    </view>
+    <view class="btn-logout" bindtap="onLogout">退出</view>
+  </view>
+
+  <!-- ══ 门店切换（仅总部运营可见） ══ -->
+  <view wx:if="{{showStorePicker}}" class="store-picker-bar">
+    <text class="picker-label">🏢 切换门店：</text>
+    <picker class="picker" mode="selector" range="{{allStores}}" range-key="name" value="{{storePickerIndex}}" bindchange="onStoreChange">
+      <view class="picker-value">{{allStores[storePickerIndex].name}} ▼</view>
+    </picker>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
+
+  <block wx:if="{{!loading && metrics}}">
+
+    <!-- ══ 今日概览 ══ -->
+    <view class="overview-section">
+      <text class="section-title">📊 今日概览</text>
+      <view class="overview-grid">
+        <view class="ov-item">
+          <text class="ov-val ov-revenue">¥{{metrics.todayOverview.revenue}}</text>
+          <text class="ov-label">今日营收</text>
+        </view>
+        <view class="ov-item">
+          <text class="ov-val ov-orders">{{metrics.todayOverview.orderCount}}</text>
+          <text class="ov-label">订单数</text>
+        </view>
+        <view class="ov-item">
+          <text class="ov-val ov-members">{{metrics.todayOverview.newMembers}}</text>
+          <text class="ov-label">新会员</text>
+        </view>
+        <view class="ov-item">
+          <text class="ov-val ov-avg">¥{{metrics.todayOverview.avgOrderValue}}</text>
+          <text class="ov-label">客单价</text>
+        </view>
+      </view>
+      <!-- 店长：查看门店订单入口 -->
+      <view wx:if="{{userRoleId !== 'hq_ops'}}" class="btn-view-orders" bindtap="onViewStoreOrders">
+        📋 查看门店订单详情 ›
+      </view>
+    </view>
+
+    <!-- ══ 坪效折线图 ══ -->
+    <view class="chart-card">
+      <text class="section-title">📈 近7天坪效（元/m²/天）</text>
+      <canvas type="2d" id="chartLine" class="chart-canvas"></canvas>
+    </view>
+
+    <!-- ══ 翻台率柱状图 ══ -->
+    <view class="chart-card">
+      <text class="section-title">🔄 近7天翻台率</text>
+      <canvas type="2d" id="chartBar" class="chart-canvas"></canvas>
+    </view>
+
+    <!-- ══ 会员复购率饼图 ══ -->
+    <view class="chart-card">
+      <text class="section-title">👥 会员复购率（按等级）</text>
+      <canvas type="2d" id="chartPie" class="chart-canvas chart-pie"></canvas>
+    </view>
+
+  </block>
+
+  <!-- ══ 总部运营：全部门店概览 ══ -->
+  <block wx:if="{{!loading && hqOverview}}">
+    <view class="hq-section-title">🏢 全部门店概览</view>
+    <view class="hq-total-row">
+      <view class="hq-total-item">
+        <text class="hq-total-val">¥{{hqOverview.totalRevenue}}</text>
+        <text class="hq-total-label">总营收</text>
+      </view>
+      <view class="hq-total-item">
+        <text class="hq-total-val">{{hqOverview.totalOrders}}</text>
+        <text class="hq-total-label">总订单</text>
+      </view>
+      <view class="hq-total-item">
+        <text class="hq-total-val">{{hqOverview.totalMembers}}</text>
+        <text class="hq-total-label">会员数</text>
+      </view>
+      <view class="hq-total-item">
+        <text class="hq-total-val">{{hqOverview.avgDailyTurnover}}x</text>
+        <text class="hq-total-label">均翻台率</text>
+      </view>
+    </view>
+    <view class="hq-store-list">
+      <view wx:for="{{hqOverview.stores}}" wx:key="id" class="hq-store-card" bindtap="onViewHqStoreOrders" data-storeid="{{item.id}}">
+        <view class="hq-store-top">
+          <text class="hq-store-name">{{item.name}}</text>
+          <text class="hq-store-status store-status-{{item.status}}">{{item.status === 'open' ? '营业中' : '已关闭'}}</text>
+        </view>
+        <view class="hq-store-info">
+          <text>👤 店长：{{item.manager}}（{{item.managerPhone}}）</text>
+          <text>⭐ {{item.rating}}</text>
+        </view>
+        <view class="hq-store-metrics">
+          <view class="hq-metric">
+            <text class="hq-metric-val">¥{{item.todayRevenue}}</text>
+            <text class="hq-metric-label">今日营收</text>
+          </view>
+          <view class="hq-metric">
+            <text class="hq-metric-val">{{item.todayOrders}}</text>
+            <text class="hq-metric-label">今日订单</text>
+          </view>
+          <view class="hq-metric">
+            <text class="hq-metric-val">{{item.tableCount}}桌</text>
+            <text class="hq-metric-label">空{{item.availableTables}}/{{item.tableCount}}</text>
+          </view>
+          <view class="hq-metric">
+            <text class="hq-metric-val">{{item.occupancyRate * 100}}%</text>
+            <text class="hq-metric-label">入座率</text>
+          </view>
+        </view>
+        <view class="hq-store-link">点击查看订单详情 ›</view>
+      </view>
+    </view>
+  </block>
+
+</view>

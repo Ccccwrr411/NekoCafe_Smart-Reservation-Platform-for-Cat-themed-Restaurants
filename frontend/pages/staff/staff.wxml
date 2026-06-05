@@ -1,0 +1,138 @@
+<!--pages/staff/staff.wxml-->
+<view class="container">
+
+  <!-- ══ 顶部 Banner ══ -->
+  <view class="staff-banner">
+    <view class="banner-left">
+      <text class="staff-title">🏪 店员工作台</text>
+      <text class="staff-date">{{storeName}} · {{userName}}（{{userRole}}）</text>
+    </view>
+    <view class="btn-logout" bindtap="onLogout">退出</view>
+  </view>
+
+  <!-- ══ 门店切换（仅总部运营可见） ══ -->
+  <view wx:if="{{showStorePicker}}" class="store-picker-bar">
+    <text class="picker-label">🏢 切换门店：</text>
+    <picker class="picker" mode="selector" range="{{allStores}}" range-key="name" value="{{storePickerIndex}}" bindchange="onStoreChange">
+      <view class="picker-value">{{allStores[storePickerIndex].name}} ▼</view>
+    </picker>
+  </view>
+
+  <!-- ══ Tab 切换 ══ -->
+  <view class="tab-bar">
+    <view class="tab-item {{currentTab === 0 ? 'tab-active' : ''}}" bindtap="switchTab" data-idx="0">桌位管理</view>
+    <view class="tab-item {{currentTab === 1 ? 'tab-active' : ''}}" bindtap="switchTab" data-idx="1">
+      接单中心
+      <text wx:if="{{pendingOrders.length > 0}}" class="alert-badge">{{pendingOrders.length}}</text>
+    </view>
+    <view class="tab-item {{currentTab === 2 ? 'tab-active' : ''}}" bindtap="switchTab" data-idx="2">
+      异常告警
+      <text wx:if="{{alerts.length > 0}}" class="alert-badge alert-badge-red">{{alerts.length}}</text>
+    </view>
+    <view class="tab-item {{currentTab === 3 ? 'tab-active' : ''}}" bindtap="switchTab" data-idx="3">全部订单</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
+
+  <!-- ══ Tab 0：桌位管理 ══ -->
+  <view wx:if="{{!loading && currentTab === 0}}">
+    <view class="stats-row">
+      <view class="stat-chip stat-avail">空闲 {{countAvailable}}</view>
+      <view class="stat-chip stat-occ">使用中 {{countOccupied}}</view>
+      <view class="stat-chip stat-book">已预约 {{countBooked}}</view>
+      <view class="stat-chip stat-clean">打扫中 {{countCleaning}}</view>
+    </view>
+    <view class="table-grid">
+      <view wx:for="{{tables}}" wx:key="id" class="table-item table-{{item.status}}" bindtap="onDispatch" data-table="{{item}}">
+        <view class="table-top">
+          <text class="table-name">{{item.name}}</text>
+          <view class="table-status-badge status-{{item.status}}">{{item.statusLabel}}</view>
+        </view>
+        <view class="table-info">
+          <text>{{item.type}} · 容量{{item.capacity}}人</text>
+          <text wx:if="{{item.customer && item.customer !== '-'}}">👤 {{item.customer}}</text>
+          <text wx:if="{{item.arriveTime && item.arriveTime !== '-'}}">🕙 {{item.arriveTime}} ~ {{item.estLeaveTime}}</text>
+          <text>🐱 {{item.catType}}</text>
+        </view>
+        <text class="dispatch-hint">点击调度</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ Tab 1：接单中心 ══ -->
+  <view wx:if="{{!loading && currentTab === 1}}">
+    <view wx:if="{{pendingOrders.length === 0}}" class="empty-state">
+      <text class="empty-icon">✅</text>
+      <text class="empty-text">暂无待接订单</text>
+    </view>
+    <view wx:for="{{pendingOrders}}" wx:key="tableId" class="order-card">
+      <view class="order-top">
+        <text class="order-table">{{item.tableName}} · {{item.tableType}}</text>
+        <text class="order-time">预约 {{item.arriveTime}}</text>
+      </view>
+      <view class="order-info">
+        <text>👤 {{item.customer}}</text>
+        <text>🐱 {{item.catType}}</text>
+      </view>
+      <view class="order-actions">
+        <view class="btn-accept" bindtap="onAcceptOrder" data-order="{{item}}">✅ 确认到店</view>
+        <view class="btn-reject" bindtap="onRejectOrder" data-order="{{item}}">❌ 未到取消</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ Tab 2：异常告警 ══ -->
+  <view wx:if="{{!loading && currentTab === 2}}">
+    <view wx:if="{{alerts.length === 0}}" class="empty-state">
+      <text class="empty-icon">✅</text>
+      <text class="empty-text">暂无异常告警</text>
+    </view>
+    <view wx:for="{{alerts}}" wx:key="id" class="alert-card alert-{{item.level}}" bindtap="onHandleAlert" data-alert="{{item}}">
+      <view class="alert-top">
+        <view class="alert-level level-{{item.level}}">{{item.levelLabel}}</view>
+        <text class="alert-time">{{item.time}}</text>
+      </view>
+      <text class="alert-title">{{item.title}}</text>
+      <text class="alert-desc">{{item.desc}}</text>
+    </view>
+  </view>
+
+  <!-- ══ Tab 3：全部订单 ══ -->
+  <view wx:if="{{!loading && currentTab === 3}}">
+    <view class="order-stats">
+      <text class="order-stats-text">📋 {{orderCount}} 笔订单 · 💰 ¥{{orderRevenue}}</text>
+    </view>
+    <view wx:if="{{orders.length === 0}}" class="empty-state">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无订单记录</text>
+    </view>
+    <view wx:for="{{orders}}" wx:key="id" class="order-item" bindtap="onViewOrderDetail" data-order="{{item}}">
+      <view class="order-item-top">
+        <text class="order-item-id">#{{item.id}}</text>
+        <view class="order-status-badge status-{{item.status}}">{{item.statusLabel}}</view>
+      </view>
+      <view class="order-item-body">
+        <text class="order-item-table">{{item.tableName}}</text>
+        <text class="order-item-customer">👤 {{item.customerName}}</text>
+      </view>
+      <view class="order-item-bottom">
+        <text class="order-item-date">{{item.reserveDate}} {{item.reserveTime}}</text>
+        <text class="order-item-amount">¥{{item.totalAmount}}</text>
+      </view>
+      <view class="order-item-detail-link">查看详情 ›</view>
+    </view>
+  </view>
+
+  <!-- ══ 调度弹层 ══ -->
+  <view wx:if="{{showDispatchModal}}" class="modal-mask" bindtap="onDispatchMaskTap">
+    <view class="modal-panel" catchtap="">
+      <text class="modal-title">调度 {{dispatchTable.name}}（{{dispatchTable.type}}）</text>
+      <text class="modal-sub">当前：{{dispatchTableStatusLabel}}</text>
+      <view class="dispatch-options">
+        <view wx:for="{{dispatchStatuses}}" wx:key="key" class="dispatch-opt dispatch-opt-{{item.key}}" bindtap="onSetStatus" data-status="{{item.key}}">{{item.label}}</view>
+      </view>
+      <view class="modal-cancel" bindtap="onDispatchMaskTap">取消</view>
+    </view>
+  </view>
+
+</view>
