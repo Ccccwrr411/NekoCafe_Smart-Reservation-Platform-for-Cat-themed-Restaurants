@@ -1,0 +1,121 @@
+<!--pages/profile/profile.wxml-->
+<view class="container">
+
+  <!-- ══ 用户卡片 ══ -->
+  <view class="user-hero">
+    <view class="user-hero-bg"></view>
+    <view class="user-info-row">
+      <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+      <view class="user-detail">
+        <text class="user-name">{{userInfo.nickName || '猫咖爱好者'}}</text>
+        <view class="user-member-badge">
+          {{userInfo.memberLevelIcon}} {{userInfo.memberLevel}}
+        </view>
+        <text class="user-phone">{{userInfo.phone}}</text>
+      </view>
+    </view>
+
+    <!-- 积分进度条 -->
+    <view class="points-section">
+      <view class="points-header">
+        <text class="points-val">{{userInfo.points}} 积分</text>
+        <text class="points-hint">再积 {{userInfo.pointsToNext}} 分升级 {{userInfo.nextLevel}}</text>
+      </view>
+      <view class="progress-bar">
+        <view
+          class="progress-fill"
+          style="width: {{userInfo.points * 100 / (userInfo.points + userInfo.pointsToNext)}}%"
+        ></view>
+      </view>
+    </view>
+
+    <!-- 数据概览 -->
+    <view class="stats-row">
+      <view class="stat-item">
+        <text class="stat-num">{{userInfo.totalOrders}}</text>
+        <text class="stat-label">消费次数</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-num">¥{{userInfo.totalSpent}}</text>
+        <text class="stat-label">累计消费</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-num">{{userInfo.couponCount}}</text>
+        <text class="stat-label">可用券</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 最近订单 ══ -->
+  <view class="section-header">
+    <text class="section-title-text">最近订单</text>
+    <text class="section-more" bindtap="goAllOrders">全部订单 ›</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
+
+  <view wx:else>
+    <view wx:if="{{orders.length === 0}}" class="empty-state">
+      <text>暂无订单记录</text>
+    </view>
+    <view
+      wx:for="{{orders}}"
+      wx:key="id"
+      class="order-card card"
+      bindtap="goOrderDetail"
+      data-orderid="{{item.id}}"
+    >
+      <view class="order-header">
+        <text class="order-store">{{item.storeName}}</text>
+        <text
+          class="order-status"
+          style="color: {{ORDER_STATUS_MAP[item.status].color}}"
+        >{{ORDER_STATUS_MAP[item.status].text}}</text>
+      </view>
+      <view class="order-meta">
+        <text>{{item.reserveDate}} {{item.reserveTime}} · {{item.persons}}人</text>
+        <text>{{item.tableName}}</text>
+      </view>
+      <view class="order-items-preview" wx:if="{{item.items.length > 0}}">
+        <text
+          wx:for="{{item.items}}"
+          wx:for-item="dish"
+          wx:key="name"
+          class="order-dish-name"
+        >{{dish.name}}×{{dish.qty}}</text>
+      </view>
+      <view class="order-footer">
+        <text class="order-total" wx:if="{{item.totalAmount > 0}}">¥{{item.totalAmount}}</text>
+        <view class="order-actions">
+          <view wx:if="{{item.status === 'completed' && !item.hasReview}}" class="btn-review">去评价</view>
+          <view wx:if="{{item.status === 'confirmed'}}" class="btn-cancel">取消预约</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 功能菜单 ══ -->
+  <view class="menu-section card">
+    <view
+      wx:for="{{menuItems}}"
+      wx:key="label"
+      class="menu-row"
+      bindtap="onMenuItemClick"
+      data-label="{{item.label}}"
+      data-path="{{item.path}}"
+    >
+      <view class="menu-icon">{{item.icon}}</view>
+      <text class="menu-label">{{item.label}}</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 版本号 -->
+  <view class="app-version">NekoCafé v1.0.0 · 🐱 爱猫人的专属咖啡馆</view>
+
+  <!-- 退出登录 -->
+  <view class="logout-btn" bindtap="onLogout">退出登录</view>
+
+</view>

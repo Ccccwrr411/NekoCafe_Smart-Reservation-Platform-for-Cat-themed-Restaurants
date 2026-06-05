@@ -1,0 +1,113 @@
+/**app.wxss - NekoCafé 全局样式**/
+
+/* ===== CSS 变量（品牌色） ===== */
+page {
+  --color-primary: #C97E5A;      /* 暖橙-品牌主色 */
+  --color-primary-light: #F0D5C0; /* 浅暖橙 */
+  --color-secondary: #8B5A3C;    /* 深棕 */
+  --color-bg: #F7F0EB;           /* 页面背景 */
+  --color-card: #FFFFFF;
+  --color-text: #333333;
+  --color-text-sub: #888888;
+  --color-border: #E8DDD5;
+  --color-success: #4CAF50;
+  --color-danger: #F44336;
+  --color-warn: #FF9800;
+  --radius-card: 16rpx;
+  --radius-btn: 50rpx;
+  --shadow-card: 0 4rpx 20rpx rgba(201,126,90,0.12);
+  background-color: var(--color-bg);
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  color: var(--color-text);
+  font-size: 28rpx;
+}
+
+/* ===== 通用容器 ===== */
+.container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding-bottom: 120rpx;
+}
+
+/* ===== 卡片 ===== */
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  padding: 24rpx;
+  margin: 16rpx 24rpx;
+  box-shadow: var(--shadow-card);
+}
+
+/* ===== 按钮 ===== */
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-btn);
+  border: none;
+  padding: 20rpx 60rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+.btn-primary::after { border: none; }
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary);
+  border-radius: var(--radius-btn);
+  padding: 20rpx 60rpx;
+  font-size: 30rpx;
+}
+.btn-outline::after { border: none; }
+
+/* ===== 分割线 ===== */
+.divider {
+  height: 1rpx;
+  background: var(--color-border);
+  margin: 16rpx 0;
+}
+
+/* ===== 标题 ===== */
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--color-text);
+  padding: 24rpx 24rpx 8rpx;
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 0;
+  color: var(--color-text-sub);
+  font-size: 26rpx;
+}
+.empty-state image {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 24rpx;
+}
+
+/* ===== 标签 ===== */
+.tag {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+}
+.tag-primary { background: var(--color-primary-light); color: var(--color-primary); }
+.tag-success { background: #E8F5E9; color: #388E3C; }
+.tag-danger  { background: #FFEBEE; color: #C62828; }
+.tag-warn    { background: #FFF8E1; color: #F57F17; }
+
+/* ===== 加载动画 ===== */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60rpx 0;
+  color: var(--color-text-sub);
+  font-size: 26rpx;
+}
