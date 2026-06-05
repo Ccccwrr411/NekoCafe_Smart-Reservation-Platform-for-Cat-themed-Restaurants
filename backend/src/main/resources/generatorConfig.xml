@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+    <context id="PostgresTables" targetRuntime="MyBatis3">
+        <!-- 屏蔽自动生成的无用注释 -->
+        <commentGenerator>
+            <property name="suppressAllComments" value="true"/>
+        </commentGenerator>
+
+        <!-- 云端数据库连接信息 -->
+        <jdbcConnection driverClass="org.postgresql.Driver"
+                        connectionURL="jdbc:postgresql://82.157.130.254:5432/postgres"
+                        userId="admin_user"
+                        password="123456789">
+        </jdbcConnection>
+
+        <!-- 1. 实体类 (Entity) 生成位置 -->
+        <javaModelGenerator targetPackage="cn.edu.bjfu.nekocafe.entity" targetProject="src/main/java"/>
+
+        <!-- 2. XML 映射文件生成位置 -->
+        <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources"/>
+
+        <!-- 3. Mapper 接口生成位置 -->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="cn.edu.bjfu.nekocafe.mapper" targetProject="src/main/java"/>
+
+        <!-- 指定要生成的表： % 代表 public 模式下的所有表 -->
+        <table tableName="%" schema="public"/>
+    </context>
+</generatorConfiguration>
