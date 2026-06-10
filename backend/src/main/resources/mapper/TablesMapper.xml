@@ -240,4 +240,25 @@
       is_active = #{isActive,jdbcType=BIT}
     where table_id = #{tableId,jdbcType=INTEGER}
   </update>
+
+  <!-- ========== 推荐模块自定义 SQL ========== -->
+
+  <!--
+    R10 + R13: 为推荐引擎查询可用桌位
+    按桌位类型和容量过滤在售桌位，VIP 包厢（table_type ILIKE '%vip%'）优先排序
+  -->
+  <select id="selectAvailableTablesForRecommend" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List" />
+    FROM public.tables
+    WHERE is_active = true
+      AND capacity &gt;= #{minCapacity}
+      <if test="tableType != null and tableType != ''">
+        AND table_type ILIKE CONCAT('%', #{tableType}, '%')
+      </if>
+    ORDER BY
+      CASE WHEN table_type ILIKE '%vip%' THEN 0 ELSE 1 END ASC,
+      capacity ASC
+    LIMIT #{limit}
+  </select>
+
 </mapper>
