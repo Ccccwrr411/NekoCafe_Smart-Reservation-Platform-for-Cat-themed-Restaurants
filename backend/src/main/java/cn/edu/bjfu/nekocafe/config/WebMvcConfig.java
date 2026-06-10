@@ -25,9 +25,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         // TODO：上线前替换 * 为真实前端域名
         registry.addMapping("/**")
-                .allowedOrigins("*")
+                .allowedOriginPatterns("*")          // 兼容 file:// 本地测试页面
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*");
+                .allowedHeaders("*")
+                .allowCredentials(false)
+                .maxAge(3600);
     }
 
     @Override
