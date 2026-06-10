@@ -68,7 +68,7 @@
 
   <!-- ══ 优惠券选择弹层 ══ -->
   <view wx:if="{{showCouponPicker}}" class="picker-mask" bindtap="onCloseCouponPicker"></view>
-  <view wx:if="{{showCouponPicker}}" class="coupon-picker-panel">
+  <view wx:if="{{showCouponPicker}}" class="coupon-picker-panel" catchtap="onPickerPanelTap">
     <view class="picker-header">
       <text class="picker-header-title">选择优惠</text>
       <text class="picker-header-close" bindtap="onCloseCouponPicker">✕</text>
@@ -89,18 +89,19 @@
         wx:for="{{coupons}}"
         wx:for-item="coupon"
         wx:key="id"
-        class="coupon-picker-item {{selectedCouponIds.indexOf(coupon.id) > -1 ? 'coupon-checked' : ''}}"
-        bindtap="onToggleCoupon"
+        class="coupon-picker-item {{coupon.itemClass}}"
+        catchtap="onToggleCoupon"
         data-coupon-id="{{coupon.id}}"
       >
         <view class="coupon-picker-left">
           <text class="coupon-picker-name">{{coupon.name}}</text>
           <text class="coupon-picker-rule">{{coupon.ruleText}}</text>
           <text class="coupon-picker-expire">有效期至 {{coupon.expireDate}}</text>
-          <text wx:if="{{!coupon.stackable}}" class="coupon-not-stackable">⚠ 不可叠加</text>
+          <text wx:if="{{coupon.unavailableHint}}" class="coupon-unavailable">{{coupon.unavailableHint}}</text>
+          <text wx:elif="{{!coupon.stackable}}" class="coupon-not-stackable">⚠ 不可叠加</text>
         </view>
-        <view class="coupon-checkbox {{selectedCouponIds.indexOf(coupon.id) > -1 ? 'checkbox-on' : ''}}">
-          {{selectedCouponIds.indexOf(coupon.id) > -1 ? '✓' : ''}}
+        <view class="coupon-checkbox {{coupon.checkboxClass}}">
+          {{coupon.checkboxText}}
         </view>
       </view>
     </view>

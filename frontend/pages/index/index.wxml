@@ -123,9 +123,9 @@
   <!-- ══ 门店列表 ══ -->
   <view class="section-title-row">
     <text class="section-title">附近门店</text>
-    <view class="sort-toggle {{sortByNearest ? 'sort-active' : ''}}" bindtap="onToggleSortByDistance">
-      <text class="sort-icon">{{locating ? '📍' : '📏'}}</text>
-      <text>{{sortByNearest ? '距我最近 ✓' : '默认排序'}}</text>
+    <view class="sort-indicator">
+      <text class="sort-icon">{{locating ? '📍' : (locationFailed ? '⚠️' : '📏')}}</text>
+      <text>{{locating ? '定位中...' : (locationFailed ? '未知距离' : '距我最近')}}</text>
     </view>
   </view>
 

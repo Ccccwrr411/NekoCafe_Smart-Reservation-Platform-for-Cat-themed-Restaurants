@@ -1,4 +1,5 @@
 // pages/login/login.js
+const { post, isUseMock } = require('../../utils/request')
 
 // 每种角色的模拟用户数据
 const ROLE_USERS = {
@@ -76,37 +77,67 @@ Page({
     if (!role) return
 
     this.setData({ loading: true })
-    setTimeout(() => {
-      const userInfo = ROLE_USERS[role]
-      wx.setStorageSync('token', `mock_token_${role}_20260604`)
-      wx.setStorageSync('userInfo', userInfo)
-      wx.setStorageSync('userRole', role)
 
-      // 同步更新 app.globalData（关键：onLaunch 只执行一次，reLaunch 不会重新触发）
-      const app = getApp()
-      app.globalData.userInfo = userInfo
-      app.globalData.userRole = role
-      app.globalData.cartItems = []
-      app.globalData.currentStore = null
-      app.globalData.selectedTable = null
+    if (isUseMock()) {
+      this.finishLogin(ROLE_USERS[role], role, `mock_token_${role}_20260604`)
+      return
+    }
 
-      // 按角色跳转不同首页
-      const routeMap = {
-        customer:   '/pages/index/index',
-        staff:      '/pages/staff/staff',
-        manager:    '/pages/dashboard/dashboard',
-        hq_ops:     '/pages/dashboard/dashboard',
-        cat_keeper: '/pages/cats/cats'
+    // 对接微信沙箱后端：wx.login 换取真实 token
+    wx.login({
+      success: (loginRes) => {
+        if (!loginRes.code) {
+          this.setData({ loading: false })
+          wx.showToast({ title: '微信登录失败', icon: 'none' })
+          return
+        }
+        post('/api/auth/login', { code: loginRes.code, role }).then(res => {
+          if (res.code === 0 && res.data) {
+            const userInfo = { ...res.data.userInfo, role, roleLabel: ROLE_USERS[role].roleLabel }
+            this.finishLogin(userInfo, role, res.data.token)
+          } else {
+            this.setData({ loading: false })
+            wx.showToast({ title: res.message || '登录失败', icon: 'none' })
+          }
+        }).catch(() => {
+          this.setData({ loading: false })
+          wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+        })
+      },
+      fail: () => {
+        this.setData({ loading: false })
+        wx.showToast({ title: '微信登录失败', icon: 'none' })
       }
-      const targetUrl = routeMap[role]
+    })
+  },
 
-      // TabBar 页面用 switchTab，普通页面用 reLaunch
-      const tabBarPages = ['/pages/index/index', '/pages/reservation/reservation', '/pages/menu/menu', '/pages/profile/profile']
-      if (tabBarPages.includes(targetUrl)) {
-        wx.switchTab({ url: targetUrl })
-      } else {
-        wx.reLaunch({ url: targetUrl })
-      }
-    }, 600)
+  finishLogin(userInfo, role, token) {
+    wx.setStorageSync('token', token)
+    wx.setStorageSync('userInfo', userInfo)
+    wx.setStorageSync('userRole', role)
+
+    const app = getApp()
+    app.globalData.userInfo = userInfo
+    app.globalData.userRole = role
+    app.globalData.cartItems = []
+    app.globalData.currentStore = null
+    app.globalData.selectedTable = null
+
+    const routeMap = {
+      customer:   '/pages/index/index',
+      staff:      '/pages/staff/staff',
+      manager:    '/pages/dashboard/dashboard',
+      hq_ops:     '/pages/dashboard/dashboard',
+      cat_keeper: '/pages/cats/cats'
+    }
+    const targetUrl = routeMap[role]
+    const tabBarPages = ['/pages/index/index', '/pages/reservation/reservation', '/pages/menu/menu', '/pages/profile/profile']
+
+    this.setData({ loading: false })
+    if (tabBarPages.includes(targetUrl)) {
+      wx.switchTab({ url: targetUrl })
+    } else {
+      wx.reLaunch({ url: targetUrl })
+    }
   }
 })

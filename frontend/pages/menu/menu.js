@@ -1,6 +1,7 @@
 // pages/menu/menu.js
 const { get } = require('../../utils/request')
 const { calcCartTotal, formatDistance } = require('../../utils/util')
+const { getUserLocation, applyDistanceAndSort } = require('../../utils/lbs')
 
 Page({
   data: {
@@ -20,6 +21,9 @@ Page({
   },
 
   onLoad(options) {
+    // 先检查 token
+    if (!wx.getStorageSync('token')) return
+
     // 优先 URL 参数（从预约页跳转）
     if (options.storeId) {
       this.setData({ storeId: options.storeId })
@@ -40,6 +44,8 @@ Page({
   },
 
   onShow() {
+    if (!wx.getStorageSync('token')) return
+
     const app = getApp()
     if (app.globalData.currentStore && (!this.data.storeId || app.globalData.currentStore.id !== this.data.storeId)) {
       this.setData({
@@ -53,34 +59,52 @@ Page({
     }
   },
 
+  // 加载所有门店 → 自动定位 → 按距离排序
   loadStores() {
     get('/api/stores').then(res => {
       if (res.code === 0) {
-        const stores = res.data.map(s => ({
-          ...s,
-          distanceText: formatDistance(s.distance)
-        }))
-        this.setData({ stores })
-
-        if (!this.data.storeId && stores.length > 0) {
-          const first = stores[0]
-          this.setData({
-            storeId: first.id,
-            storeName: first.name
-          })
-          const app = getApp()
-          app.globalData.currentStore = { id: first.id, name: first.name }
-          this.loadMenu()
-        } else if (this.data.storeId) {
-          // 补充 storeName
-          const current = stores.find(s => s.id === Number(this.data.storeId))
-          if (current && !this.data.storeName) {
-            this.setData({ storeName: current.name })
-          }
-          this.loadMenu()
-        }
+        const rawStores = res.data
+        // 自动获取定位 → 计算距离 → 排序
+        this.autoSortByLocation(rawStores)
       }
     })
+  },
+
+  // 自动定位 + 距离排序
+  autoSortByLocation(rawStores) {
+    getUserLocation().then(userLoc => {
+      // 定位成功 → 计算距离 + 升序排列
+      const sorted = applyDistanceAndSort(rawStores, userLoc)
+      this.applySortedStores(sorted)
+    }).catch(() => {
+      // 定位失败 → 保留原始顺序，距离显示「未知距离」
+      const fallback = applyDistanceAndSort(rawStores, null)
+      this.applySortedStores(fallback)
+      wx.showToast({ title: '无法获取位置，显示未知距离', icon: 'none' })
+    })
+  },
+
+  // 应用排序后的门店列表
+  applySortedStores(sorted) {
+    this.setData({ stores: sorted })
+
+    if (!this.data.storeId && sorted.length > 0) {
+      const first = sorted[0]
+      this.setData({
+        storeId: first.id,
+        storeName: first.name
+      })
+      const app = getApp()
+      app.globalData.currentStore = { id: first.id, name: first.name }
+      this.loadMenu()
+    } else if (this.data.storeId) {
+      // 补充 storeName
+      const current = sorted.find(s => s.id === Number(this.data.storeId))
+      if (current && !this.data.storeName) {
+        this.setData({ storeName: current.name })
+      }
+      this.loadMenu()
+    }
   },
 
   onStoreHeaderTap() {

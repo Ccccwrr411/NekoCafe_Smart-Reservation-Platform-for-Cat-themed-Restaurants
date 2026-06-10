@@ -1,11 +1,12 @@
 // pages/index/index.js
 const { get } = require('../../utils/request')
-const { formatDistance, calcDistance } = require('../../utils/util')
+const { formatDistance } = require('../../utils/util')
+const { getUserLocation, applyDistanceAndSort } = require('../../utils/lbs')
 
 Page({
   data: {
     stores: [],
-    storesOriginal: [],  // 保持原始顺序用于恢复
+    storesOriginal: [],  // 保持原始顺序用于搜索恢复
     loading: true,
     banners: [
       { id: 1, imageUrl: 'https://placehold.co/750x350/C97E5A/white?text=Banner+1', title: '布偶猫新成员入驻' },
@@ -18,19 +19,28 @@ Page({
     // AI 推荐
     recommend: null,
     showRecommend: true,
-    // LBS
-    userLocation: null,
-    sortByNearest: false,
-    locating: false
+    // LBS 状态
+    locating: false,
+    locationFailed: false
   },
 
   onLoad() {
+    // 先检查 token：没有就不加载数据，app.js 的 onLaunch 会 reLaunch 到登录页
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      this.setData({ loading: false })
+      return
+    }
     const userInfo = wx.getStorageSync('userInfo')
     this.setData({ userInfo })
     this.loadStores()
   },
 
   onShow() {
+    // 先检查 token：没有就跳过（等待跳转登录）
+    const token = wx.getStorageSync('token')
+    if (!token) return
+
     // 每次显示刷新用户信息（比如积分变动）
     const userInfo = wx.getStorageSync('userInfo')
     this.setData({ userInfo })
@@ -46,16 +56,39 @@ Page({
     this.setData({ loading: true })
     get('/api/stores').then(res => {
       if (res.code === 0) {
-        const stores = res.data.map(s => ({
-          ...s,
-          distanceText: formatDistance(s.distance)
-        }))
+        const stores = res.data
+        // 先保存原始数据
         this.setData({ stores, storesOriginal: [...stores], loading: false })
-        // 尝试获取位置
-        this.getUserLocation()
+        // 自动获取定位 → 计算距离 → 排序
+        this.autoSortByLocation()
       }
     }).catch(() => {
       this.setData({ loading: false })
+    })
+  },
+
+  // 自动获取定位并排序（定位失败时降级处理）
+  autoSortByLocation() {
+    this.setData({ locating: true })
+    getUserLocation().then(userLoc => {
+      // 定位成功 → 计算距离 + 升序排列
+      const sorted = applyDistanceAndSort(this.data.storesOriginal, userLoc)
+      this.setData({
+        stores: sorted,
+        storesOriginal: [...sorted],
+        locating: false,
+        locationFailed: false
+      })
+    }).catch(() => {
+      // 定位失败 → 保留原始顺序，距离显示「未知距离」
+      const fallback = applyDistanceAndSort(this.data.storesOriginal, null)
+      this.setData({
+        stores: fallback,
+        storesOriginal: [...fallback],
+        locating: false,
+        locationFailed: true
+      })
+      wx.showToast({ title: '无法获取位置，显示未知距离', icon: 'none' })
     })
   },
 
@@ -66,8 +99,12 @@ Page({
 
   onSearch() {
     const kw = this.data.searchKeyword.trim()
-    if (!kw) { this.loadStores(); return }
-    const filtered = this.data.stores.filter(s =>
+    if (!kw) {
+      // 恢复排序后的完整列表
+      this.setData({ stores: [...this.data.storesOriginal] })
+      return
+    }
+    const filtered = this.data.storesOriginal.filter(s =>
       s.name.includes(kw) || s.address.includes(kw) || s.tags.some(t => t.includes(kw))
     )
     this.setData({ stores: filtered })
@@ -93,67 +130,6 @@ Page({
     wx.stopPullDownRefresh()
   },
 
-  // ── LBS 定位与排序 ──
-
-  // 获取用户位置
-  getUserLocation() {
-    if (this.data.userLocation) return // 已获取过
-    this.setData({ locating: true })
-    wx.getLocation({
-      type: 'gcj02',
-      success: (res) => {
-        const loc = { lat: res.latitude, lng: res.longitude }
-        this.setData({ userLocation: loc, locating: false })
-        // 计算真实距离
-        this.computeRealDistances(loc)
-        // 如果已开启"距我最近"则排序
-        if (this.data.sortByNearest) {
-          this.sortByDistance()
-        }
-      },
-      fail: () => {
-        this.setData({ locating: false })
-        // 定位失败则使用 mock 的 distance 字段
-        wx.showToast({ title: '无法获取位置，显示默认距离', icon: 'none' })
-      }
-    })
-  },
-
-  // 用真实经纬度计算距离
-  computeRealDistances(loc) {
-    const stores = this.data.stores.map(s => {
-      if (s.lat && s.lng) {
-        const realDist = calcDistance(loc.lat, loc.lng, s.lat, s.lng)
-        return { ...s, realDistance: realDist, distanceText: formatDistance(realDist) }
-      }
-      return s
-    })
-    this.setData({ stores, storesOriginal: [...stores] })
-  },
-
-  // 按实际距离排序
-  sortByDistance() {
-    const sorted = [...this.data.stores].sort((a, b) => {
-      const da = a.realDistance !== undefined ? a.realDistance : a.distance
-      const db = b.realDistance !== undefined ? b.realDistance : b.distance
-      return da - db
-    })
-    this.setData({ stores: sorted, sortByNearest: true })
-  },
-
-  // 切换"距我最近"排序
-  onToggleSortByDistance() {
-    if (this.data.sortByNearest) {
-      // 恢复原始顺序
-      this.setData({ stores: [...this.data.storesOriginal], sortByNearest: false })
-    } else {
-      if (!this.data.userLocation) {
-        this.getUserLocation()
-      } else {
-        this.sortByDistance()
-      }
-    }
-  },
   goReservation() { wx.switchTab({ url: '/pages/reservation/reservation' }) },
   goMenu()        { wx.switchTab({ url: '/pages/menu/menu' }) },
   goCats()        { wx.navigateTo({ url: '/pages/cats/cats' }) },
@@ -166,7 +142,7 @@ Page({
       if (res.code === 0) {
         this.setData({ recommend: res.data })
       }
-    })
+    }).catch(() => {})
   },
 
   // 点击推荐桌位 → 跳预约页

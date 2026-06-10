@@ -23,6 +23,7 @@ const formatPrice = (price) => `¥${Number(price).toFixed(2)}`
  * 格式化距离：1.2 → 1.2km；0.8 → 800m
  */
 const formatDistance = (km) => {
+  if (km == null || isNaN(km)) return '未知距离'
   if (km < 1) return `${Math.round(km * 1000)}m`
   return `${km.toFixed(1)}km`
 }
