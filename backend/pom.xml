@@ -137,13 +137,7 @@
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
-				<filtering>true</filtering>
-				<includes>
-					<include>**/*.yml</include>
-					<include>**/*.yaml</include>
-					<include>**/*.properties</include>
-					<include>**/*.xml</include>
-				</includes>
+				<filtering>false</filtering>
 			</resource>
 			<resource>
 				<directory>src/main/java</directory>
