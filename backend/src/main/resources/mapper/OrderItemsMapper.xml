@@ -225,4 +225,46 @@
       subtotal = #{subtotal,jdbcType=NUMERIC}
     where item_id = #{itemId,jdbcType=BIGINT}
   </update>
+
+  <!-- ========== 推荐模块自定义 SQL ========== -->
+
+  <!-- R4: 用户历史点餐频次统计 -->
+  <select id="selectDishFrequencyByUserId" resultType="java.util.Map">
+    SELECT oi.dish_id AS dishid,
+           SUM(oi.quantity) AS totalquantity
+    FROM public.order_items oi
+    WHERE oi.reservation_id IN (
+        SELECT r.reservation_id
+        FROM public.reservations r
+        WHERE r.user_id = #{userId}
+          AND r.status IN ('confirmed', 'completed')
+    )
+    GROUP BY oi.dish_id
+    ORDER BY totalquantity DESC
+  </select>
+
+  <!-- R17: 全店销量排行（兜底） -->
+  <select id="selectGlobalDishRanking" resultType="java.util.Map">
+    SELECT oi.dish_id AS dishid,
+           COUNT(*) AS ordercount
+    FROM public.order_items oi
+    GROUP BY oi.dish_id
+    ORDER BY ordercount DESC
+    LIMIT #{limit}
+  </select>
+
+  <!-- R16: 同偏好协同过滤 — 找到口味偏好相同的其他用户最爱点的菜 -->
+  <select id="selectCollaborativeFilterDishes" resultType="java.util.Map">
+    SELECT oi.dish_id AS dishid,
+           COUNT(*) AS ordercount
+    FROM public.order_items oi
+    INNER JOIN public.reservations r ON oi.reservation_id = r.reservation_id
+    INNER JOIN public.member_ext me ON r.user_id = me.user_id
+    WHERE r.user_id != #{currentUserId}
+      AND me.preferences::text LIKE CONCAT('%', #{flavorPreference}, '%')
+      AND r.status IN ('confirmed', 'completed')
+    GROUP BY oi.dish_id
+    ORDER BY ordercount DESC
+    LIMIT #{limit}
+  </select>
 </mapper>

@@ -18,7 +18,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new AuthInterceptor())
                 .addPathPatterns("/api/**")               // 拦截所有 /api 接口
-                .excludePathPatterns("/api/auth/login");  // 登录接口放行
+                .excludePathPatterns(
+                        "/api/auth/login",
+                        "/api/queue/**",
+                        "/api/dashboard/**",   // ⚠️ 测试用临时放行，上线前移除
+                        "/api/staff/**",        // ⚠️ 测试用临时放行，上线前移除
+                        "/api/recommend/**"     // ⚠️ 测试用临时放行，上线前移除
+                );
     }
 
     @Override
