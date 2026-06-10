@@ -1,0 +1,37 @@
+<!--pages/coupons/coupons.wxml-->
+<view class="container">
+
+  <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
+
+  <view wx:else>
+    <view wx:if="{{coupons.length === 0}}" class="empty-state">
+      <text>暂无可用优惠券</text>
+    </view>
+
+    <view
+      wx:for="{{coupons}}"
+      wx:key="id"
+      class="coupon-card"
+      bindtap="onUseCoupon"
+      data-coupon="{{item}}"
+    >
+      <view class="coupon-left">
+        <text class="coupon-value">
+          <block wx:if="{{item.type === 'discount'}}">{{item.value * 10}}折</block>
+          <block wx:elif="{{item.type === 'cashback'}}">¥{{item.value}}</block>
+          <block wx:elif="{{item.type === 'freebie'}}">赠品</block>
+        </text>
+        <text class="coupon-name">{{item.name}}</text>
+      </view>
+      <view class="coupon-right">
+        <text class="coupon-cond" wx:if="{{item.minAmount > 0}}">满¥{{item.minAmount}}可用</text>
+        <text class="coupon-cond" wx:else>无门槛</text>
+        <text class="coupon-expire">有效期至 {{item.expireDate}}</text>
+        <view class="coupon-status {{item.status === 'unused' ? 'status-avail' : 'status-used'}}">
+          {{item.status === 'unused' ? '立即使用' : item.status === 'used' ? '已使用' : '已过期'}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+</view>

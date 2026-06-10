@@ -1,0 +1,40 @@
+<!--pages/login/login.wxml-->
+<view class="login-container">
+
+  <!-- Logo -->
+  <view class="login-logo">
+    <text class="logo-cat">🐱</text>
+    <text class="logo-name">NekoCafé</text>
+    <text class="logo-sub">猫咪与咖啡的温馨相遇</text>
+  </view>
+
+  <!-- 角色选择 -->
+  <view class="role-section">
+    <text class="role-title">请选择您的身份</text>
+    <view class="role-grid">
+      <view
+        wx:for="{{roles}}"
+        wx:key="id"
+        class="role-card {{selectedRole === item.id ? 'role-card-active' : ''}}"
+        bindtap="onSelectRole"
+        data-role="{{item.id}}"
+      >
+        <text class="role-icon">{{item.icon}}</text>
+        <text class="role-name">{{item.name}}</text>
+        <text class="role-name-en">{{item.nameEn}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 登录按钮 -->
+  <button
+    class="btn-wx-login {{selectedRole ? '' : 'btn-disabled'}}"
+    bindtap="onMockLogin"
+    loading="{{loading}}"
+    disabled="{{!selectedRole}}"
+  >
+    微信一键登录
+  </button>
+  <text class="login-hint">登录即代表同意《用户协议》及《隐私政策》</text>
+
+</view>
