@@ -3,10 +3,17 @@
 // 统一请求封装：开发阶段用 mock，后端好了改 USE_MOCK = false 即可
 // ====================================================================
 
-const app = getApp()
-
-// ⚙️ 开关：true = 用假数据；false = 调真实后端
-const USE_MOCK = true
+/**
+ * 是否使用 mock 数据（优先读 app.globalData.useMock，默认 false 对接沙箱后端）
+ */
+function isUseMock() {
+  try {
+    const app = getApp()
+    return app.globalData.useMock === true
+  } catch (e) {
+    return false
+  }
+}
 
 /**
  * 发起请求（统一入口）
@@ -16,11 +23,10 @@ const USE_MOCK = true
  * @returns {Promise}      resolve(responseData)
  */
 function request(url, method = 'GET', data = {}) {
-  if (USE_MOCK) {
+  if (isUseMock()) {
     return mockRequest(url, data)
-  } else {
-    return realRequest(url, method, data)
   }
+  return realRequest(url, method, data)
 }
 
 // ─── Mock 模式 ──────────────────────────────────────────────────────
@@ -61,25 +67,47 @@ function mockRequest(url, data) {
 
 // ─── 真实请求模式 ────────────────────────────────────────────────────
 function realRequest(url, method, data) {
-  const baseUrl = app.globalData.baseUrl || 'http://172.20.10.3:8081'
+  const app = getApp()
+  const baseUrl = app.globalData.baseUrl || 'http://127.0.0.1:8081'
+  const isLoginRequest = (url === '/api/auth/login')
   const token = wx.getStorageSync('token') || ''
 
   return new Promise((resolve, reject) => {
+    const header = {
+      'Content-Type': 'application/json'
+    }
+
+    // 非登录接口：必须有 token 才放行（先登录，再请求数据）
+    if (!isLoginRequest) {
+      if (!token) {
+        wx.reLaunch({ url: '/pages/login/login' })
+        // 用 resolve 返回安全响应（而非 reject），避免未捕获异常导致页面白屏
+        // reLaunch 会异步执行跳转，页面在此期间收到 { code: -1 } 可安全渲染
+        resolve({ code: -1, message: '未登录', data: null })
+        return
+      }
+      header['Authorization'] = `Bearer ${token}`
+    }
+
     wx.request({
       url: baseUrl + url,
       method,
       data,
-      header: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      header,
       success(res) {
         if (res.statusCode === 200) {
           resolve(res.data)
         } else if (res.statusCode === 401) {
-          // token 过期，跳转登录
-          wx.navigateTo({ url: '/pages/login/login' })
-          reject(new Error('未授权，请重新登录'))
+          // token 过期，清除本地登录态并跳转登录
+          wx.removeStorageSync('token')
+          wx.removeStorageSync('userInfo')
+          wx.removeStorageSync('userRole')
+          if (app.globalData) {
+            app.globalData.userInfo = null
+            app.globalData.userRole = null
+          }
+          wx.reLaunch({ url: '/pages/login/login' })
+          reject(new Error('登录已过期，请重新登录'))
         } else {
           reject(new Error(`请求失败：${res.statusCode}`))
         }
@@ -98,4 +126,4 @@ const post = (url, data) => request(url, 'POST', data)
 const put  = (url, data) => request(url, 'PUT', data)
 const del  = (url, data) => request(url, 'DELETE', data)
 
-module.exports = { request, get, post, put, del }
+module.exports = { request, get, post, put, del, isUseMock }

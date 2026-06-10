@@ -1,12 +1,13 @@
 // pages/reservation/reservation.js
 const { get, post } = require('../../utils/request')
 const { TABLE_STATUS_MAP, genTimeSlots, formatDistance } = require('../../utils/util')
+const { getUserLocation, applyDistanceAndSort } = require('../../utils/lbs')
 
 Page({
   data: {
     storeId: null,
     storeName: '',
-    stores: [],           // 所有门店列表
+    stores: [],           // 所有门店列表（已按距离排序）
     showStorePicker: false, // 门店选择弹层
 
     tables: [],
@@ -32,6 +33,9 @@ Page({
   },
 
   onLoad(options) {
+    // 先检查 token
+    if (!wx.getStorageSync('token')) return
+
     // 生成未来7天日期
     const dateList = []
     for (let i = 0; i < 7; i++) {
@@ -76,6 +80,8 @@ Page({
   },
 
   onShow() {
+    if (!wx.getStorageSync('token')) return
+
     // 每次显示时同步全局门店（可能在其他页面切换了）
     const app = getApp()
     if (app.globalData.currentStore && (!this.data.storeId || app.globalData.currentStore.id !== this.data.storeId)) {
@@ -91,31 +97,48 @@ Page({
     }
   },
 
-  // 加载所有门店
+  // 加载所有门店 → 自动定位 → 按距离排序
   loadStores() {
     get('/api/stores').then(res => {
       if (res.code === 0) {
-        const stores = res.data.map(s => ({
-          ...s,
-          distanceText: formatDistance(s.distance)
-        }))
-        this.setData({ stores })
-
-        // 如果还没有选中门店，用第一个作为默认
-        if (!this.data.storeId && stores.length > 0) {
-          const first = stores[0]
-          this.setData({
-            storeId: first.id,
-            storeName: first.name
-          })
-          const app = getApp()
-          app.globalData.currentStore = { id: first.id, name: first.name }
-          this.loadTables()
-        } else if (this.data.storeId) {
-          this.loadTables()
-        }
+        const rawStores = res.data
+        // 自动获取定位 → 计算距离 → 排序
+        this.autoSortByLocation(rawStores)
       }
     })
+  },
+
+  // 自动定位 + 距离排序
+  autoSortByLocation(rawStores) {
+    getUserLocation().then(userLoc => {
+      // 定位成功 → 计算距离 + 升序排列
+      const sorted = applyDistanceAndSort(rawStores, userLoc)
+      this.applySortedStores(sorted)
+    }).catch(() => {
+      // 定位失败 → 保留原始顺序，距离显示「未知距离」
+      const fallback = applyDistanceAndSort(rawStores, null)
+      this.applySortedStores(fallback)
+      wx.showToast({ title: '无法获取位置，显示未知距离', icon: 'none' })
+    })
+  },
+
+  // 应用排序后的门店列表
+  applySortedStores(sorted) {
+    this.setData({ stores: sorted })
+
+    // 如果还没有选中门店，用第一个（最近）作为默认
+    if (!this.data.storeId && sorted.length > 0) {
+      const first = sorted[0]
+      this.setData({
+        storeId: first.id,
+        storeName: first.name
+      })
+      const app = getApp()
+      app.globalData.currentStore = { id: first.id, name: first.name }
+      this.loadTables()
+    } else if (this.data.storeId) {
+      this.loadTables()
+    }
   },
 
   // 点击门店头部 → 弹出切换面板

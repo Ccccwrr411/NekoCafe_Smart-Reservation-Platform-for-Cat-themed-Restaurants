@@ -85,6 +85,7 @@
   justify-content: space-between;
   padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -4rpx 16rpx rgba(0,0,0,0.08);
+  z-index: 100;
 }
 .submit-total { display: flex; align-items: baseline; gap: 8rpx; }
 .submit-label { font-size: 26rpx; color: var(--color-text-sub); }
@@ -109,7 +110,7 @@
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.5);
-  z-index: 200;
+  z-index: 299;
 }
 .coupon-picker-panel {
   position: fixed;
@@ -117,7 +118,7 @@
   left: 0; right: 0;
   background: #fff;
   border-radius: 24rpx 24rpx 0 0;
-  z-index: 201;
+  z-index: 300;
   max-height: 65vh;
   display: flex;
   flex-direction: column;
@@ -180,6 +181,13 @@
 }
 .coupon-checked {
   background: #FDF6F2;
+}
+.coupon-disabled {
+  opacity: 0.45;
+}
+.coupon-unavailable {
+  font-size: 20rpx;
+  color: #999;
 }
 .coupon-picker-left {
   flex: 1;

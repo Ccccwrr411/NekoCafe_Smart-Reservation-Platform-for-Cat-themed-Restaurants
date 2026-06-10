@@ -258,13 +258,26 @@ module.exports = {
   // ─────────────────────────────────────────────
   // 可用优惠券  GET /api/coupons/available?storeId=1&amount=146
   // ─────────────────────────────────────────────
-  '/api/coupons/available': {
-    code: 0,
-    message: 'success',
-    data: [
-      { id: 'CPN001', name: '新人专享 8折券', type: 'discount', value: 0.8, maxDiscount: 20, minAmount: 50, expireDate: '2026-07-31', stackable: true, saving: 20, ruleId: 'RULE_DISCOUNT_20' },
-      { id: 'CPN002', name: '满100减20', type: 'cashback', value: 20, minAmount: 100, expireDate: '2026-06-30', stackable: false, saving: 20, ruleId: 'RULE_CASHBACK_100_20' }
+  '/api/coupons/available': function (queryParams) {
+    const amount = Number(queryParams.amount || 0)
+    const allCoupons = [
+      { id: 'CPN001', name: '新人专享 8折券', type: 'discount', value: 0.8, maxDiscount: 20, minAmount: 50, expireDate: '2026-07-31', stackable: true, ruleId: 'RULE_DISCOUNT_20' },
+      { id: 'CPN002', name: '满100减20', type: 'cashback', value: 20, minAmount: 100, expireDate: '2026-06-30', stackable: false, ruleId: 'RULE_CASHBACK_100_20' },
+      { id: 'CPN003', name: '免费猫爪拿铁', type: 'freebie', value: 38, minAmount: 0, expireDate: '2026-06-15', stackable: true, ruleId: 'RULE_FREEBIE_DRINK' }
     ]
+    // 返回用户持有的券，前端根据金额判断门槛并展示不可用状态
+    const data = allCoupons.map(c => {
+      let saving = 0
+      if (c.type === 'discount' && amount >= c.minAmount) {
+        saving = Math.min(Math.round(amount * (1 - c.value)), c.maxDiscount || 999)
+      } else if (c.type === 'cashback' && amount >= c.minAmount) {
+        saving = c.value
+      } else if (c.type === 'freebie') {
+        saving = c.value
+      }
+      return { ...c, saving }
+    })
+    return { code: 0, message: 'success', data }
   },
 
   // ─────────────────────────────────────────────
@@ -416,21 +429,30 @@ module.exports = {
   // ─────────────────────────────────────────────
   // 提交订单  POST /api/order/submit
   // ─────────────────────────────────────────────
-  '/api/order/submit': {
-    code: 0,
-    message: 'success',
-    data: {
-      orderId: 'ORD20260603003',
-      totalAmount: 114,
-      // 微信支付沙箱参数（后端应按真实微信统一下单接口返回）
-      payInfo: {
+  '/api/order/submit': function (queryParams, body) {
+    const items = (body && body.items) || []
+    if (!items.length) {
+      return { code: 400, message: '购物车不能为空', data: null }
+    }
+    const finalAmount = body && body.finalAmount != null ? body.finalAmount : 0
+    const orderId = 'ORD' + Date.now()
+    const data = {
+      orderId,
+      totalAmount: body.totalAmount || 0,
+      finalAmount,
+      discount: body.discount || 0
+    }
+    // 实付金额 > 0 时返回 mock 支付参数（前端会识别并走模拟支付）
+    if (finalAmount > 0) {
+      data.payInfo = {
         timeStamp: String(Math.floor(Date.now() / 1000)),
-        nonceStr: 'mock_nonce_str_20260603',
-        package: 'prepay_id=mock_prepay_id_20260603',
+        nonceStr: 'mock_nonce_str_' + orderId,
+        package: 'prepay_id=mock_prepay_id_' + orderId,
         signType: 'RSA',
-        paySign: 'mock_pay_sign_20260603'
+        paySign: 'mock_pay_sign_' + orderId
       }
     }
+    return { code: 0, message: 'success', data }
   },
 
   // ─────────────────────────────────────────────

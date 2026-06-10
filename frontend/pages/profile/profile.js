@@ -13,6 +13,8 @@ Page({
   },
 
   onShow() {
+    if (!wx.getStorageSync('token')) return
+
     this.buildMenuItems()
     this.loadUserInfo()
     this.loadOrders()
