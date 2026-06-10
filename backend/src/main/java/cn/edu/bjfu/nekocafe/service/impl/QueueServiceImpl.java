@@ -56,30 +56,30 @@ public class QueueServiceImpl implements QueueService {
         waitingExample.setOrderByClause("created_at ASC");
         List<Queue> waitingList = queueMapper.selectByExample(waitingExample);
 
-<<<<<<< HEAD
+
         // --- 4b: 查当前叫号（status=serving 的最大号），无服务记录时默认 0 ---
         int currentNumber = 0;
-=======
+
 //        // --- 4b: 查当前叫号（status=serving 的最大号） ---
 //        Integer currentNumber = null;
->>>>>>> 3f3b3536ed2d4c4c4abe5a745a93c9db93b2cac2
+
         QueueExample servingExample = new QueueExample();
         servingExample.createCriteria()
                 .andStoreIdEqualTo(storeId)
                 .andStatusEqualTo("serving");
         List<Queue> servingList = queueMapper.selectByExample(servingExample);
         if (!servingList.isEmpty()) {
-<<<<<<< HEAD
+
             for (Queue q : servingList) {
                 int num = parseQueueNumber(q.getQueueNumber());
                 if (num > currentNumber) {
-=======
+
 //            int maxNum = 0;
 //            for (Queue q : servingList) {
 //                int num = parseQueueNumber(q.getQueueNumber());
 //                if (num > maxNum) {
 //                    maxNum = num;
->>>>>>> 3f3b3536ed2d4c4c4abe5a745a93c9db93b2cac2
+
                     currentNumber = num;
                 }
             }
