@@ -91,9 +91,36 @@ Page({
           wx.showToast({ title: '微信登录失败', icon: 'none' })
           return
         }
+        // post('/api/auth/login', { code: loginRes.code, role }).then(res => {
+        //   if (res.code === 0 && res.data) {
+        //     const userInfo = { ...res.data.userInfo, role, roleLabel: ROLE_USERS[role].roleLabel }
+        //     this.finishLogin(userInfo, role, res.data.token)
+        //   } else {
+        //     this.setData({ loading: false })
+        //     wx.showToast({ title: res.message || '登录失败', icon: 'none' })
+        //   }
+        // }).catch(() => {
+        //   this.setData({ loading: false })
+        //   wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+        // })
+
         post('/api/auth/login', { code: loginRes.code, role }).then(res => {
           if (res.code === 0 && res.data) {
-            const userInfo = { ...res.data.userInfo, role, roleLabel: ROLE_USERS[role].roleLabel }
+            // 定义角色对应的中文名称
+            const roleLabelMap = {
+              customer: '顾客',
+              staff: '店员',
+              manager: '店长',
+              hq_ops: '总部运营',
+              cat_keeper: '猫咪管家'
+            }
+            
+            // 只合并后端返回的真实数据，不混入 ROLE_USERS 的假数据
+            const userInfo = {
+              ...res.data.userInfo,  // 后端返回的真实用户信息（包含 id: 31）
+              role: role,
+              roleLabel: roleLabelMap[role]
+            }
             this.finishLogin(userInfo, role, res.data.token)
           } else {
             this.setData({ loading: false })

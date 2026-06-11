@@ -16,6 +16,22 @@ function isUseMock() {
 }
 
 /**
+ * 公开接口白名单：不需要登录即可访问
+ */
+const PUBLIC_PATHS = [
+  '/api/stores',      // 门店列表
+  '/api/tables',      // 桌位列表（只读）
+  '/api/menu'         // 菜品列表（只读）
+]
+
+/**
+ * 判断是否为公开接口
+ */
+function isPublicPath(url) {
+  return PUBLIC_PATHS.some(p => url.startsWith(p))
+}
+
+/**
  * 发起请求（统一入口）
  * @param {string} url     接口路径，如 '/api/stores'
  * @param {string} method  HTTP 方法，默认 GET
@@ -77,8 +93,8 @@ function realRequest(url, method, data) {
       'Content-Type': 'application/json'
     }
 
-    // 非登录接口：必须有 token 才放行（先登录，再请求数据）
-    if (!isLoginRequest) {
+    // 非登录、非公开接口：必须有 token 才放行
+    if (!isLoginRequest && !isPublicPath(url)) {
       if (!token) {
         wx.reLaunch({ url: '/pages/login/login' })
         // 用 resolve 返回安全响应（而非 reject），避免未捕获异常导致页面白屏
@@ -88,6 +104,7 @@ function realRequest(url, method, data) {
       }
       header['Authorization'] = `Bearer ${token}`
     }
+    // 公开接口（如 /api/stores）：无需 token，直接放行
 
     wx.request({
       url: baseUrl + url,
