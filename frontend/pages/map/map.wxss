@@ -1,0 +1,223 @@
+/* pages/map/map.wxss — 门店可视化地图样式 */
+
+/* ── 页面容器 ── */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #F7F0EB;
+}
+
+/* ── 加载状态 ── */
+.loading-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  color: var(--color-text-sub);
+  font-size: 28rpx;
+}
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── 地图区域 ── */
+.map-section {
+  flex: 0 0 55vh;
+  position: relative;
+}
+.store-map {
+  width: 100%;
+  height: 100%;
+}
+
+/* 地图控件（定位 + 全览按钮） */
+.map-controls {
+  position: absolute;
+  right: 16rpx;
+  bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.map-btn {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 40rpx;
+  padding: 12rpx 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+.map-btn-text {
+  font-size: 24rpx;
+  color: var(--color-text);
+}
+.map-btn-overview {
+  /* 全览按钮同风格 */
+}
+
+/* ── 门店列表区域 ── */
+.list-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 28rpx 28rpx 0 0;
+  margin-top: -20rpx;
+  z-index: 10;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 列表标题 */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 28rpx 12rpx;
+  flex-shrink: 0;
+}
+.list-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.list-count {
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+}
+
+/* 门店列表 */
+.store-list {
+  flex: 1;
+  padding: 0 20rpx;
+}
+
+/* ── 门店列表项 ── */
+.store-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 16rpx;
+  margin-bottom: 12rpx;
+  border-radius: 16rpx;
+  background: #FDF8F6;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.store-item-active {
+  background: #FFF3ED;
+  box-shadow: 0 2rpx 12rpx rgba(201, 126, 90, 0.18);
+  border: 2rpx solid rgba(201, 126, 90, 0.3);
+}
+
+/* 序号 + 距离 */
+.store-rank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 80rpx;
+  padding-right: 16rpx;
+  border-right: 1rpx solid var(--color-border);
+  margin-right: 16rpx;
+}
+.rank-num {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+.rank-dist {
+  font-size: 22rpx;
+  color: var(--color-text-sub);
+  margin-top: 4rpx;
+}
+
+/* 中间信息 */
+.store-main {
+  flex: 1;
+  min-width: 0;
+}
+.store-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 4rpx;
+}
+.store-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.store-status {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 10rpx;
+  flex-shrink: 0;
+}
+.status-open {
+  background: #E8F5E9;
+  color: #4CAF50;
+}
+.status-closed {
+  background: #F5F5F5;
+  color: #9E9E9E;
+}
+
+.store-addr {
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+  display: block;
+  margin-bottom: 8rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.store-meta {
+  display: flex;
+  gap: 20rpx;
+  font-size: 22rpx;
+  color: var(--color-text-sub);
+}
+
+/* 导航按钮 */
+.store-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 20rpx;
+  margin-left: 12rpx;
+  background: var(--color-primary);
+  border-radius: 16rpx;
+  flex-shrink: 0;
+}
+.nav-icon {
+  font-size: 36rpx;
+}
+.nav-text {
+  font-size: 22rpx;
+  color: #fff;
+  margin-top: 2rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 80rpx 0;
+  font-size: 28rpx;
+  color: var(--color-text-sub);
+}

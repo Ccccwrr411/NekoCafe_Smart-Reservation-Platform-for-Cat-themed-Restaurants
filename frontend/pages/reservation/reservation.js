@@ -10,6 +10,13 @@ Page({
     stores: [],           // 所有门店列表（已按距离排序）
     showStorePicker: false, // 门店选择弹层
 
+    // 门店选择器地图
+    pickerMapLat: 39.9042,
+    pickerMapLng: 116.4074,
+    pickerMarkers: [],
+    activePickerStoreId: null,
+    userLocation: null,
+
     tables: [],
     loading: true,
     selectedTable: null,
@@ -111,11 +118,10 @@ Page({
   // 自动定位 + 距离排序
   autoSortByLocation(rawStores) {
     getUserLocation().then(userLoc => {
-      // 定位成功 → 计算距离 + 升序排列
+      this.setData({ userLocation: userLoc })
       const sorted = applyDistanceAndSort(rawStores, userLoc)
       this.applySortedStores(sorted)
     }).catch(() => {
-      // 定位失败 → 保留原始顺序，距离显示「未知距离」
       const fallback = applyDistanceAndSort(rawStores, null)
       this.applySortedStores(fallback)
       wx.showToast({ title: '无法获取位置，显示未知距离', icon: 'none' })
@@ -141,14 +147,67 @@ Page({
     }
   },
 
-  // 点击门店头部 → 弹出切换面板
+  // 点击门店头部 → 构建标记并弹出切换面板
   onStoreHeaderTap() {
-    this.setData({ showStorePicker: true })
+    this.buildPickerMarkers()
+    this.setData({ showStorePicker: true, activePickerStoreId: null })
   },
 
   // 隐藏门店选择器
   hideStorePicker() {
     this.setData({ showStorePicker: false })
+  },
+
+  // 构建门店选择器地图标记
+  buildPickerMarkers() {
+    const { stores, userLocation } = this.data
+    if (!stores || stores.length === 0) return
+
+    const markers = stores.map((s, index) => ({
+      id: s.id,
+      latitude: s.lat,
+      longitude: s.lng,
+      title: s.name,
+      // 不设 callout（门店选择器地图不需要导航；避免 qqmap:// scheme 报错）
+      label: {
+        content: String(index + 1),
+        color: '#ffffff',
+        fontSize: 12,
+        x: 12,
+        y: -24,
+        bgColor: '#C97E5A',
+        borderRadius: 16,
+        padding: 4
+      },
+      width: 26,
+      height: 26
+    }))
+
+    // 地图居中：用户定位优先 → 所有门店中心
+    const loc = userLocation
+    let centerLat, centerLng
+    if (loc && loc.lat) {
+      centerLat = loc.lat
+      centerLng = loc.lng
+    } else {
+      const lats = stores.map(s => s.lat)
+      const lngs = stores.map(s => s.lng)
+      centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
+      centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2
+    }
+
+    this.setData({
+      pickerMarkers: markers,
+      pickerMapLat: centerLat,
+      pickerMapLng: centerLng
+    })
+  },
+
+  // 地图标记点击 → 滚动列表到对应门店
+  onPickerMarkerTap(e) {
+    const id = e.detail && e.detail.markerId
+    if (!id) return
+    this.setData({ activePickerStoreId: id })
   },
 
   // 切换门店

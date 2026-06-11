@@ -85,9 +85,7 @@
         wx:for="{{tables}}"
         wx:key="id"
         wx:if="{{filterType === 'all' || item.type === filterType}}"
-        class="table-cell
-          status-{{item.status}}
-          {{selectedTable && selectedTable.id === item.id ? 'table-selected' : ''}}"
+        class="table-cell status-{{item.status}} {{selectedTable && selectedTable.id === item.id ? 'table-selected' : ''}}"
         bindtap="onTableSelect"
         data-table="{{item}}"
       >
@@ -132,18 +130,34 @@
     >确认预约 →</button>
   </view>
 
-  <!-- ══ 门店选择弹层 ══ -->
+  <!-- ══ 门店选择弹层（地图 + 列表） ══ -->
   <view wx:if="{{showStorePicker}}" class="picker-mask" bindtap="hideStorePicker"></view>
-  <view wx:if="{{showStorePicker}}" class="store-picker-panel">
+  <view wx:if="{{showStorePicker}}" class="store-picker-panel picker-with-map">
     <view class="picker-header">
       <text class="picker-header-title">选择门店</text>
       <text class="picker-header-close" bindtap="hideStorePicker">✕</text>
     </view>
-    <scroll-view scroll-y class="picker-list">
+    <view class="picker-map-wrap">
+      <map
+        id="reservePickerMap"
+        class="picker-map"
+        latitude="{{pickerMapLat}}"
+        longitude="{{pickerMapLng}}"
+        scale="{{11}}"
+        markers="{{pickerMarkers}}"
+        bindmarkertap="onPickerMarkerTap"
+      />
+    </view>
+    <scroll-view
+      scroll-y
+      class="picker-list"
+      scroll-into-view="picker-store-{{activePickerStoreId}}"
+    >
       <view
         wx:for="{{stores}}"
         wx:key="id"
-        class="picker-store-item {{storeId === item.id ? 'picker-store-active' : ''}}"
+        id="picker-store-{{item.id}}"
+        class="picker-store-item {{storeId === item.id ? 'picker-store-active' : ''}} {{activePickerStoreId === item.id ? 'picker-store-highlight' : ''}}"
         bindtap="onStoreSelect"
         data-store="{{item}}"
       >
