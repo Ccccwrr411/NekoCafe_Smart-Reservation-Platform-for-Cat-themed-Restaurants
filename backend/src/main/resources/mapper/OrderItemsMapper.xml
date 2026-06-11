@@ -85,7 +85,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    select 
+    select
     <include refid="Base_Column_List" />
     from public.order_items
     where item_id = #{itemId,jdbcType=BIGINT}
@@ -101,10 +101,10 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.OrderItems">
-    insert into public.order_items (item_id, reservation_id, dish_id, 
+    insert into public.order_items (item_id, reservation_id, dish_id,
       quantity, unit_price, subtotal
       )
-    values (#{itemId,jdbcType=BIGINT}, #{reservationId,jdbcType=BIGINT}, #{dishId,jdbcType=INTEGER}, 
+    values (#{itemId,jdbcType=BIGINT}, #{reservationId,jdbcType=BIGINT}, #{dishId,jdbcType=INTEGER},
       #{quantity,jdbcType=INTEGER}, #{unitPrice,jdbcType=NUMERIC}, #{subtotal,jdbcType=NUMERIC}
       )
   </insert>

@@ -34,7 +34,7 @@ public class QueueController {
     @PostMapping("/take")
     public Result<Map<String, Object>> takeNumber(@RequestBody QueueTakeDTO dto,
                                                    HttpServletRequest request) {
-        Long userId = resolveUserId(request);
+        Long userId = (Long) request.getAttribute("userId");
         return Result.success(queueService.takeNumber(userId, dto));
     }
 

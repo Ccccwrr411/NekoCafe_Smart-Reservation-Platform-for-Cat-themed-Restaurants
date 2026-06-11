@@ -2,6 +2,7 @@ package cn.edu.bjfu.nekocafe.mapper;
 
 import cn.edu.bjfu.nekocafe.entity.CatProfiles;
 import cn.edu.bjfu.nekocafe.entity.CatProfilesExample;
+import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

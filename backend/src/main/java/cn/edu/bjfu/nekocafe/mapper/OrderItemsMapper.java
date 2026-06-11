@@ -2,6 +2,7 @@ package cn.edu.bjfu.nekocafe.mapper;
 
 import cn.edu.bjfu.nekocafe.entity.OrderItems;
 import cn.edu.bjfu.nekocafe.entity.OrderItemsExample;
+import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

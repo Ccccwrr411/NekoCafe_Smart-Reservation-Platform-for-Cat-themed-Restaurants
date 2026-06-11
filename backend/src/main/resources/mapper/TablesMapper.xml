@@ -86,7 +86,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select 
+    select
     <include refid="Base_Column_List" />
     from public.tables
     where table_id = #{tableId,jdbcType=INTEGER}
@@ -102,11 +102,11 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Tables">
-    insert into public.tables (table_id, store_id, table_no, 
-      capacity, table_type, cat_theme, 
+    insert into public.tables (table_id, store_id, table_no,
+      capacity, table_type, cat_theme,
       is_active)
-    values (#{tableId,jdbcType=INTEGER}, #{storeId,jdbcType=INTEGER}, #{tableNo,jdbcType=VARCHAR}, 
-      #{capacity,jdbcType=INTEGER}, #{tableType,jdbcType=VARCHAR}, #{catTheme,jdbcType=VARCHAR}, 
+    values (#{tableId,jdbcType=INTEGER}, #{storeId,jdbcType=INTEGER}, #{tableNo,jdbcType=VARCHAR},
+      #{capacity,jdbcType=INTEGER}, #{tableType,jdbcType=VARCHAR}, #{catTheme,jdbcType=VARCHAR},
       #{isActive,jdbcType=BIT})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Tables">
