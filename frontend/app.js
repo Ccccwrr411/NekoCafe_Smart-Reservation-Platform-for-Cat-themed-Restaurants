@@ -64,7 +64,7 @@ App({
   globalData: {
     userInfo: null,
     userRole: null,            // 'customer' | 'staff' | 'manager' | 'hq_ops' | 'cat_keeper'
-    baseUrl: 'http://172.20.10.2:8081', // 后端地址（上线后替换）172.20.10.2     127.0.0.1:8081
+    baseUrl: 'http://127.0.0.1:8081', // 后端地址（上线后替换）172.20.10.2     127.0.0.1:8081
     useMock: false,              // true = 纯前端 mock 开发；false = 对接真实后端
     cartItems: [],
     currentStore: null,
