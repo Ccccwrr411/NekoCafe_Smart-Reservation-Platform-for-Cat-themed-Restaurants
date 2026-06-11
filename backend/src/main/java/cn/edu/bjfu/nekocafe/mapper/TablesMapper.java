@@ -27,19 +27,4 @@ public interface TablesMapper {
     int updateByPrimaryKeySelective(Tables row);
 
     int updateByPrimaryKey(Tables row);
-
-    // ========== 推荐模块自定义 SQL ==========
-
-    /**
-     * R10 + R13: 为推荐引擎查询可用桌位
-     * 按桌位类型和容量过滤在售桌位，支持 VIP 包厢优先排序
-     *
-     * @param minCapacity 最小可容纳人数
-     * @param tableType   桌位类型关键词（null 则不过滤），如 "vip"、"standard"
-     * @param limit       最多返回数量
-     */
-    List<Tables> selectAvailableTablesForRecommend(
-            @Param("minCapacity") int minCapacity,
-            @Param("tableType") String tableType,
-            @Param("limit") int limit);
 }

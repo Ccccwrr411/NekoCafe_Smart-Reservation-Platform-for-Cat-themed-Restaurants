@@ -28,19 +28,17 @@ public class OrderController {
 
     /** E-1 订单列表 */
     @GetMapping("/orders")
-    public Result<List<OrderVO>> listOrders(HttpServletRequest request,
-                                            @RequestParam(required = false) Long userId) {
-        Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.listOrders(uid));
+    public Result<List<OrderVO>> listOrders(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return Result.success(orderService.listOrders(userId));
     }
 
     /** E-2 提交订单（含点单） */
     @PostMapping("/order/submit")
     public Result<Map<String, Object>> submitOrder(@RequestBody OrderSubmitDTO dto,
-                                                    HttpServletRequest request,
-                                                    @RequestParam(required = false) Long userId) {
-        Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.submitOrder(uid, dto));
+                                                    HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return Result.success(orderService.submitOrder(userId, dto));
     }
 
     /** E-3 订单详情 */
@@ -52,36 +50,32 @@ public class OrderController {
     /** E-4 取消订单 */
     @PostMapping("/order/cancel")
     public Result<Map<String, Object>> cancelOrder(@RequestBody Map<String, String> body,
-                                                    HttpServletRequest request,
-                                                    @RequestParam(required = false) Long userId) {
-        Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.cancelOrder(uid, body.get("orderId")));
+                                                    HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return Result.success(orderService.cancelOrder(userId, body.get("orderId")));
     }
 
     /** E-5 改约 */
     @PostMapping("/order/reschedule")
     public Result<Map<String, Object>> reschedule(@RequestBody RescheduleDTO dto,
-                                                   HttpServletRequest request,
-                                                   @RequestParam(required = false) Long userId) {
-        Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.reschedule(uid, dto));
+                                                   HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return Result.success(orderService.reschedule(userId, dto));
     }
 
     /** E-6 申请退款 */
     @PostMapping("/order/refund")
     public Result<Map<String, Object>> applyRefund(@RequestBody Map<String, String> body,
-                                                    HttpServletRequest request,
-                                                    @RequestParam(required = false) Long userId) {
-        Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.applyRefund(uid, body.get("orderId")));
+                                                    HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return Result.success(orderService.applyRefund(userId, body.get("orderId")));
     }
 
     /** E-7 纯预约（无点单） */
     @PostMapping("/reservation/create")
     public Result<Map<String, Object>> createReservation(@RequestBody ReservationCreateDTO dto,
-                                                          HttpServletRequest request,
-                                                          @RequestParam(required = false) Long userId) {
-        Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.createReservation(uid, dto));
+                                                          HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        return Result.success(orderService.createReservation(userId, dto));
     }
 }

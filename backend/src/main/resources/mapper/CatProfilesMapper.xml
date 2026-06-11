@@ -288,11 +288,4 @@
       created_at = #{createdAt,jdbcType=TIMESTAMP}
     where cat_id = #{catId,jdbcType=INTEGER}
   </update>
-
-  <!-- R11: 按性格关键词筛选猫咪 -->
-  <select id="selectByPersonality" resultType="cn.edu.bjfu.nekocafe.entity.CatProfiles">
-    SELECT <include refid="Base_Column_List" />
-    FROM public.cat_profiles
-    WHERE personality LIKE CONCAT('%', #{keyword}, '%')
-  </select>
 </mapper>
