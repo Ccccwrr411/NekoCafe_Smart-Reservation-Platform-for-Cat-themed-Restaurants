@@ -23,9 +23,8 @@ import java.util.*;
  *
  * 实现要点：
  *   getProfile: Users JOIN MemberExt 联查
-     *     - phone 脱敏：138****8888（用户绑定真实手机号后才有值）
-     *     - email：直接返回，未绑定时为 null
-     *     - openid：不对外暴露
+ *     - phone 脱敏：138****8888
+ *     - level 映射：1=普通会员, 2=银卡会员, 3=金卡会员, 4=黑卡会员
  *     - 图标：🌱/🥈/🥇/⬛
  *     - 升级所需积分：普通→银卡 1000, 银卡→金卡 3000, 金卡→黑卡 10000
  *   verifyRealname: 写入 realName + idCard + isVerified=true
@@ -77,8 +76,7 @@ public class UserServiceImpl implements UserService {
         vo.setId(user.getUserId());
         vo.setNickName(user.getNickname());
         vo.setAvatarUrl(user.getAvatarUrl());
-        vo.setPhone(maskPhone(user.getPhone()));    // phone 现在才是真实手机号（可能为null）
-        vo.setEmail(user.getEmail());               // 邮箱字段（可能为null）
+        vo.setPhone(maskPhone(user.getPhone()));
         vo.setMemberLevel(levelToString(level));
         vo.setMemberLevelIcon(levelToIcon(level));
         vo.setPoints(points);

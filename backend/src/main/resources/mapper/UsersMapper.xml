@@ -4,8 +4,6 @@
   <resultMap id="BaseResultMap" type="cn.edu.bjfu.nekocafe.entity.Users">
     <id column="user_id" jdbcType="BIGINT" property="userId" />
     <result column="phone" jdbcType="VARCHAR" property="phone" />
-    <result column="email" jdbcType="VARCHAR" property="email" />
-    <result column="openid" jdbcType="VARCHAR" property="openid" />
     <result column="password_hash" jdbcType="VARCHAR" property="passwordHash" />
     <result column="nickname" jdbcType="VARCHAR" property="nickname" />
     <result column="avatar_url" jdbcType="VARCHAR" property="avatarUrl" />
@@ -75,7 +73,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    user_id, phone, email, openid, password_hash, nickname, avatar_url, real_name, id_card, is_verified, 
+    user_id, phone, password_hash, nickname, avatar_url, real_name, id_card, is_verified, 
     status, created_at, updated_at
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.UsersExample" resultMap="BaseResultMap">
@@ -108,17 +106,17 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Users" useGeneratedKeys="true" keyProperty="userId">
-    insert into public.users (user_id, phone, email, openid, password_hash, 
+  <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Users">
+    insert into public.users (user_id, phone, password_hash, 
       nickname, avatar_url, real_name, 
       id_card, is_verified, status, 
       created_at, updated_at)
-    values (#{userId,jdbcType=BIGINT}, #{phone,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, #{openid,jdbcType=VARCHAR}, #{passwordHash,jdbcType=VARCHAR}, 
+    values (#{userId,jdbcType=BIGINT}, #{phone,jdbcType=VARCHAR}, #{passwordHash,jdbcType=VARCHAR}, 
       #{nickname,jdbcType=VARCHAR}, #{avatarUrl,jdbcType=VARCHAR}, #{realName,jdbcType=VARCHAR}, 
       #{idCard,jdbcType=VARCHAR}, #{isVerified,jdbcType=BIT}, #{status,jdbcType=SMALLINT}, 
       #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Users" useGeneratedKeys="true" keyProperty="userId">
+  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Users">
     insert into public.users
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="userId != null">
@@ -126,12 +124,6 @@
       </if>
       <if test="phone != null">
         phone,
-      </if>
-      <if test="email != null">
-        email,
-      </if>
-      <if test="openid != null">
-        openid,
       </if>
       <if test="passwordHash != null">
         password_hash,
@@ -167,12 +159,6 @@
       </if>
       <if test="phone != null">
         #{phone,jdbcType=VARCHAR},
-      </if>
-      <if test="email != null">
-        #{email,jdbcType=VARCHAR},
-      </if>
-      <if test="openid != null">
-        #{openid,jdbcType=VARCHAR},
       </if>
       <if test="passwordHash != null">
         #{passwordHash,jdbcType=VARCHAR},
@@ -218,12 +204,6 @@
       <if test="row.phone != null">
         phone = #{row.phone,jdbcType=VARCHAR},
       </if>
-      <if test="row.email != null">
-        email = #{row.email,jdbcType=VARCHAR},
-      </if>
-      <if test="row.openid != null">
-        openid = #{row.openid,jdbcType=VARCHAR},
-      </if>
       <if test="row.passwordHash != null">
         password_hash = #{row.passwordHash,jdbcType=VARCHAR},
       </if>
@@ -260,8 +240,6 @@
     update public.users
     set user_id = #{row.userId,jdbcType=BIGINT},
       phone = #{row.phone,jdbcType=VARCHAR},
-      email = #{row.email,jdbcType=VARCHAR},
-      openid = #{row.openid,jdbcType=VARCHAR},
       password_hash = #{row.passwordHash,jdbcType=VARCHAR},
       nickname = #{row.nickname,jdbcType=VARCHAR},
       avatar_url = #{row.avatarUrl,jdbcType=VARCHAR},
@@ -280,12 +258,6 @@
     <set>
       <if test="phone != null">
         phone = #{phone,jdbcType=VARCHAR},
-      </if>
-      <if test="email != null">
-        email = #{email,jdbcType=VARCHAR},
-      </if>
-      <if test="openid != null">
-        openid = #{openid,jdbcType=VARCHAR},
       </if>
       <if test="passwordHash != null">
         password_hash = #{passwordHash,jdbcType=VARCHAR},
@@ -320,8 +292,6 @@
   <update id="updateByPrimaryKey" parameterType="cn.edu.bjfu.nekocafe.entity.Users">
     update public.users
     set phone = #{phone,jdbcType=VARCHAR},
-      email = #{email,jdbcType=VARCHAR},
-      openid = #{openid,jdbcType=VARCHAR},
       password_hash = #{passwordHash,jdbcType=VARCHAR},
       nickname = #{nickname,jdbcType=VARCHAR},
       avatar_url = #{avatarUrl,jdbcType=VARCHAR},

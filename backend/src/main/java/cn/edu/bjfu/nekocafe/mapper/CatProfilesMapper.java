@@ -2,8 +2,9 @@ package cn.edu.bjfu.nekocafe.mapper;
 
 import cn.edu.bjfu.nekocafe.entity.CatProfiles;
 import cn.edu.bjfu.nekocafe.entity.CatProfilesExample;
-import java.util.List;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface CatProfilesMapper {
     long countByExample(CatProfilesExample example);
@@ -27,4 +28,11 @@ public interface CatProfilesMapper {
     int updateByPrimaryKeySelective(CatProfiles row);
 
     int updateByPrimaryKey(CatProfiles row);
+
+    // ========== 推荐模块自定义 SQL ==========
+
+    /**
+     * R11: 按性格关键词筛选猫咪（如"温顺"）
+     */
+    List<CatProfiles> selectByPersonality(@Param("keyword") String keyword);
 }

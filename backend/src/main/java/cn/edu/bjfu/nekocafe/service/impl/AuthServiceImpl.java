@@ -19,13 +19,13 @@ import java.util.List;
  * 认证服务实现
  *
  * 登录流程（课设版）：
- * 1. 前端传 wx.login() 返回的 code
- * 2. 【正式环境】应调微信 code2session 接口换 openid
- * 【课设环境】直接用 code 作为用户标识，存到 openid 字段做查询
- * 3. 根据 openid 查 users 表，若无则自动注册新用户
- * 4. 查 member_ext 表获取积分和等级
- * 5. 调用 JwtUtil.generateToken(userId) 签发 Token
- * 6. 组装 LoginVO 返回
+ *   1. 前端传 wx.login() 返回的 code
+ *   2. 【正式环境】应调微信 code2session 接口换 openid
+ *      【课设环境】直接用 code 作为用户标识，存到 phone 字段做查询
+ *   3. 根据 phone 查 users 表，若无则自动注册新用户
+ *   4. 查 member_ext 表获取积分和等级
+ *   5. 调用 JwtUtil.generateToken(userId) 签发 Token
+ *   6. 组装 LoginVO 返回
  */
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -43,17 +43,17 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("code 不能为空");
         }
 
-        // ========== 1. 课设版：用 code 当用户标识，查 openid 字段 ==========
-        // 既然有了 openid 字段，就不要再去污染 phone 字段了
+        // ========== 1. 课设版：用 code 当用户标识查 phone 字段 ==========
+        // 正式环境应改为：调微信 code2session 拿 openid，然后 phone 字段存真实手机号
         UsersExample example = new UsersExample();
-        example.createCriteria().andOpenidEqualTo(code);
+        example.createCriteria().andPhoneEqualTo(code);
         List<Users> list = usersMapper.selectByExample(example);
 
         Users user;
         if (list.isEmpty()) {
             // 新用户：自动注册
             user = new Users();
-            user.setOpenid(code);                   // 将传过来的标识存入 openid 字段
+            user.setPhone(code);                    // 课设用 code 暂存
             user.setNickname("猫咖爱好者");           // 默认昵称
             user.setAvatarUrl("/uploads/avatars/default.png");
             user.setStatus((short) 1);              // 1=正常
@@ -90,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
         userInfo.setId(user.getUserId());
         userInfo.setNickName(user.getNickname());
         userInfo.setAvatarUrl(user.getAvatarUrl());
-        userInfo.setPhone(maskPhone(user.getPhone()));       // 如果没有绑定手机号，这里会传 null 进去，maskPhone 会安全处理
+        userInfo.setPhone(maskPhone(user.getPhone()));       // 手机号脱敏
         userInfo.setMemberLevel(levelToString(level));
         userInfo.setPoints(points);
         result.setUserInfo(userInfo);

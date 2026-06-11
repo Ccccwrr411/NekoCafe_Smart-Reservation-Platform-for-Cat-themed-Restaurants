@@ -12,7 +12,6 @@ public class LoginVO {
         private String nickName;
         private String avatarUrl;
         private String phone;
-        private String email;
         private String memberLevel;
         private Integer points;
 
@@ -24,8 +23,6 @@ public class LoginVO {
         public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
         public String getMemberLevel() { return memberLevel; }
         public void setMemberLevel(String memberLevel) { this.memberLevel = memberLevel; }
         public Integer getPoints() { return points; }

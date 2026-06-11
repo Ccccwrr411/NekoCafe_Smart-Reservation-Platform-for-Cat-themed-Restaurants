@@ -7,22 +7,11 @@
 - **端口**：8081
 - **包名前缀**：cn.edu.bjfu.nekocafe
 
-## 框架现状（2026-06-10）
-- 框架骨架已搭建完整，所有 Controller 已存在
-- 数据库实体（entity）和 Mapper 均由 MyBatis Generator 生成
-- **已完成 ServiceImpl**：A（Auth+User）、D（Coupon+Cat+Review）
-- **待完成 ServiceImpl**：B（Store+Table+Menu）、C（Order）、E（Queue+Staff+Recommend）
-
-## 已知 DB 缺陷（需要改表结构）
-- `cat_profiles` 表无 `store_id` 字段 → listCats 无法按门店筛选（代码已加 TODO）
-- `reservations` 表无 `has_review` 字段 → 用 reviews 表 countByExample 反查替代
-- ~~`users` 表无 email/openid 字段~~ → **已修复（2026-06-11）**：DB 已加 email/openid，后端已同步适配
-
-## users 表认证字段说明（2026-06-11 更新）
-- **openid**：存微信 openid（课设版用 wx.login() 的 code 代替）
-- **email**：用户绑定邮箱（可为 null）
-- **phone**：真实手机号（可为 null，不再存 code）
-- 登录查询：`andOpenidEqualTo(code)`，注册时 `user.setOpenid(code)`
+## 框架现状（2026-06-04）
+- 框架骨架已搭建完整，所有 Controller / Service / ServiceImpl 均为空壳
+- ServiceImpl 中有详细 TODO 注释和实现要点
+- JwtUtil / AuthInterceptor 尚未实现（最优先完成）
+- 数据库实体（entity）和 Mapper 均由 MyBatis Generator 生成，已存在
 
 ## 关键设计约定
 - orderId 格式：`"ORD" + reservationId`（补零到10位）
