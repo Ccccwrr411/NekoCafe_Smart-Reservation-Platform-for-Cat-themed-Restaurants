@@ -135,6 +135,7 @@ Page({
   goCats()        { wx.navigateTo({ url: '/pages/cats/cats' }) },
   goCoupons()     { wx.navigateTo({ url: '/pages/coupons/coupons' }) },
   goProfile()     { wx.switchTab({ url: '/pages/profile/profile' }) },
+  goMap()         { wx.navigateTo({ url: '/pages/map/map' }) },
 
   // ── AI 推荐 ──
   loadRecommend() {
@@ -164,5 +165,19 @@ Page({
   // 关闭推荐
   dismissRecommend() {
     this.setData({ showRecommend: false })
+  },
+
+  // ── 导航：调用微信原生 wx.openLocation ──
+  onNavigate(e) {
+    const store = e.currentTarget.dataset.store
+    if (!store) return
+
+    wx.openLocation({
+      latitude: store.lat,
+      longitude: store.lng,
+      name: store.name,
+      address: store.address,
+      scale: 16
+    })
   },
 })

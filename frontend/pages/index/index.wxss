@@ -187,6 +187,21 @@
   font-size: 24rpx;
   color: var(--color-text-sub);
 }
+.store-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.btn-nav {
+  display: flex;
+  align-items: center;
+  color: var(--color-primary);
+  font-size: 26rpx;
+  padding: 12rpx 20rpx;
+  border-radius: 30rpx;
+  border: 2rpx solid var(--color-primary);
+  background: var(--color-primary-light);
+}
 .btn-reserve {
   background: var(--color-primary);
   color: #fff;
@@ -247,7 +262,12 @@
   padding: 0 24rpx;
   margin: 24rpx 0 12rpx;
 }
-.sort-toggle {
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.sort-indicator {
   display: flex;
   align-items: center;
   gap: 6rpx;
@@ -263,3 +283,19 @@
   background: var(--color-primary-light);
 }
 .sort-icon { font-size: 24rpx; }
+
+/* 地图入口按钮 */
+.map-entry {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 24rpx;
+  color: #fff;
+  background: var(--color-primary);
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-weight: 500;
+}
+.map-entry-icon {
+  font-size: 24rpx;
+}

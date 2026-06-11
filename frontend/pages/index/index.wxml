@@ -123,9 +123,15 @@
   <!-- ══ 门店列表 ══ -->
   <view class="section-title-row">
     <text class="section-title">附近门店</text>
-    <view class="sort-indicator">
-      <text class="sort-icon">{{locating ? '📍' : (locationFailed ? '⚠️' : '📏')}}</text>
-      <text>{{locating ? '定位中...' : (locationFailed ? '未知距离' : '距我最近')}}</text>
+    <view class="section-actions">
+      <view class="sort-indicator">
+        <text class="sort-icon">{{locating ? '📍' : (locationFailed ? '⚠️' : '📏')}}</text>
+        <text>{{locating ? '定位中...' : (locationFailed ? '未知距离' : '距我最近')}}</text>
+      </view>
+      <view class="map-entry" bindtap="goMap">
+        <text class="map-entry-icon">🗺️</text>
+        <text>地图</text>
+      </view>
     </view>
   </view>
 
@@ -176,10 +182,15 @@
           >{{tag}}</text>
         </view>
 
-        <!-- 营业时间 + 预约按钮 -->
+        <!-- 营业时间 + 导航 + 预约按钮 -->
         <view class="store-bottom">
           <text class="open-time">🕙 {{item.openTime}}</text>
-          <view class="btn-reserve" bindtap="onStoreClick" data-store="{{item}}">立即预约</view>
+          <view class="store-bottom-actions">
+            <view class="btn-nav" catchtap="onNavigate" data-store="{{item}}">
+              <text>🧭 导航</text>
+            </view>
+            <!-- <view class="btn-reserve" catchtap="onStoreClick" data-store="{{item}}">立即预约</view> -->
+          </view>
         </view>
       </view>
     </view>
