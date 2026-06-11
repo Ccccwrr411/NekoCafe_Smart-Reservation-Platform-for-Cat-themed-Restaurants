@@ -87,7 +87,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select 
+    select
     <include refid="Base_Column_List" />
     from public.dishes
     where dish_id = #{dishId,jdbcType=INTEGER}
@@ -103,11 +103,11 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Dishes">
-    insert into public.dishes (dish_id, name, category, 
-      price, image_url, description, 
+    insert into public.dishes (dish_id, name, category,
+      price, image_url, description,
       tags, is_active)
-    values (#{dishId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{category,jdbcType=VARCHAR}, 
-      #{price,jdbcType=NUMERIC}, #{imageUrl,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, 
+    values (#{dishId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{category,jdbcType=VARCHAR},
+      #{price,jdbcType=NUMERIC}, #{imageUrl,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR},
       #{tags,jdbcType=VARCHAR}, #{isActive,jdbcType=BIT})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Dishes">

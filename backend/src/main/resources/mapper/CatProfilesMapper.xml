@@ -72,7 +72,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    cat_id, user_id, name, breed, personality, birth_date, weight_kg, avatar_url, is_default, 
+    cat_id, user_id, name, breed, personality, birth_date, weight_kg, avatar_url, is_default,
     created_at
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.CatProfilesExample" resultMap="BaseResultMap">
@@ -90,7 +90,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select 
+    select
     <include refid="Base_Column_List" />
     from public.cat_profiles
     where cat_id = #{catId,jdbcType=INTEGER}
@@ -106,13 +106,13 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.CatProfiles">
-    insert into public.cat_profiles (cat_id, user_id, name, 
-      breed, personality, birth_date, 
-      weight_kg, avatar_url, is_default, 
+    insert into public.cat_profiles (cat_id, user_id, name,
+      breed, personality, birth_date,
+      weight_kg, avatar_url, is_default,
       created_at)
-    values (#{catId,jdbcType=INTEGER}, #{userId,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR}, 
-      #{breed,jdbcType=VARCHAR}, #{personality,jdbcType=VARCHAR}, #{birthDate,jdbcType=DATE}, 
-      #{weightKg,jdbcType=NUMERIC}, #{avatarUrl,jdbcType=VARCHAR}, #{isDefault,jdbcType=BIT}, 
+    values (#{catId,jdbcType=INTEGER}, #{userId,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR},
+      #{breed,jdbcType=VARCHAR}, #{personality,jdbcType=VARCHAR}, #{birthDate,jdbcType=DATE},
+      #{weightKg,jdbcType=NUMERIC}, #{avatarUrl,jdbcType=VARCHAR}, #{isDefault,jdbcType=BIT},
       #{createdAt,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.CatProfiles">

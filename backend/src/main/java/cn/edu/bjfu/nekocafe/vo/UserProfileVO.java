@@ -10,7 +10,8 @@ public class UserProfileVO {
     private Long id;
     private String nickName;
     private String avatarUrl;
-    private String phone;          // 脱敏手机号，如 138****8888
+    private String phone;          // 脱敏手机号，如 138****8888（用户绑定后才有值）
+    private String email;          // 邮箱（用户绑定后才有值）
     private String memberLevel;    // MemberExt.level 枚举转文字
     private String memberLevelIcon;// 等级图标 emoji
     private Integer points;        // totalPoints
@@ -31,6 +32,8 @@ public class UserProfileVO {
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
     public String getMemberLevel() { return memberLevel; }
     public void setMemberLevel(String memberLevel) { this.memberLevel = memberLevel; }
     public String getMemberLevelIcon() { return memberLevelIcon; }

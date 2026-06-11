@@ -17,6 +17,8 @@ public interface RecommendService {
 
     /**
      * 个性化推荐（H-1）
+     * 根据用户历史偏好推荐桌位和菜品
+     * 返回 reason + tables + dishes + userProfile
      *
      * @param userId           用户ID（从 JWT 解析）
      * @param companionCount   同行人数，用于 R10 桌位匹配（默认=1）
