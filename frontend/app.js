@@ -14,10 +14,7 @@ App({
     this.globalData.userInfo = userInfo
     this.globalData.userRole = userRole
 
-    // 未登录则跳转到登录页
-    if (!token) {
-      wx.reLaunch({ url: '/pages/login/login' })
-    }
+    // 未登录不再强制跳转，允许浏览首页（预约/点餐页会单独检查）
   },
 
   // ─── 权限判断工具 ───────────────────────────────────────

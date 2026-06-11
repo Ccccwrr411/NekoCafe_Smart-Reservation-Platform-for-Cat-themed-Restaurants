@@ -13,7 +13,11 @@ Page({
   },
 
   onShow() {
-    if (!wx.getStorageSync('token')) return
+    // 检查登录态，未登录跳转到登录页
+    if (!wx.getStorageSync('token')) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
 
     this.buildMenuItems()
     this.loadUserInfo()

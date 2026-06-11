@@ -25,27 +25,19 @@ Page({
   },
 
   onLoad() {
-    // 先检查 token：没有就不加载数据，app.js 的 onLaunch 会 reLaunch 到登录页
-    const token = wx.getStorageSync('token')
-    if (!token) {
-      this.setData({ loading: false })
-      return
-    }
-    const userInfo = wx.getStorageSync('userInfo')
+    // 允许未登录用户浏览首页门店列表
+    const userInfo = wx.getStorageSync('userInfo') || null
     this.setData({ userInfo })
     this.loadStores()
   },
 
   onShow() {
-    // 先检查 token：没有就跳过（等待跳转登录）
-    const token = wx.getStorageSync('token')
-    if (!token) return
-
-    // 每次显示刷新用户信息（比如积分变动）
-    const userInfo = wx.getStorageSync('userInfo')
+    // 允许未登录用户浏览首页
+    const userInfo = wx.getStorageSync('userInfo') || null
     this.setData({ userInfo })
-    // 刷新 AI 推荐
-    if (!this._recommendLoaded) {
+
+    // 刷新 AI 推荐（仅登录用户）
+    if (userInfo && !this._recommendLoaded) {
       this.loadRecommend()
       this._recommendLoaded = true
     }
@@ -138,11 +130,33 @@ Page({
   goMap()         { wx.navigateTo({ url: '/pages/map/map' }) },
 
   // ── AI 推荐 ──
+  // loadRecommend() {
+  //   get('/api/recommend').then(res => {
+  //     if (res.code === 0) {
+  //       this.setData({ recommend: res.data })
+  //     }
+  //   }).catch(() => {})
+  // },
+
   loadRecommend() {
-    get('/api/recommend').then(res => {
-      if (res.code === 0) {
-        this.setData({ recommend: res.data })
-      }
+    const userInfo = wx.getStorageSync('userInfo')
+    console.log('完整 userInfo:', userInfo)  // 打印完整的 userInfo
+    console.log('userInfo 的所有 key:', Object.keys(userInfo || {}))  // 打印所有字段名
+    
+    const userId = userInfo?.id || userInfo?.userId
+    console.log('解析出的 userId:', userId)
+    
+    if (!userId) {
+      console.log('userId 为空，无法请求推荐')
+      return
+    }
+    
+    get(`/api/recommend?userId=${userId}`).then(res => {
+      // if (res.code === 0) {
+      //   this.setData({ recommend: res.data })
+      // }
+      this.setData({ recommend: res.data })
+      console.log("1111111",res.data)
     }).catch(() => {})
   },
 

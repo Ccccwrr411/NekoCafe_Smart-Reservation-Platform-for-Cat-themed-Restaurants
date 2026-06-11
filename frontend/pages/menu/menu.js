@@ -28,8 +28,11 @@ Page({
   },
 
   onLoad(options) {
-    // 先检查 token
-    if (!wx.getStorageSync('token')) return
+    // 检查登录态，未登录跳转到登录页
+    if (!wx.getStorageSync('token')) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
 
     // 优先 URL 参数（从预约页跳转）
     if (options.storeId) {
@@ -51,7 +54,11 @@ Page({
   },
 
   onShow() {
-    if (!wx.getStorageSync('token')) return
+    // 检查登录态，未登录跳转到登录页
+    if (!wx.getStorageSync('token')) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
 
     const app = getApp()
     if (app.globalData.currentStore && (!this.data.storeId || app.globalData.currentStore.id !== this.data.storeId)) {

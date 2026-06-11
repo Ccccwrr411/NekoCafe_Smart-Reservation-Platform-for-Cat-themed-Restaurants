@@ -40,8 +40,11 @@ Page({
   },
 
   onLoad(options) {
-    // 先检查 token
-    if (!wx.getStorageSync('token')) return
+    // 检查登录态，未登录跳转到登录页
+    if (!wx.getStorageSync('token')) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
 
     // 生成未来7天日期
     const dateList = []
@@ -87,7 +90,11 @@ Page({
   },
 
   onShow() {
-    if (!wx.getStorageSync('token')) return
+    // 检查登录态，未登录跳转到登录页
+    if (!wx.getStorageSync('token')) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
 
     // 每次显示时同步全局门店（可能在其他页面切换了）
     const app = getApp()
