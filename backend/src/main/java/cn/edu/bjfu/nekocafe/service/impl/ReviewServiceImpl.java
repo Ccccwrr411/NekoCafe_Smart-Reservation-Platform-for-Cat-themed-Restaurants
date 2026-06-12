@@ -57,7 +57,7 @@ public class ReviewServiceImpl implements ReviewService {
         if (!reservation.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "无权评价此订单");
         }
-        if (!"completed".equals(reservation.getStatus())) {
+        if (!"COMPLETED".equals(reservation.getStatus())) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "只能评价已完成的订单");
         }
 

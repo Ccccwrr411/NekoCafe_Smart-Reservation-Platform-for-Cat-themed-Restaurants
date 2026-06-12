@@ -6,6 +6,7 @@
     "pages/order/order",
     "pages/profile/profile",
     "pages/staff/staff",
+    "pages/staff/refund",
     "pages/login/login",
     "pages/review/review",
     "pages/orderDetail/orderDetail",

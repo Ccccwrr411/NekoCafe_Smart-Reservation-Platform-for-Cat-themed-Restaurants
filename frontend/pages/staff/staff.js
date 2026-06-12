@@ -1,29 +1,43 @@
-// pages/staff/staff.js
+// pages/staff/staff.js — 店员工作台（4Tab底部导航）
 const { get, post } = require('../../utils/request')
 const app = getApp()
 
-const ALERT_LEVEL_LABEL = {
-  critical: '🔴 严重',
-  warning:  '🟡 警告',
-  info:     '🔵 提示'
-}
-const STATUS_CYCLE = ['available', 'booked', 'occupied', 'cleaning', 'maintenance']
-const STATUS_LABEL = {
-  occupied:    '使用中',
-  booked:      '已预约',
-  available:   '空闲',
-  cleaning:    '打扫中',
-  maintenance: '维护中'
-}
+// ── 常量 ──────────────────────────────────────
 const ORDER_STATUS_LABEL = {
-  completed: '已完成',
+  booked:    '待接单',
   confirmed: '已确认',
-  occupied:  '进行中',
+  making:    '制作中',
+  serving:   '已上菜',
+  completed: '已完成',
   cancelled: '已取消',
-  pending:   '待支付'
+  refunding: '退款中'
 }
-
-// 全部门店列表（用于 hq_ops 切换）
+const TABLE_STATUS_LABEL = {
+  available:   '空闲',
+  booked:      '已预约',
+  occupied:    '用餐中',
+  cleaning:    '待清洁',
+  maintenance: '维修中'
+}
+const ALERT_LEVEL_LABEL = {
+  high:   '🔴 严重',
+  medium: '🟡 警告',
+  low:    '🔵 提示'
+}
+const DISPATCH_OPTIONS = [
+  { key: 'available', label: '🟢 设为空闲' },
+  { key: 'booked', label: '⚪ 设为预定' },
+  { key: 'occupied', label: '🔴 设为用餐中' },
+  { key: 'cleaning', label: '🟡 设为待清洁' },
+  { key: 'maintenance', label: '⚫ 设为维修' }
+]
+const STATUS_TO_DB = {
+  available: 'IDLE',
+  booked: 'RESERVED',
+  occupied: 'OCCUPIED',
+  cleaning: 'CLEANING',
+  maintenance: 'IDLE'  // 数据库无 maintenance，映射为 IDLE
+}
 const ALL_STORES = [
   { id: 1, name: 'NekoCafé 朝阳店' },
   { id: 2, name: 'NekoCafé 海淀店' },
@@ -34,30 +48,52 @@ const ALL_STORES = [
 
 Page({
   data: {
-    currentTab: 0,   // 0=桌位管理, 1=接单中心, 2=告警中心, 3=全部订单
+    // 导航
+    activeTab: 'orders',   // orders | tables | alerts | profile
+    // 订单
+    orderFilter: 'booked', // booked | confirmed | making | serving | completed | refunding | cancelled | all | pending
+    orders: [],
+    filteredOrders: [],
+    countByStatus: {},
+    // 全部下拉
+    showAllDropdown: false,
+    // 桌位
     tables: [],
+    tableViewMode: 'map',   // map | list
+    countAvailable: 0,
+    countOccupied: 0,
+    countBooked: 0,
+    countCleaning: 0,
+    // 告警
     alerts: [],
-    pendingOrders: [],
-    orders: [],       // 全部订单
-    loading: true,
+    alertFilter: 'pending',  // pending | resolved | all
+    filteredAlerts: [],
+    pendingAlertCount: 0,
+    // 概览
+    todayOrderCount: 0,
+    pendingCount: 0,
+    occupancyRate: '0%',
+    todayRevenue: 0,
+    // 用户
     userRole: '',
     userName: '',
-    userRoleId: '',   // 角色英文ID
+    userRoleId: '',
     storeId: 1,
-    storeName: 'NekoCafé 朝阳店',
-    // 门店选择（仅总部运营可用）
+    storeName: 'NekoCafe 朝阳店',
     showStorePicker: false,
     allStores: ALL_STORES,
     storePickerIndex: 0,
-    // 桌位统计
-    countAvailable: 0, countOccupied: 0, countBooked: 0, countCleaning: 0,
-    // 订单统计
-    orderCount: 0, orderRevenue: 0,
-    // 调度弹层
+    // 加载
+    loading: true,
+    // 弹层
     showDispatchModal: false,
     dispatchTable: null,
-    dispatchStatuses: [],
-    dispatchTableStatusLabel: ''
+    dispatchOptions: DISPATCH_OPTIONS,
+    showRejectModal: false,
+    rejectOrder: null,
+    rejectReason: '',
+    // 常量（供 wxml 引用）
+    ORDER_STATUS_LABEL
   },
 
   onLoad(options) {
@@ -65,10 +101,7 @@ Page({
     const userInfo = app.globalData.userInfo || {}
     const userRole = app.globalData.userRole || ''
     const isHqOps = (userRole === 'hq_ops')
-
-    // 优先使用 URL 参数传入的 storeId（总部运营从 Dashboard 跳转时带入）
     const paramStoreId = options.storeId ? parseInt(options.storeId) : null
-
     let storeId, storeName
     if (isHqOps) {
       storeId = paramStoreId || 1
@@ -77,16 +110,14 @@ Page({
     } else {
       storeId = paramStoreId || (userInfo.storeId || 1)
       const store = ALL_STORES.find(s => s.id === storeId)
-      storeName = store ? store.name : (userInfo.storeName || 'NekoCafé 朝阳店')
+      storeName = store ? store.name : (userInfo.storeName || 'NekoCafe 朝阳店')
     }
-
     const pickerIndex = ALL_STORES.findIndex(s => s.id === storeId)
     this.setData({
       userRole: userInfo.roleLabel || '',
       userName: userInfo.nickName || '',
       userRoleId: userRole,
-      storeId: storeId,
-      storeName: storeName,
+      storeId, storeName,
       showStorePicker: isHqOps,
       storePickerIndex: pickerIndex >= 0 ? pickerIndex : 0
     })
@@ -102,7 +133,7 @@ Page({
     this.loadData()
   },
 
-  // ── 门店切换（仅总部运营） ──────────────────────────────
+  // ── 门店切换 ─────────────────────────────────
   onStoreChange(e) {
     const idx = parseInt(e.detail.value)
     const store = ALL_STORES[idx]
@@ -110,7 +141,7 @@ Page({
     this.loadData()
   },
 
-  // ── 加载数据 ─────────────────────────────────────────────
+  // ── 数据加载 ─────────────────────────────────
   loadData() {
     this.setData({ loading: true })
     const sid = this.data.storeId
@@ -123,145 +154,317 @@ Page({
       const tables = (tableRes.code === 0) ? tableRes.data : []
       const alerts = (alertRes.code === 0) ? alertRes.data : []
       const allOrders = (orderRes.code === 0) ? orderRes.data : []
-      // 按 storeId 过滤订单（mock 返回全部，前端二次过滤）
-      const orders = allOrders.filter(o => o.storeId === sid)
-      // 给订单附加状态中文标签
-      const ordersWithLabel = orders.map(o => ({ ...o, statusLabel: ORDER_STATUS_LABEL[o.status] || o.status }))
-      // 待接单
-      const pendingOrders = tables.filter(t => t.status === 'booked').map(t => ({
-        tableId: t.id, tableName: t.name, tableType: t.type,
-        customer: t.customer, arriveTime: t.arriveTime, catType: t.catType
+
+      // 订单处理
+      const orders = allOrders.map(o => ({
+        ...o,
+        statusLabel: ORDER_STATUS_LABEL[o.status] || o.status
       }))
-      // 状态标签
-      const tablesWithLabel = tables.map(t => ({ ...t, statusLabel: STATUS_LABEL[t.status] || t.status }))
-      const alertsWithLabel = alerts.map(a => ({ ...a, levelLabel: ALERT_LEVEL_LABEL[a.level] || a.level }))
-      // 统计
-      const countAvailable = tables.filter(t => t.status === 'available').length
-      const countOccupied  = tables.filter(t => t.status === 'occupied').length
-      const countBooked    = tables.filter(t => t.status === 'booked').length
-      const countCleaning  = tables.filter(t => t.status === 'cleaning').length
-      const orderCount = orders.length
-      const orderRevenue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
-      this.setData({
-        tables: tablesWithLabel, alerts: alertsWithLabel, pendingOrders,
-        orders: ordersWithLabel, loading: false,
-        countAvailable, countOccupied, countBooked, countCleaning,
-        orderCount, orderRevenue
+      // 按时间升序排序（最早的排最前）
+      orders.sort((a, b) => {
+        const ta = a.reservationTime ? new Date(a.reservationTime).getTime() : 0
+        const tb = b.reservationTime ? new Date(b.reservationTime).getTime() : 0
+        return ta - tb
       })
+      const countByStatus = {}
+      orders.forEach(o => {
+        countByStatus[o.status] = (countByStatus[o.status] || 0) + 1
+      })
+
+      // 桌位处理
+      const tablesWithLabel = tables.map(t => ({
+        ...t,
+        id: t.tableId,
+        name: t.tableNo || ('桌 ' + t.tableId),
+        statusLabel: TABLE_STATUS_LABEL[t.status] || t.status
+      }))
+      const countAvailable = tables.filter(t => t.status === 'available').length
+      const countOccupied = tables.filter(t => t.status === 'occupied').length
+      const countBooked = tables.filter(t => t.status === 'booked').length
+      const countCleaning = tables.filter(t => t.status === 'cleaning').length
+
+      // 告警处理
+      const alertsWithLabel = alerts.map(a => ({
+        ...a,
+        levelLabel: ALERT_LEVEL_LABEL[a.level] || a.level,
+        level: a.level || 'low'
+      }))
+      const pendingAlertCount = alertsWithLabel.filter(a => a.status === 'pending').length
+
+      // 概览统计
+      const todayOrderCount = allOrders.length
+      // 待处理 = 非已完成、非已取消的所有订单
+      const pendingCount = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').length
+      const totalTables = tables.length || 1
+      const occupancyRate = Math.round((countOccupied + countBooked) / totalTables * 100) + '%'
+      const todayRevenue = allOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+
+      this.setData({
+        tables: tablesWithLabel, alerts: alertsWithLabel, orders,
+        countByStatus, countAvailable, countOccupied, countBooked, countCleaning,
+        todayOrderCount, pendingCount, occupancyRate, todayRevenue,
+        pendingAlertCount, loading: false
+      })
+      this.applyFilters()
     }).catch(() => {
       wx.stopPullDownRefresh()
       this.setData({ loading: false })
     })
   },
 
-  // ── Tab 切换 ─────────────────────────────────────────────
-  switchTab(e) {
-    const tab = parseInt(e.currentTarget.dataset.idx)
-    this.setData({ currentTab: tab })
-    // 切换到订单 Tab 时加载订单（如尚未加载）
-    if (tab === 3 && this.data.orders.length === 0) {
-      this.loadData()
+  // ── 筛选 ─────────────────────────────────────
+  applyFilters() {
+    // 订单筛选
+    const { orderFilter, orders } = this.data
+    let filteredOrders
+    if (orderFilter === 'all') {
+      filteredOrders = orders
+    } else if (orderFilter === 'pending') {
+      // 待处理 = 非已完成、非已取消
+      filteredOrders = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled')
+    } else {
+      filteredOrders = orders.filter(o => o.status === orderFilter)
     }
+    // 告警筛选
+    const { alertFilter, alerts } = this.data
+    const filteredAlerts = alertFilter === 'all'
+      ? alerts
+      : alertFilter === 'pending'
+        ? alerts.filter(a => a.status === 'pending')
+        : alerts.filter(a => a.status !== 'pending')
+    this.setData({ filteredOrders, filteredAlerts })
   },
 
-  // ── 接单：确认到店 ───────────────────────────────────────
+  onFilterOrder(e) {
+    const filter = e.currentTarget.dataset.filter
+    this.setData({ orderFilter: filter, showAllDropdown: false })
+    this.applyFilters()
+  },
+
+  // ── 待处理点击 ────────────────────────────────
+  onFilterPending() {
+    this.setData({ orderFilter: 'pending', showAllDropdown: false })
+    this.applyFilters()
+  },
+
+  // ── 全部下拉切换 ──────────────────────────────
+  onToggleAllDropdown() {
+    this.setData({ showAllDropdown: !this.data.showAllDropdown })
+  },
+  onCloseAllDropdown() {
+    this.setData({ showAllDropdown: false })
+  },
+
+  onFilterAlert(e) {
+    const filter = e.currentTarget.dataset.filter
+    this.setData({ alertFilter: filter })
+    this.applyFilters()
+  },
+
+  // ── Tab 切换 ─────────────────────────────────
+  onSwitchTab(e) {
+    this.setData({ activeTab: e.currentTarget.dataset.tab })
+  },
+
+  onSwitchTableView(e) {
+    this.setData({ tableViewMode: e.currentTarget.dataset.mode })
+  },
+
+  // ── 接单 ─────────────────────────────────────
   onAcceptOrder(e) {
     const order = e.currentTarget.dataset.order
+    if (!order || !order.reservationId) {
+      wx.showToast({ title: '缺少预约信息', icon: 'none' })
+      return
+    }
     wx.showModal({
-      title: '确认顾客到店',
-      content: `${order.customer} 预约 ${order.tableName}（${order.arriveTime}）\n确认后桌位状态变为"使用中"`,
-      confirmText: '确认到店', cancelText: '取消',
+      title: '确认接单',
+      content: `${order.customerName || '顾客'} 预约 ${order.tableNo || ''}，确认到店接单？`,
+      confirmText: '确认接单',
+      confirmColor: '#C97E5A',
       success: (res) => {
         if (!res.confirm) return
-        const tables = this.data.tables.map(t =>
-          t.id === order.tableId ? { ...t, status: 'occupied', statusLabel: '使用中' } : t
-        )
-        const pendingOrders = this.data.pendingOrders.filter(o => o.tableId !== order.tableId)
-        const countOccupied = tables.filter(t => t.status === 'occupied').length
-        const countBooked = tables.filter(t => t.status === 'booked').length
-        this.setData({ tables, pendingOrders, countOccupied, countBooked })
-        wx.showToast({ title: order.tableName + ' 已接单', icon: 'success' })
+        wx.showLoading({ title: '处理中...' })
+        post('/api/staff/order/accept', { reservationId: order.reservationId }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0 && apiRes.data && apiRes.data.success) {
+            wx.showToast({ title: '接单成功', icon: 'success' })
+            this.loadData()
+          } else {
+            wx.showToast({ title: (apiRes.data && apiRes.data.message) || '接单失败', icon: 'none' })
+          }
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常', icon: 'none' })
+        })
       }
     })
   },
 
-  // ── 拒绝接单（未到取消） ──────────────────────────────────
+  // ── 拒单弹层 ─────────────────────────────────
   onRejectOrder(e) {
     const order = e.currentTarget.dataset.order
+    this.setData({ showRejectModal: true, rejectOrder: order, rejectReason: '' })
+  },
+  onCloseReject() {
+    this.setData({ showRejectModal: false, rejectOrder: null, rejectReason: '' })
+  },
+  onInputRejectReason(e) {
+    this.setData({ rejectReason: e.detail.value })
+  },
+  onConfirmReject() {
+    const order = this.data.rejectOrder
+    if (!order) return
+    if (!this.data.rejectReason.trim()) {
+      wx.showToast({ title: '请填写拒单原因', icon: 'none' })
+      return
+    }
+    wx.showLoading({ title: '处理中...' })
+    // 释放桌位
+    post('/api/staff/table/dispatch', {
+      tableId: order.tableId,
+      status: 'IDLE'
+    }).then(apiRes => {
+      wx.hideLoading()
+      if (apiRes.code === 0 && apiRes.data && apiRes.data.success) {
+        wx.showToast({ title: '已拒单并释放桌位', icon: 'success' })
+        this.setData({ showRejectModal: false, rejectOrder: null, rejectReason: '' })
+        this.loadData()
+      } else {
+        wx.showToast({ title: '操作失败', icon: 'none' })
+      }
+    }).catch(() => {
+      wx.hideLoading()
+      wx.showToast({ title: '网络异常', icon: 'none' })
+    })
+  },
+
+  // ── 订单进度推进 ─────────────────────────────
+  onProgressOrder(e) {
+    const order = e.currentTarget.dataset.order
+    const target = e.currentTarget.dataset.target
+    if (!order || !target) return
+
+    const actionLabels = {
+      MAKING: '开始制作',
+      SERVING: '确认上菜',
+      COMPLETED: '完成用餐'
+    }
+    const confirmLabels = {
+      MAKING: `确认将订单 #${order.id} 开始制作？`,
+      SERVING: `确认订单 #${order.id} 已上菜？`,
+      COMPLETED: `确认订单 #${order.id} 用餐完成？桌位将变为待清洁状态`
+    }
+
     wx.showModal({
-      title: '确认未到店取消',
-      content: `${order.customer} 超时未到，是否取消预约并释放 ${order.tableName}？`,
-      confirmText: '确认取消', cancelText: '再等等', confirmColor: '#E74C3C',
+      title: actionLabels[target],
+      content: confirmLabels[target],
+      confirmText: '确认',
+      confirmColor: '#C97E5A',
       success: (res) => {
         if (!res.confirm) return
-        const tables = this.data.tables.map(t =>
-          t.id === order.tableId ? { ...t, status: 'available', statusLabel: '空闲', customer: '-', arriveTime: '-', estLeaveTime: '-' } : t
-        )
-        const pendingOrders = this.data.pendingOrders.filter(o => o.tableId !== order.tableId)
-        const countAvailable = tables.filter(t => t.status === 'available').length
-        const countBooked = tables.filter(t => t.status === 'booked').length
-        this.setData({ tables, pendingOrders, countAvailable, countBooked })
-        wx.showToast({ title: '已取消预约', icon: 'none' })
+        wx.showLoading({ title: '处理中...' })
+        post('/api/staff/order/progress', {
+          reservationId: order.reservationId || order.id,
+          targetStatus: target
+        }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0 && apiRes.data && apiRes.data.success) {
+            wx.showToast({ title: '操作成功', icon: 'success' })
+            this.loadData()
+          } else {
+            wx.showToast({ title: (apiRes.data && apiRes.data.message) || '操作失败', icon: 'none' })
+          }
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常', icon: 'none' })
+        })
       }
     })
   },
 
-  // ── 调度弹层 ─────────────────────────────────────────────
+  // ── 退款审核跳转 ─────────────────────────────
+  onViewRefund() {
+    wx.navigateTo({ url: '/pages/staff/refund?storeId=' + this.data.storeId })
+  },
+
+  // ── 数据看板跳转 ─────────────────────────────
+  onViewDashboard() {
+    wx.navigateTo({ url: '/pages/dashboard/dashboard' })
+  },
+
+  // ── 桌位调度弹层 ─────────────────────────────
   onDispatch(e) {
     const table = e.currentTarget.dataset.table
-    const dispatchStatuses = STATUS_CYCLE.filter(s => s !== table.status).map(s => ({ key: s, label: STATUS_LABEL[s] }))
-    this.setData({ showDispatchModal: true, dispatchTable: table, dispatchStatuses, dispatchTableStatusLabel: STATUS_LABEL[table.status] || table.status })
+    const opts = DISPATCH_OPTIONS.filter(s => s.key !== table.status)
+    this.setData({
+      showDispatchModal: true,
+      dispatchTable: table,
+      dispatchOptions: opts
+    })
   },
-  onDispatchMaskTap() {
+  onCloseDispatch() {
     this.setData({ showDispatchModal: false, dispatchTable: null })
   },
   onSetStatus(e) {
     const newStatus = e.currentTarget.dataset.status
     const table = this.data.dispatchTable
-    const tables = this.data.tables.map(t => {
-      const updated = t.id === table.id ? { ...t, status: newStatus } : t
-      return { ...updated, statusLabel: STATUS_LABEL[updated.status] || updated.status }
+    const dbStatus = STATUS_TO_DB[newStatus] || newStatus.toUpperCase()
+
+    wx.showModal({
+      title: '确认切换状态',
+      content: `将 ${table.name || table.tableNo} 设为「${TABLE_STATUS_LABEL[newStatus]}」？`,
+      confirmColor: '#C97E5A',
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '处理中...' })
+        post('/api/staff/table/dispatch', {
+          tableId: table.id || table.tableId,
+          status: dbStatus
+        }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0 && apiRes.data && apiRes.data.success) {
+            wx.showToast({ title: '状态已更新', icon: 'success' })
+            this.setData({ showDispatchModal: false, dispatchTable: null })
+            this.loadData()
+          } else {
+            wx.showToast({ title: (apiRes.data && apiRes.data.message) || '调度失败', icon: 'none' })
+          }
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常', icon: 'none' })
+        })
+      }
     })
-    const countAvailable = tables.filter(t => t.status === 'available').length
-    const countOccupied  = tables.filter(t => t.status === 'occupied').length
-    const countBooked    = tables.filter(t => t.status === 'booked').length
-    const countCleaning  = tables.filter(t => t.status === 'cleaning').length
-    this.setData({ tables, showDispatchModal: false, dispatchTable: null,
-      countAvailable, countOccupied, countBooked, countCleaning })
-    wx.showToast({ title: table.name + ' → ' + STATUS_LABEL[newStatus], icon: 'success' })
-    if (newStatus === 'available') {
-      const pendingOrders = tables.filter(t => t.status === 'booked').map(t => ({
-        tableId: t.id, tableName: t.name, tableType: t.type,
-        customer: t.customer, arriveTime: t.arriveTime, catType: t.catType
-      }))
-      this.setData({ pendingOrders })
-    }
   },
 
-  // ── 查看订单详情（跳转完整详情页）───────────────────────
-  onViewOrderDetail(e) {
-    const order = e.currentTarget.dataset.order
-    if (order && order.id) {
-      wx.navigateTo({ url: '/pages/orderDetail/orderDetail?orderId=' + order.id })
-    }
-  },
-
-  // ── 处理告警 ─────────────────────────────────────────────
-  onHandleAlert(e) {
+  // ── 告警处理 ─────────────────────────────────
+  onAcknowledgeAlert(e) {
     const alert = e.currentTarget.dataset.alert
     wx.showModal({
-      title: alert.title,
-      content: alert.desc + '\n\n请线下跟进处理',
-      showCancel: false,
-      confirmText: '已知晓'
+      title: '确认已知晓',
+      content: `告警：${alert.reason || alert.type}，确认已知晓？`,
+      confirmText: '已知晓',
+      confirmColor: '#C97E5A',
+      success: (res) => {
+        if (!res.confirm) return
+        // 目前告警为只读，标记为已知后本地更新状态
+        const idx = this.data.alerts.findIndex(a => a.alertId === alert.alertId)
+        if (idx >= 0) {
+          this.setData({ [`alerts[${idx}].status`]: 'resolved' })
+          this.applyFilters()
+        }
+        wx.showToast({ title: '已标记', icon: 'success' })
+      }
     })
   },
 
-  // ── 退出登录 ─────────────────────────────────────────────
+  // ── 退出登录 ─────────────────────────────────
   onLogout() {
     wx.showModal({
       title: '退出登录',
       content: '确认退出当前账号？',
+      confirmColor: '#E74C3C',
       success: (res) => { if (res.confirm) app.logout() }
     })
   }

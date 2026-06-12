@@ -238,11 +238,12 @@ public class RecommendServiceImpl implements RecommendService {
      */
     private void analyzeHistory(MemberProfile p) {
         // 通过 reservations 表统计
-        var example = new cn.edu.bjfu.nekocafe.entity.ReservationsExample();
-        example.createCriteria().andUserIdEqualTo(p.userId)
-                .andStatusIn(Arrays.asList("confirmed", "completed"));
+        // 注意：使用专用方法 selectByUserIdAndStatuses，对 PostgreSQL 枚举类型做显式 CAST，
+        // 避免 "operator does not exist: reservation_status = character varying" 报错
+        // 枚举值为大写：BOOKED, CONFIRMED, COMPLETED, CANCEL_BOOKING, CANCEL_ORDER, REFUNDING
         List<cn.edu.bjfu.nekocafe.entity.Reservations> reservations =
-                reservationsMapper.selectByExample(example);
+                reservationsMapper.selectByUserIdAndStatuses(
+                        p.userId, Arrays.asList("CONFIRMED", "COMPLETED"));
 
         p.isNewUser = reservations.isEmpty();
 
