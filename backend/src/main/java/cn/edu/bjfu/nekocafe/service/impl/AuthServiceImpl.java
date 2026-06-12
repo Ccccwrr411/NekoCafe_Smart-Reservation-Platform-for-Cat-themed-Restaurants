@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
             user = new Users();
             user.setOpenid(code);                   // 课设用 code 存 openid 字段（varchar 足够长）
             user.setNickname("猫咖爱好者");           // 默认昵称
-            user.setAvatarUrl("/uploads/avatars/default.png");
+            user.setAvatarUrl("https://nekocafe-images.oss-cn-beijing.aliyuncs.com/uploads/avatars/default.png");
             user.setStatus((short) 1);              // 1=正常
             user.setCreatedAt(new Date());
             user.setUpdatedAt(new Date());

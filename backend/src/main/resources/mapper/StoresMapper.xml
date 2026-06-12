@@ -11,6 +11,7 @@
     <result column="contact_phone" jdbcType="VARCHAR" property="contactPhone" />
     <result column="business_hours" jdbcType="VARCHAR" property="businessHours" />
     <result column="status" jdbcType="SMALLINT" property="status" />
+    <result column="image_url" jdbcType="VARCHAR" property="imageUrl" />
     <result column="created_at" jdbcType="TIMESTAMP" property="createdAt" />
   </resultMap>
   <sql id="Example_Where_Clause">
@@ -72,8 +73,8 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    store_id, name, city, address, longitude, latitude, contact_phone, business_hours, 
-    status, created_at
+    store_id, name, city, address, longitude, latitude, contact_phone, business_hours,
+    status, image_url, created_at
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.StoresExample" resultMap="BaseResultMap">
     select
@@ -106,14 +107,14 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Stores">
-    insert into public.stores (store_id, name, city, 
-      address, longitude, latitude, 
-      contact_phone, business_hours, status, 
-      created_at)
-    values (#{storeId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, 
-      #{address,jdbcType=VARCHAR}, #{longitude,jdbcType=NUMERIC}, #{latitude,jdbcType=NUMERIC}, 
-      #{contactPhone,jdbcType=VARCHAR}, #{businessHours,jdbcType=VARCHAR}, #{status,jdbcType=SMALLINT}, 
-      #{createdAt,jdbcType=TIMESTAMP})
+    insert into public.stores (store_id, name, city,
+      address, longitude, latitude,
+      contact_phone, business_hours, status,
+      image_url, created_at)
+    values (#{storeId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR},
+      #{address,jdbcType=VARCHAR}, #{longitude,jdbcType=NUMERIC}, #{latitude,jdbcType=NUMERIC},
+      #{contactPhone,jdbcType=VARCHAR}, #{businessHours,jdbcType=VARCHAR}, #{status,jdbcType=SMALLINT},
+      #{imageUrl,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Stores">
     insert into public.stores
@@ -144,6 +145,9 @@
       </if>
       <if test="status != null">
         status,
+      </if>
+      <if test="imageUrl != null">
+        image_url,
       </if>
       <if test="createdAt != null">
         created_at,
@@ -176,6 +180,9 @@
       </if>
       <if test="status != null">
         #{status,jdbcType=SMALLINT},
+      </if>
+      <if test="imageUrl != null">
+        #{imageUrl,jdbcType=VARCHAR},
       </if>
       <if test="createdAt != null">
         #{createdAt,jdbcType=TIMESTAMP},
@@ -218,6 +225,9 @@
       <if test="row.status != null">
         status = #{row.status,jdbcType=SMALLINT},
       </if>
+      <if test="row.imageUrl != null">
+        image_url = #{row.imageUrl,jdbcType=VARCHAR},
+      </if>
       <if test="row.createdAt != null">
         created_at = #{row.createdAt,jdbcType=TIMESTAMP},
       </if>
@@ -237,6 +247,7 @@
       contact_phone = #{row.contactPhone,jdbcType=VARCHAR},
       business_hours = #{row.businessHours,jdbcType=VARCHAR},
       status = #{row.status,jdbcType=SMALLINT},
+      image_url = #{row.imageUrl,jdbcType=VARCHAR},
       created_at = #{row.createdAt,jdbcType=TIMESTAMP}
     <if test="example != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -269,6 +280,9 @@
       <if test="status != null">
         status = #{status,jdbcType=SMALLINT},
       </if>
+      <if test="imageUrl != null">
+        image_url = #{imageUrl,jdbcType=VARCHAR},
+      </if>
       <if test="createdAt != null">
         created_at = #{createdAt,jdbcType=TIMESTAMP},
       </if>
@@ -285,6 +299,7 @@
       contact_phone = #{contactPhone,jdbcType=VARCHAR},
       business_hours = #{businessHours,jdbcType=VARCHAR},
       status = #{status,jdbcType=SMALLINT},
+      image_url = #{imageUrl,jdbcType=VARCHAR},
       created_at = #{createdAt,jdbcType=TIMESTAMP}
     where store_id = #{storeId,jdbcType=INTEGER}
   </update>
