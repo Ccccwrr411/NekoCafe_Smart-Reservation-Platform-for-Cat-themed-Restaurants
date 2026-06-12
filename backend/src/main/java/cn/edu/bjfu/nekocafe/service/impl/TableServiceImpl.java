@@ -66,6 +66,10 @@ public class TableServiceImpl implements TableService {
             vo.setType(t.getTableType());
             vo.setCapacity(t.getCapacity());
 
+            vo.setTop(t.getTop());
+            vo.setLeft(t.getLeft());
+            vo.setWidth(t.getWidth());
+            vo.setHeight(t.getHeight());
             // 实时状态映射
             TableStatus ts = statusMap.get(t.getTableId());
             if (ts != null) {

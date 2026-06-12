@@ -9,6 +9,10 @@
     <result column="table_type" jdbcType="VARCHAR" property="tableType" />
     <result column="cat_theme" jdbcType="VARCHAR" property="catTheme" />
     <result column="is_active" jdbcType="BIT" property="isActive" />
+    <result column="top" property="top" jdbcType="VARCHAR" />
+    <result column="left" property="left" jdbcType="VARCHAR" />
+    <result column="width" property="width" jdbcType="VARCHAR" />
+    <result column="height" property="height" jdbcType="VARCHAR" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -69,7 +73,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    table_id, store_id, table_no, capacity, table_type, cat_theme, is_active
+    table_id, store_id, table_no, capacity, table_type, cat_theme, is_active, top, "left", width, height
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.TablesExample" resultMap="BaseResultMap">
     select
@@ -86,7 +90,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select 
+    select
     <include refid="Base_Column_List" />
     from public.tables
     where table_id = #{tableId,jdbcType=INTEGER}
@@ -102,11 +106,11 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Tables">
-    insert into public.tables (table_id, store_id, table_no, 
-      capacity, table_type, cat_theme, 
+    insert into public.tables (table_id, store_id, table_no,
+      capacity, table_type, cat_theme,
       is_active)
-    values (#{tableId,jdbcType=INTEGER}, #{storeId,jdbcType=INTEGER}, #{tableNo,jdbcType=VARCHAR}, 
-      #{capacity,jdbcType=INTEGER}, #{tableType,jdbcType=VARCHAR}, #{catTheme,jdbcType=VARCHAR}, 
+    values (#{tableId,jdbcType=INTEGER}, #{storeId,jdbcType=INTEGER}, #{tableNo,jdbcType=VARCHAR},
+      #{capacity,jdbcType=INTEGER}, #{tableType,jdbcType=VARCHAR}, #{catTheme,jdbcType=VARCHAR},
       #{isActive,jdbcType=BIT})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Tables">

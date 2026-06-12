@@ -2,7 +2,7 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     # 注意：这里的 /nekocafe 是你们业务数据库的名字，如果组长建的库叫别的名字，请替换
-    url: jdbc:postgresql://82.157.130.254:5432/postgres?stringtype=unspecified
+    url: jdbc:postgresql://82.157.130.254:5432/postgres
     username: admin_user
     password: 123456789
 

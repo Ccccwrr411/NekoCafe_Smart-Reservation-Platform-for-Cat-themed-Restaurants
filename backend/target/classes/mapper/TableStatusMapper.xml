@@ -101,7 +101,7 @@
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.TableStatus">
     insert into public.table_status (table_id, status, current_reservation_id, 
       version)
-    values (#{tableId,jdbcType=INTEGER}, #{status,jdbcType=VARCHAR}, #{currentReservationId,jdbcType=BIGINT}, 
+    values (#{tableId,jdbcType=INTEGER}, #{status}::status_enum, #{currentReservationId,jdbcType=BIGINT}, 
       #{version,jdbcType=INTEGER})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.TableStatus">
@@ -125,7 +125,7 @@
         #{tableId,jdbcType=INTEGER},
       </if>
       <if test="status != null">
-        #{status,jdbcType=VARCHAR},
+        #{status}::status_enum,
       </if>
       <if test="currentReservationId != null">
         #{currentReservationId,jdbcType=BIGINT},
@@ -148,7 +148,7 @@
         table_id = #{row.tableId,jdbcType=INTEGER},
       </if>
       <if test="row.status != null">
-        status = #{row.status,jdbcType=VARCHAR},
+        status = #{row.status}::status_enum,
       </if>
       <if test="row.currentReservationId != null">
         current_reservation_id = #{row.currentReservationId,jdbcType=BIGINT},
@@ -164,7 +164,7 @@
   <update id="updateByExample" parameterType="map">
     update public.table_status
     set table_id = #{row.tableId,jdbcType=INTEGER},
-      status = #{row.status,jdbcType=VARCHAR},
+      status = #{row.status}::status_enum,
       current_reservation_id = #{row.currentReservationId,jdbcType=BIGINT},
       version = #{row.version,jdbcType=INTEGER}
     <if test="example != null">
@@ -175,7 +175,7 @@
     update public.table_status
     <set>
       <if test="status != null">
-        status = #{status,jdbcType=VARCHAR},
+        status = #{status}::status_enum,
       </if>
       <if test="currentReservationId != null">
         current_reservation_id = #{currentReservationId,jdbcType=BIGINT},
@@ -188,7 +188,7 @@
   </update>
   <update id="updateByPrimaryKey" parameterType="cn.edu.bjfu.nekocafe.entity.TableStatus">
     update public.table_status
-    set status = #{status,jdbcType=VARCHAR},
+    set status = #{status}::status_enum,
       current_reservation_id = #{currentReservationId,jdbcType=BIGINT},
       version = #{version,jdbcType=INTEGER}
     where table_id = #{tableId,jdbcType=INTEGER}

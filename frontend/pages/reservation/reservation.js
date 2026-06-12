@@ -9,7 +9,7 @@ Page({
     storeName: '',
     stores: [],           // 所有门店列表（已按距离排序）
     showStorePicker: false, // 门店选择弹层
-
+    showTablePopup: false,
     tables: [],
     loading: true,
     selectedTable: null,
@@ -23,12 +23,6 @@ Page({
     // 时间选择
     timeSlots: [],
     dateList: [],
-
-    // 筛选
-    filterType: 'all',
-    tableTypes: ['all', '双人桌', '四人桌', '包间', '吧台位'],
-    tableTypeLabels: { all: '全部', '双人桌': '双人', '四人桌': '四人', '包间': '包间', '吧台位': '吧台' },
-
     TABLE_STATUS_MAP
   },
 
@@ -151,11 +145,6 @@ Page({
       }
     })
   },
-
-  onFilterChange(e) {
-    this.setData({ filterType: e.currentTarget.dataset.type, selectedTable: null })
-  },
-
   onTableSelect(e) {
     const table = e.currentTarget.dataset.table
     // 添加物理震动反馈，提升不可点击状态的体验
@@ -164,7 +153,14 @@ Page({
       wx.showToast({ title: table.status === 'booked' ? '该桌已被预约' : '该桌维护中', icon: 'none' })
       return
     }
-    this.setData({ selectedTable: table })
+    this.setData({ 
+      selectedTable: table,
+      showTablePopup: true 
+    })
+  },
+
+hideTablePopup() {
+    this.setData({ showTablePopup: false })
   },
 
   onDateSelect(e) { this.setData({ reserveDate: e.currentTarget.dataset.date }) },
@@ -193,33 +189,36 @@ Page({
 
   onSubmit() {
     const { selectedTable, reserveDate, reserveTime, persons, storeId } = this.data
-    if (!selectedTable) { wx.showToast({ title: '请先选择桌位', icon: 'none' }); return }
+    if (!selectedTable) return
 
-    wx.showModal({
-      title: '确认预约',
-      content: `${reserveDate} ${reserveTime}\n${selectedTable.name}（${selectedTable.type}）\n${persons}人`,
-      success: (res) => {
-        if (!res.confirm) return
-        wx.showLoading({ title: '提交中...' })
-        post('/api/reservation/create', {
-          storeId,
-          tableId: selectedTable.id,
-          reserveDate,
-          reserveTime,
-          persons,
-          duration: this.data.duration
-        }).then(result => {
-          wx.hideLoading()
-          if (result.code === 0) {
-            const app = getApp()
-            app.globalData.selectedTable = selectedTable
-            wx.showToast({ title: '预约成功！', icon: 'success' })
-            setTimeout(() => {
-              wx.navigateTo({ url: `/pages/menu/menu?storeId=${storeId}&tableId=${selectedTable.id}` })
-            }, 800)
-          }
-        }).catch(() => wx.hideLoading())
+    wx.showLoading({ title: '提交中...' })
+    
+    post('/api/reservation/create', {
+      storeId,
+      tableId: selectedTable.id,
+      reserveDate,
+      reserveTime,
+      persons,
+      duration: this.data.duration
+    }).then(result => {
+      wx.hideLoading()
+      if (result.code === 0) {
+        // 预约成功，关闭我们的精美弹窗
+        this.setData({ showTablePopup: false })
+        
+        const app = getApp()
+        app.globalData.selectedTable = selectedTable
+        wx.showToast({ title: '预约成功！', icon: 'success' })
+        
+        setTimeout(() => {
+          wx.navigateTo({ url: `/pages/menu/menu?storeId=${storeId}&tableId=${selectedTable.id}` })
+        }, 800)
+      } else {
+         wx.showToast({ title: result.msg || '预约失败', icon: 'none' })
       }
+    }).catch(() => {
+      wx.hideLoading()
+      wx.showToast({ title: '网络开小差啦', icon: 'none' })
     })
   }
 })
