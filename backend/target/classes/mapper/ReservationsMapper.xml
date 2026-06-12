@@ -122,7 +122,7 @@
     values (#{reservationId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, #{storeId,jdbcType=INTEGER}, 
       #{tableId,jdbcType=INTEGER}, #{catProfileId,jdbcType=INTEGER}, #{reservationTime,jdbcType=TIMESTAMP}, 
       #{durationMin,jdbcType=INTEGER}, #{partySize,jdbcType=INTEGER}, #{specialRequest,jdbcType=VARCHAR}, 
-      #{orderAmount,jdbcType=NUMERIC}, #{totalAmount,jdbcType=NUMERIC}, #{status,jdbcType=VARCHAR}, 
+      #{orderAmount,jdbcType=NUMERIC}, #{totalAmount,jdbcType=NUMERIC}, #{status}::reservation_status, 
       #{pointsUsed,jdbcType=INTEGER}, #{pointsEarned,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP}, 
       #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
@@ -213,7 +213,7 @@
         #{totalAmount,jdbcType=NUMERIC},
       </if>
       <if test="status != null">
-        #{status,jdbcType=VARCHAR},
+        #{status}::reservation_status,
       </if>
       <if test="pointsUsed != null">
         #{pointsUsed,jdbcType=INTEGER},
@@ -272,7 +272,7 @@
         total_amount = #{row.totalAmount,jdbcType=NUMERIC},
       </if>
       <if test="row.status != null">
-        status = #{row.status,jdbcType=VARCHAR},
+        status = #{row.status}::reservation_status,
       </if>
       <if test="row.pointsUsed != null">
         points_used = #{row.pointsUsed,jdbcType=INTEGER},
@@ -304,7 +304,7 @@
       special_request = #{row.specialRequest,jdbcType=VARCHAR},
       order_amount = #{row.orderAmount,jdbcType=NUMERIC},
       total_amount = #{row.totalAmount,jdbcType=NUMERIC},
-      status = #{row.status,jdbcType=VARCHAR},
+      status = #{row.status}::reservation_status,
       points_used = #{row.pointsUsed,jdbcType=INTEGER},
       points_earned = #{row.pointsEarned,jdbcType=INTEGER},
       created_at = #{row.createdAt,jdbcType=TIMESTAMP},
@@ -347,7 +347,7 @@
         total_amount = #{totalAmount,jdbcType=NUMERIC},
       </if>
       <if test="status != null">
-        status = #{status,jdbcType=VARCHAR},
+        status = #{status}::reservation_status,
       </if>
       <if test="pointsUsed != null">
         points_used = #{pointsUsed,jdbcType=INTEGER},
@@ -376,11 +376,54 @@
       special_request = #{specialRequest,jdbcType=VARCHAR},
       order_amount = #{orderAmount,jdbcType=NUMERIC},
       total_amount = #{totalAmount,jdbcType=NUMERIC},
-      status = #{status,jdbcType=VARCHAR},
+      status = #{status}::reservation_status,
       points_used = #{pointsUsed,jdbcType=INTEGER},
       points_earned = #{pointsEarned,jdbcType=INTEGER},
       created_at = #{createdAt,jdbcType=TIMESTAMP},
       updated_at = #{updatedAt,jdbcType=TIMESTAMP}
     where reservation_id = #{reservationId,jdbcType=BIGINT}
   </update>
+
+  <!--
+    专用查询：按 userId + status 列表筛选，对枚举字段显式 CAST 为 reservation_status，
+    解决 PostgreSQL "operator does not exist: reservation_status = character varying" 问题。
+  -->
+  <select id="selectByUserIdAndStatuses" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+  </select>
+
+  <!--
+    专用查询：按 storeId + status 列表筛选（店员工作台用）。
+    对 status 枚举字段显式 CAST，解决 PostgreSQL 类型不匹配问题。
+  -->
+  <select id="selectByStoreIdAndStatuses" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where store_id = #{storeId,jdbcType=INTEGER}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+    order by reservation_time DESC
+  </select>
+
+  <!--
+    专用查询：按 storeId 查全部预约（店员工作台 - 全部订单 Tab）。
+  -->
+  <select id="selectByStoreId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where store_id = #{storeId,jdbcType=INTEGER}
+    order by reservation_time DESC
+  </select>
+
 </mapper>

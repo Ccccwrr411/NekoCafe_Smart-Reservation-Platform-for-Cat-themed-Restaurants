@@ -4,6 +4,8 @@
   <resultMap id="BaseResultMap" type="cn.edu.bjfu.nekocafe.entity.Users">
     <id column="user_id" jdbcType="BIGINT" property="userId" />
     <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="openid" jdbcType="VARCHAR" property="openid" />
     <result column="password_hash" jdbcType="VARCHAR" property="passwordHash" />
     <result column="nickname" jdbcType="VARCHAR" property="nickname" />
     <result column="avatar_url" jdbcType="VARCHAR" property="avatarUrl" />
@@ -13,10 +15,7 @@
     <result column="status" jdbcType="SMALLINT" property="status" />
     <result column="created_at" jdbcType="TIMESTAMP" property="createdAt" />
     <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
-    <result column="email" jdbcType="VARCHAR" property="email" />
-    <result column="openid" jdbcType="VARCHAR" property="openid" />
   </resultMap>
-
   <sql id="Example_Where_Clause">
     <where>
       <foreach collection="oredCriteria" item="criteria" separator="or">
@@ -46,7 +45,6 @@
       </foreach>
     </where>
   </sql>
-
   <sql id="Update_By_Example_Where_Clause">
     <where>
       <foreach collection="example.oredCriteria" item="criteria" separator="or">
@@ -76,11 +74,10 @@
       </foreach>
     </where>
   </sql>
-
   <sql id="Base_Column_List">
-    user_id, phone, password_hash, nickname, avatar_url, real_name, id_card, is_verified,
-    status, created_at, updated_at, email, openid </sql>
-
+    user_id, phone, email, openid, password_hash, nickname, avatar_url, real_name, id_card, is_verified, 
+    status, created_at, updated_at
+  </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.UsersExample" resultMap="BaseResultMap">
     select
     <if test="distinct">
@@ -95,38 +92,33 @@
       order by ${orderByClause}
     </if>
   </select>
-
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    select
+    select 
     <include refid="Base_Column_List" />
     from public.users
     where user_id = #{userId,jdbcType=BIGINT}
   </select>
-
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from public.users
     where user_id = #{userId,jdbcType=BIGINT}
   </delete>
-
   <delete id="deleteByExample" parameterType="cn.edu.bjfu.nekocafe.entity.UsersExample">
     delete from public.users
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-
-  <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Users">
-    insert into public.users (user_id, phone, password_hash,
-    nickname, avatar_url, real_name,
-    id_card, is_verified, status,
-    created_at, updated_at, email, openid)
-    values (#{userId,jdbcType=BIGINT}, #{phone,jdbcType=VARCHAR}, #{passwordHash,jdbcType=VARCHAR},
-    #{nickname,jdbcType=VARCHAR}, #{avatarUrl,jdbcType=VARCHAR}, #{realName,jdbcType=VARCHAR},
-    #{idCard,jdbcType=VARCHAR}, #{isVerified,jdbcType=BIT}, #{status,jdbcType=SMALLINT},
-    #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP}, #{email,jdbcType=VARCHAR}, #{openid,jdbcType=VARCHAR})
+  <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Users" useGeneratedKeys="true" keyProperty="userId">
+    insert into public.users (user_id, phone, email, openid, password_hash, 
+      nickname, avatar_url, real_name, 
+      id_card, is_verified, status, 
+      created_at, updated_at)
+    values (#{userId,jdbcType=BIGINT}, #{phone,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, #{openid,jdbcType=VARCHAR}, #{passwordHash,jdbcType=VARCHAR}, 
+      #{nickname,jdbcType=VARCHAR}, #{avatarUrl,jdbcType=VARCHAR}, #{realName,jdbcType=VARCHAR}, 
+      #{idCard,jdbcType=VARCHAR}, #{isVerified,jdbcType=BIT}, #{status,jdbcType=SMALLINT}, 
+      #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
-
-  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Users" useGeneratedKeys="true" keyProperty="userId" keyColumn="user_id">
+  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Users" useGeneratedKeys="true" keyProperty="userId">
     insert into public.users
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="userId != null">
@@ -134,6 +126,12 @@
       </if>
       <if test="phone != null">
         phone,
+      </if>
+      <if test="email != null">
+        email,
+      </if>
+      <if test="openid != null">
+        openid,
       </if>
       <if test="passwordHash != null">
         password_hash,
@@ -162,12 +160,6 @@
       <if test="updatedAt != null">
         updated_at,
       </if>
-      <if test="email != null">
-        email,
-      </if>
-      <if test="openid != null">
-        openid,
-      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="userId != null">
@@ -175,6 +167,12 @@
       </if>
       <if test="phone != null">
         #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null">
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="openid != null">
+        #{openid,jdbcType=VARCHAR},
       </if>
       <if test="passwordHash != null">
         #{passwordHash,jdbcType=VARCHAR},
@@ -203,22 +201,14 @@
       <if test="updatedAt != null">
         #{updatedAt,jdbcType=TIMESTAMP},
       </if>
-      <if test="email != null">
-        #{email,jdbcType=VARCHAR},
-      </if>
-      <if test="openid != null">
-        #{openid,jdbcType=VARCHAR},
-      </if>
     </trim>
   </insert>
-
   <select id="countByExample" parameterType="cn.edu.bjfu.nekocafe.entity.UsersExample" resultType="java.lang.Long">
     select count(*) from public.users
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
   </select>
-
   <update id="updateByExampleSelective" parameterType="map">
     update public.users
     <set>
@@ -227,6 +217,12 @@
       </if>
       <if test="row.phone != null">
         phone = #{row.phone,jdbcType=VARCHAR},
+      </if>
+      <if test="row.email != null">
+        email = #{row.email,jdbcType=VARCHAR},
+      </if>
+      <if test="row.openid != null">
+        openid = #{row.openid,jdbcType=VARCHAR},
       </if>
       <if test="row.passwordHash != null">
         password_hash = #{row.passwordHash,jdbcType=VARCHAR},
@@ -255,41 +251,41 @@
       <if test="row.updatedAt != null">
         updated_at = #{row.updatedAt,jdbcType=TIMESTAMP},
       </if>
-      <if test="row.email != null">
-        email = #{row.email,jdbcType=VARCHAR},
-      </if>
-      <if test="row.openid != null">
-        openid = #{row.openid,jdbcType=VARCHAR},
-      </if>
     </set>
     <if test="example != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
   </update>
-
   <update id="updateByExample" parameterType="map">
     update public.users
     set user_id = #{row.userId,jdbcType=BIGINT},
-    phone = #{row.phone,jdbcType=VARCHAR},
-    password_hash = #{row.passwordHash,jdbcType=VARCHAR},
-    nickname = #{row.nickname,jdbcType=VARCHAR},
-    avatar_url = #{row.avatarUrl,jdbcType=VARCHAR},
-    real_name = #{row.realName,jdbcType=VARCHAR},
-    id_card = #{row.idCard,jdbcType=VARCHAR},
-    is_verified = #{row.isVerified,jdbcType=BIT},
-    status = #{row.status,jdbcType=SMALLINT},
-    created_at = #{row.createdAt,jdbcType=TIMESTAMP},
-    updated_at = #{row.updatedAt,jdbcType=TIMESTAMP},
-    email = #{row.email,jdbcType=VARCHAR},  openid = #{row.openid,jdbcType=VARCHAR} <if test="example != null">
-    <include refid="Update_By_Example_Where_Clause" />
-  </if>
+      phone = #{row.phone,jdbcType=VARCHAR},
+      email = #{row.email,jdbcType=VARCHAR},
+      openid = #{row.openid,jdbcType=VARCHAR},
+      password_hash = #{row.passwordHash,jdbcType=VARCHAR},
+      nickname = #{row.nickname,jdbcType=VARCHAR},
+      avatar_url = #{row.avatarUrl,jdbcType=VARCHAR},
+      real_name = #{row.realName,jdbcType=VARCHAR},
+      id_card = #{row.idCard,jdbcType=VARCHAR},
+      is_verified = #{row.isVerified,jdbcType=BIT},
+      status = #{row.status,jdbcType=SMALLINT},
+      created_at = #{row.createdAt,jdbcType=TIMESTAMP},
+      updated_at = #{row.updatedAt,jdbcType=TIMESTAMP}
+    <if test="example != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
   </update>
-
   <update id="updateByPrimaryKeySelective" parameterType="cn.edu.bjfu.nekocafe.entity.Users">
     update public.users
     <set>
       <if test="phone != null">
         phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null">
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="openid != null">
+        openid = #{openid,jdbcType=VARCHAR},
       </if>
       <if test="passwordHash != null">
         password_hash = #{passwordHash,jdbcType=VARCHAR},
@@ -318,28 +314,23 @@
       <if test="updatedAt != null">
         updated_at = #{updatedAt,jdbcType=TIMESTAMP},
       </if>
-      <if test="email != null">
-        email = #{email,jdbcType=VARCHAR},
-      </if>
-      <if test="openid != null">
-        openid = #{openid,jdbcType=VARCHAR},
-      </if>
     </set>
     where user_id = #{userId,jdbcType=BIGINT}
   </update>
-
   <update id="updateByPrimaryKey" parameterType="cn.edu.bjfu.nekocafe.entity.Users">
     update public.users
     set phone = #{phone,jdbcType=VARCHAR},
-    password_hash = #{passwordHash,jdbcType=VARCHAR},
-    nickname = #{nickname,jdbcType=VARCHAR},
-    avatar_url = #{avatarUrl,jdbcType=VARCHAR},
-    real_name = #{realName,jdbcType=VARCHAR},
-    id_card = #{idCard,jdbcType=VARCHAR},
-    is_verified = #{isVerified,jdbcType=BIT},
-    status = #{status,jdbcType=SMALLINT},
-    created_at = #{createdAt,jdbcType=TIMESTAMP},
-    updated_at = #{updatedAt,jdbcType=TIMESTAMP},
-    email = #{email,jdbcType=VARCHAR},  openid = #{openid,jdbcType=VARCHAR} where user_id = #{userId,jdbcType=BIGINT}
+      email = #{email,jdbcType=VARCHAR},
+      openid = #{openid,jdbcType=VARCHAR},
+      password_hash = #{passwordHash,jdbcType=VARCHAR},
+      nickname = #{nickname,jdbcType=VARCHAR},
+      avatar_url = #{avatarUrl,jdbcType=VARCHAR},
+      real_name = #{realName,jdbcType=VARCHAR},
+      id_card = #{idCard,jdbcType=VARCHAR},
+      is_verified = #{isVerified,jdbcType=BIT},
+      status = #{status,jdbcType=SMALLINT},
+      created_at = #{createdAt,jdbcType=TIMESTAMP},
+      updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+    where user_id = #{userId,jdbcType=BIGINT}
   </update>
 </mapper>

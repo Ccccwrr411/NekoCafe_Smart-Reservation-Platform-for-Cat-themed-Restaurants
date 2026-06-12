@@ -111,8 +111,8 @@
       status, operator_id, created_at, 
       completed_at)
     values (#{refundId,jdbcType=BIGINT}, #{paymentId,jdbcType=BIGINT}, #{reservationId,jdbcType=BIGINT}, 
-      #{refundAmount,jdbcType=NUMERIC}, #{refundReason,jdbcType=VARCHAR}, #{refundTransactionId,jdbcType=VARCHAR}, 
-      #{status,jdbcType=VARCHAR}, #{operatorId,jdbcType=BIGINT}, #{createdAt,jdbcType=TIMESTAMP}, 
+      #{refundAmount,jdbcType=NUMERIC}, #{refundReason,jdbcType=VARCHAR}, #{refundTransactionId,jdbcType=VARCHAR},
+      #{status}::refund_status_enum, #{operatorId,jdbcType=BIGINT}, #{createdAt,jdbcType=TIMESTAMP}, 
       #{completedAt,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.RefundRecords">
@@ -169,7 +169,7 @@
         #{refundTransactionId,jdbcType=VARCHAR},
       </if>
       <if test="status != null">
-        #{status,jdbcType=VARCHAR},
+        #{status}::refund_status_enum,
       </if>
       <if test="operatorId != null">
         #{operatorId,jdbcType=BIGINT},
@@ -210,7 +210,7 @@
         refund_transaction_id = #{row.refundTransactionId,jdbcType=VARCHAR},
       </if>
       <if test="row.status != null">
-        status = #{row.status,jdbcType=VARCHAR},
+        status = #{row.status}::refund_status_enum,
       </if>
       <if test="row.operatorId != null">
         operator_id = #{row.operatorId,jdbcType=BIGINT},
@@ -234,7 +234,7 @@
       refund_amount = #{row.refundAmount,jdbcType=NUMERIC},
       refund_reason = #{row.refundReason,jdbcType=VARCHAR},
       refund_transaction_id = #{row.refundTransactionId,jdbcType=VARCHAR},
-      status = #{row.status,jdbcType=VARCHAR},
+      status = #{row.status}::refund_status_enum,
       operator_id = #{row.operatorId,jdbcType=BIGINT},
       created_at = #{row.createdAt,jdbcType=TIMESTAMP},
       completed_at = #{row.completedAt,jdbcType=TIMESTAMP}
@@ -261,7 +261,7 @@
         refund_transaction_id = #{refundTransactionId,jdbcType=VARCHAR},
       </if>
       <if test="status != null">
-        status = #{status,jdbcType=VARCHAR},
+        status = #{status}::refund_status_enum,
       </if>
       <if test="operatorId != null">
         operator_id = #{operatorId,jdbcType=BIGINT},
@@ -282,7 +282,7 @@
       refund_amount = #{refundAmount,jdbcType=NUMERIC},
       refund_reason = #{refundReason,jdbcType=VARCHAR},
       refund_transaction_id = #{refundTransactionId,jdbcType=VARCHAR},
-      status = #{status,jdbcType=VARCHAR},
+      status = #{status}::refund_status_enum,
       operator_id = #{operatorId,jdbcType=BIGINT},
       created_at = #{createdAt,jdbcType=TIMESTAMP},
       completed_at = #{completedAt,jdbcType=TIMESTAMP}

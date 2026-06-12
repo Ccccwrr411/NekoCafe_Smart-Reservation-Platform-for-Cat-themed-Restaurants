@@ -9,6 +9,10 @@
     <result column="table_type" jdbcType="VARCHAR" property="tableType" />
     <result column="cat_theme" jdbcType="VARCHAR" property="catTheme" />
     <result column="is_active" jdbcType="BIT" property="isActive" />
+    <result column="top" property="top" jdbcType="VARCHAR" />
+    <result column="left" property="left" jdbcType="VARCHAR" />
+    <result column="width" property="width" jdbcType="VARCHAR" />
+    <result column="height" property="height" jdbcType="VARCHAR" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -69,7 +73,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    table_id, store_id, table_no, capacity, table_type, cat_theme, is_active
+    table_id, store_id, table_no, capacity, table_type, cat_theme, is_active, top, "left", width, height
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.TablesExample" resultMap="BaseResultMap">
     select

@@ -1,8 +1,8 @@
 /* pages/reservation/reservation.wxss */
 
-/* ── 全局容器：防底部遮挡 ── */
+/* ── 全局容器：留出防触底留白 ── */
 .container {
-  padding-bottom: 220rpx; /* 预留底部悬浮按钮的高度 */
+  padding-bottom: 40rpx; 
 }
 
 /* ── 门店头部 ── */
@@ -26,6 +26,59 @@
   padding: 20rpx 24rpx; box-shadow: var(--shadow-card);
 }
 .block-title { font-size: 28rpx; font-weight: 600; color: var(--color-text); margin-bottom: 16rpx; }
+
+/* =========================================
+   🐾 桌位详情与预约居中弹窗
+   ========================================= */
+
+/* 半透明纯黑遮罩 */
+.popup-mask {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.55); z-index: 300;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* 居中面板 */
+.popup-panel {
+  position: fixed; top: 50%; left: 50%; 
+  transform: translate(-50%, -50%); /* 绝对居中 */
+  width: 82%; max-width: 640rpx; background: #fff; 
+  border-radius: 28rpx; z-index: 301; overflow: hidden; 
+  box-shadow: 0 16rpx 48rpx rgba(0,0,0,0.15);
+  animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 带点果冻回弹效果 */
+}
+
+/* 头部 */
+.popup-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 36rpx 40rpx 24rpx;
+}
+.popup-title { font-size: 34rpx; font-weight: 600; color: var(--color-text); }
+.popup-close { font-size: 40rpx; color: #999; line-height: 1; padding: 0 10rpx; }
+
+/* 内容区 */
+.popup-content { padding: 0 40rpx 32rpx; }
+.popup-row { display: flex; justify-content: space-between; align-items: center; margin-top: 24rpx; }
+.p-label { font-size: 28rpx; color: var(--color-text-sub); }
+.p-val { font-size: 28rpx; color: var(--color-text); font-weight: 500; }
+.price-red { color: var(--color-danger); font-weight: bold; }
+.popup-divider { height: 2rpx; background: var(--color-border); margin: 32rpx 0 16rpx; border-radius: 2rpx; }
+
+/* 底部按钮 */
+.popup-footer { padding: 10rpx 40rpx 44rpx; }
+.popup-btn {
+  width: 100%; height: 92rpx; line-height: 92rpx; border-radius: 46rpx;
+  background: var(--color-primary); color: #fff; 
+  font-size: 32rpx; font-weight: 600; text-align: center;
+  box-shadow: 0 8rpx 20rpx rgba(201,126,90,0.3);
+}
+
+/* 出现动画 */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popUp { 
+  from { transform: translate(-50%, -40%) scale(0.9); opacity: 0; } 
+  to { transform: translate(-50%, -50%) scale(1); opacity: 1; } 
+}
 
 /* ── 日期滚动 ── */
 .date-scroll { width: 100%; }
@@ -67,7 +120,7 @@
 
 
 /* =========================================
-   🐾 桌位布局：网格卡片版本
+   🐾 桌位布局：绝对定位实体布景版本
    ========================================= */
 
 .floor-plan-box {
@@ -79,62 +132,68 @@
   margin-bottom: 20rpx; text-align: center;
 }
 
-/* 地图主容器：改为一排两列 Grid 网格布局 */
+/* 地图主容器：改为相对定位，并设置固定高度支持内部元素绝对定位 */
 .map-container {
+  position: relative; /* 核心：开启相对定位上下文 */
   width: 100%;
-  background: #FCFBF9; 
+  height: 550rpx;    /* 给予足够的高度用于还原实体布景比例 */
+  background-color: #FCFBF9; 
   border: 2rpx solid #F0EBE1;
   border-radius: 12rpx;
-  padding: 24rpx; 
   box-sizing: border-box;
   
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); 
-  gap: 24rpx; 
+  /* 如果后续有精心渲染的 3D 店面全景图，取消下面三行的注释并替换 URL 即可 */
+  /* background-image: url('https://你的服务器地址/images/floor_3d_blueprint.png'); */
+  /* background-size: 100% 100%; */
+  /* background-repeat: no-repeat; */
 }
 
-.map-loading { display: flex; justify-content: center; align-items: center; height: 200rpx; font-size: 28rpx; color: #999; }
+.map-loading { display: flex; justify-content: center; align-items: center; height: 100%; font-size: 28rpx; color: #999; }
 
-/* 单张桌子卡片 */
+/* 单张桌子卡片：绝对定位 + 直接作为文字排版容器 */
 .floor-table {
-  position: relative; 
+  position: absolute; 
   border-radius: 16rpx;
   box-sizing: border-box;
   border: 4rpx solid transparent;
   transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.03);
-  height: 180rpx; /* 撑起高度 */
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.04);
+  
+  /* ⚡️ 核心修复：把排版属性直接加给外层卡片，解决高度塌陷问题 */
+  display: flex; 
+  flex-direction: column;
+  justify-content: center; 
+  align-items: center; 
+  gap: 6rpx;
+  
+  /* 防止微信小程序吞噬文字，加上溢出隐藏和层级优先 */
+  overflow: hidden; 
+  z-index: 2; 
 }
 
-/* 内部三行文字居中 */
-.table-content {
-  width: 100%; height: 100%; display: flex; flex-direction: column;
-  justify-content: center; align-items: center; gap: 8rpx; box-sizing: border-box;
-}
+/* 文字细节样式 */
+.t-name { font-size: 26rpx; font-weight: bold; letter-spacing: 1rpx; color: inherit; }
+.t-cat  { font-size: 22rpx; color: #D35400; font-weight: 500; }
+.t-state { font-size: 20rpx; font-weight: 500; }
 
-/* 文字样式 */
-.t-name { font-size: 28rpx; font-weight: bold; letter-spacing: 2rpx; }
-.t-cat  { font-size: 24rpx; color: #D35400; font-weight: 500; }
-.t-state { font-size: 22rpx; font-weight: 500; }
-
-/* 🟢 可预约：薄荷绿底 + 亮绿边框 */
+/* 🟢 可预约状态配色 */
 .status-available { background: #E8F8EE; border-color: #2ECC71; color: #1E8449; }
 
-/* 🔴 已占用：水蜜桃粉底 + 亮红边框 */
+/* 🔴 已占座状态配色 */
 .status-booked { background: #FCEBEB; border-color: #FF5252; color: #C62828; }
 .status-booked .t-name { color: #8C1A1A; }
 .state-booked { color: #C62828; }
 
-/* ⚪ 维护中：雾霾灰底 + 灰蓝边框 */
+/* ⚪ 维护中状态配色 */
 .status-maintenance { background: #F0F2F5; border-color: #9AA7B1; color: #455A64; }
 
-/* ⭐ 选中状态：主色调高亮发光 */
+/* ⭐ 选中交互：边框高亮并产生浮起阴影 */
 .table-selected {
   background: #fff !important;
   border: 4rpx solid var(--color-primary) !important;
-  box-shadow: 0 8rpx 24rpx rgba(201,126,90,0.3);
-  transform: scale(1.05);
-  z-index: 10;
+  box-shadow: 0 12rpx 30rpx rgba(201,126,90,0.35);
+  transform: scale(1.04);
+  z-index: 10; /* 选中时提升层级防止被边缘邻近卡片压碎效果 */
 }
 
 /* ========================================= */
@@ -148,12 +207,12 @@
 .sel-val   { font-size: 26rpx; color: var(--color-text); }
 .price-red { color: var(--color-danger); font-weight: 500; }
 
-/* ── 底部提交 (已修复遮挡层级) ── */
+/* ── 底部提交（z-index 加固，彻底防穿透） ── */
 .submit-bar {
   position: fixed; bottom: 0; left: 0; right: 0;
   background: #fff; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 10rpx;
-  z-index: 100; /* 最高层级，防止被选中的卡片穿透 */
+  z-index: 100; /* 极高层级，确保始终悬浮在绝对定位大厅的上方 */
 }
 .submit-info { font-size: 24rpx; color: var(--color-text-sub); text-align: center; }
 .btn-submit { background: var(--color-primary); color: #fff; border-radius: 50rpx; height: 88rpx; line-height: 88rpx; text-align: center; font-size: 32rpx; font-weight: 600; border: none; }
