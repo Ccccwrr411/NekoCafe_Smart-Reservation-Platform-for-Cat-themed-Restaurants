@@ -1,5 +1,10 @@
 /* pages/reservation/reservation.wxss */
 
+/* ── 全局容器：防底部遮挡 ── */
+.container {
+  padding-bottom: 220rpx; /* 预留底部悬浮按钮的高度 */
+}
+
 /* ── 门店头部 ── */
 .store-header {
   background: var(--color-primary);
@@ -8,14 +13,8 @@
   position: relative;
 }
 .store-header::after {
-  content: '';
-  position: absolute;
-  right: 28rpx;
-  top: 50%;
-  width: 12rpx;
-  height: 12rpx;
-  border-right: 3rpx solid rgba(255,255,255,0.7);
-  border-bottom: 3rpx solid rgba(255,255,255,0.7);
+  content: ''; position: absolute; right: 28rpx; top: 50%; width: 12rpx; height: 12rpx;
+  border-right: 3rpx solid rgba(255,255,255,0.7); border-bottom: 3rpx solid rgba(255,255,255,0.7);
   transform: translateY(-50%) rotate(-45deg);
 }
 .store-title { font-size: 32rpx; font-weight: 600; display: block; }
@@ -23,341 +22,160 @@
 
 /* ── 区块通用 ── */
 .section-block {
-  background: #fff;
-  margin: 16rpx 24rpx;
-  border-radius: 16rpx;
-  padding: 20rpx 24rpx;
-  box-shadow: var(--shadow-card);
+  background: #fff; margin: 16rpx 24rpx; border-radius: 16rpx;
+  padding: 20rpx 24rpx; box-shadow: var(--shadow-card);
 }
-.block-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 16rpx;
-}
+.block-title { font-size: 28rpx; font-weight: 600; color: var(--color-text); margin-bottom: 16rpx; }
 
 /* ── 日期滚动 ── */
 .date-scroll { width: 100%; }
-.date-list {
-  display: flex;
-  gap: 16rpx;
-  white-space: nowrap;
-  padding: 4rpx 0;
-}
+.date-list { display: flex; gap: 16rpx; white-space: nowrap; padding: 4rpx 0; }
 .date-item {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12rpx 24rpx;
-  border-radius: 12rpx;
-  border: 2rpx solid var(--color-border);
-  min-width: 100rpx;
+  display: inline-flex; flex-direction: column; align-items: center;
+  padding: 12rpx 24rpx; border-radius: 12rpx; border: 2rpx solid var(--color-border); min-width: 100rpx;
 }
 .date-label { font-size: 24rpx; color: var(--color-text); font-weight: 500; }
 .date-full  { font-size: 22rpx; color: var(--color-text-sub); margin-top: 4rpx; }
-.date-active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-}
-.date-active .date-label,
-.date-active .date-full { color: #fff; }
+.date-active { background: var(--color-primary); border-color: var(--color-primary); }
+.date-active .date-label, .date-active .date-full { color: #fff; }
 
 /* ── 表单行 ── */
-.form-block { }
-.form-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--color-border);
-}
+.form-row { display: flex; justify-content: space-between; align-items: center; padding: 16rpx 0; border-bottom: 1rpx solid var(--color-border); }
 .form-row:last-child { border-bottom: none; }
 .form-label { font-size: 28rpx; color: var(--color-text); }
 .form-value { font-size: 28rpx; color: var(--color-primary); }
 .picker-val { font-weight: 500; }
 
 /* ── 数量调节 ── */
-.counter {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-}
-.counter-btn {
-  width: 52rpx;
-  height: 52rpx;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32rpx;
-  font-weight: 600;
-}
+.counter { display: flex; align-items: center; gap: 20rpx; }
+.counter-btn { width: 52rpx; height: 52rpx; background: var(--color-primary-light); color: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32rpx; font-weight: 600; }
 .counter-val { font-size: 28rpx; color: var(--color-text); min-width: 80rpx; text-align: center; }
 
 /* ── 筛选 ── */
 .filter-scroll { width: 100%; }
-.filter-list {
-  display: flex;
-  gap: 12rpx;
-  padding: 4rpx 0 12rpx;
-}
-.filter-item {
-  display: inline-block;
-  padding: 10rpx 28rpx;
-  border-radius: 30rpx;
-  font-size: 24rpx;
-  border: 2rpx solid var(--color-border);
-  color: var(--color-text-sub);
-  white-space: nowrap;
-}
-.filter-active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-}
+.filter-list { display: flex; gap: 12rpx; padding: 4rpx 0 12rpx; }
+.filter-item { display: inline-block; padding: 10rpx 28rpx; border-radius: 30rpx; font-size: 24rpx; border: 2rpx solid var(--color-border); color: var(--color-text-sub); white-space: nowrap; }
+.filter-active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
 
 /* ── 图例 ── */
-.legend {
-  display: flex;
-  gap: 32rpx;
-  margin-top: 12rpx;
-}
+.legend { display: flex; gap: 32rpx; margin-top: 12rpx; }
 .legend-item { display: flex; align-items: center; gap: 8rpx; font-size: 22rpx; color: var(--color-text-sub); }
 .legend-dot  { width: 20rpx; height: 20rpx; border-radius: 4rpx; }
 .dot-available  { background: #4CAF50; }
 .dot-booked     { background: #EF5350; }
 .dot-maintenance{ background: #BDBDBD; }
 
-/* ── 桌位 Grid ── */
-.table-grid-wrap {
-  margin: 0 24rpx;
+
+/* =========================================
+   🐾 桌位布局：网格卡片版本
+   ========================================= */
+
+.floor-plan-box {
+  background: #fff; margin: 16rpx 24rpx; border-radius: 20rpx;
+  padding: 24rpx; box-shadow: var(--shadow-card);
 }
-.table-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16rpx;
+.floor-title {
+  font-size: 26rpx; color: var(--color-text-sub);
+  margin-bottom: 20rpx; text-align: center;
 }
-.table-cell {
+
+/* 地图主容器：改为一排两列 Grid 网格布局 */
+.map-container {
+  width: 100%;
+  background: #FCFBF9; 
+  border: 2rpx solid #F0EBE1;
   border-radius: 12rpx;
-  padding: 18rpx 12rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6rpx;
-  text-align: center;
-  border: 3rpx solid transparent;
+  padding: 24rpx; 
+  box-sizing: border-box;
+  
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 24rpx; 
 }
-.table-name { font-size: 28rpx; font-weight: 600; }
-.table-type { font-size: 20rpx; }
-.table-cat  { font-size: 20rpx; }
-.table-price{ font-size: 20rpx; color: var(--color-primary); }
 
-.status-available   { background: #E8F5E9; }
-.status-available .table-name { color: #2E7D32; }
-.status-available .table-type,
-.status-available .table-cat  { color: #388E3C; }
+.map-loading { display: flex; justify-content: center; align-items: center; height: 200rpx; font-size: 28rpx; color: #999; }
 
-.status-booked      { background: #FFEBEE; opacity: 0.8; }
-.status-booked .table-name { color: #C62828; }
-.status-booked .table-type,
-.status-booked .table-cat  { color: #E53935; }
+/* 单张桌子卡片 */
+.floor-table {
+  position: relative; 
+  border-radius: 16rpx;
+  box-sizing: border-box;
+  border: 4rpx solid transparent;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.03);
+  height: 180rpx; /* 撑起高度 */
+}
 
-.status-maintenance { background: #F5F5F5; opacity: 0.6; }
-.status-maintenance .table-name { color: #9E9E9E; }
+/* 内部三行文字居中 */
+.table-content {
+  width: 100%; height: 100%; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; gap: 8rpx; box-sizing: border-box;
+}
 
+/* 文字样式 */
+.t-name { font-size: 28rpx; font-weight: bold; letter-spacing: 2rpx; }
+.t-cat  { font-size: 24rpx; color: #D35400; font-weight: 500; }
+.t-state { font-size: 22rpx; font-weight: 500; }
+
+/* 🟢 可预约：薄荷绿底 + 亮绿边框 */
+.status-available { background: #E8F8EE; border-color: #2ECC71; color: #1E8449; }
+
+/* 🔴 已占用：水蜜桃粉底 + 亮红边框 */
+.status-booked { background: #FCEBEB; border-color: #FF5252; color: #C62828; }
+.status-booked .t-name { color: #8C1A1A; }
+.state-booked { color: #C62828; }
+
+/* ⚪ 维护中：雾霾灰底 + 灰蓝边框 */
+.status-maintenance { background: #F0F2F5; border-color: #9AA7B1; color: #455A64; }
+
+/* ⭐ 选中状态：主色调高亮发光 */
 .table-selected {
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 4rpx rgba(201,126,90,0.3);
+  background: #fff !important;
+  border: 4rpx solid var(--color-primary) !important;
+  box-shadow: 0 8rpx 24rpx rgba(201,126,90,0.3);
+  transform: scale(1.05);
+  z-index: 10;
 }
+
+/* ========================================= */
 
 /* ── 已选信息 ── */
-.selected-info { margin: 16rpx 24rpx; }
-.selected-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: var(--color-primary);
-  margin-bottom: 12rpx;
-}
-.selected-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10rpx 0;
-  border-bottom: 1rpx solid var(--color-border);
-}
+.selected-info { margin: 16rpx 24rpx; background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: var(--shadow-card); }
+.selected-title { font-size: 28rpx; font-weight: 600; color: var(--color-primary); margin-bottom: 12rpx; }
+.selected-row { display: flex; justify-content: space-between; padding: 10rpx 0; border-bottom: 1rpx solid var(--color-border); }
 .selected-row:last-child { border-bottom: none; }
 .sel-label { font-size: 26rpx; color: var(--color-text-sub); }
 .sel-val   { font-size: 26rpx; color: var(--color-text); }
 .price-red { color: var(--color-danger); font-weight: 500; }
 
-/* ── 底部提交 ── */
+/* ── 底部提交 (已修复遮挡层级) ── */
 .submit-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #fff;
-  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff; padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 10rpx;
+  z-index: 100; /* 最高层级，防止被选中的卡片穿透 */
 }
 .submit-info { font-size: 24rpx; color: var(--color-text-sub); text-align: center; }
-.btn-submit {
-  background: var(--color-primary);
-  color: #fff;
-  border-radius: 50rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  text-align: center;
-  font-size: 32rpx;
-  font-weight: 600;
-  border: none;
-}
+.btn-submit { background: var(--color-primary); color: #fff; border-radius: 50rpx; height: 88rpx; line-height: 88rpx; text-align: center; font-size: 32rpx; font-weight: 600; border: none; }
 .btn-submit::after { border: none; }
-.btn-disabled {
-  background: #BDBDBD;
-  color: rgba(255,255,255,0.8);
-}
+.btn-disabled { background: #BDBDBD; color: rgba(255,255,255,0.8); }
 
 /* ── 门店选择弹层 ── */
-.picker-mask {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 200;
-}
-.store-picker-panel {
-  position: fixed;
-  bottom: 0;
-  left: 0; right: 0;
-  background: #fff;
-  border-radius: 24rpx 24rpx 0 0;
-  z-index: 201;
-  max-height: 70vh;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-.picker-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 28rpx 32rpx;
-  border-bottom: 1rpx solid var(--color-border);
-  flex-shrink: 0;
-}
-.picker-header-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: var(--color-text);
-}
-.picker-header-close {
-  font-size: 36rpx;
-  color: var(--color-text-sub);
-  padding: 8rpx;
-}
-.picker-list {
-  flex: 1;
-  overflow-y: auto;
-}
-.picker-store-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24rpx 32rpx;
-  border-bottom: 1rpx solid var(--color-border);
-}
-.picker-store-active {
-  background: #FDF6F2;
-}
-.picker-store-left {
-  display: flex;
-  gap: 16rpx;
-  flex: 1;
-  overflow: hidden;
-}
-.picker-store-img {
-  width: 100rpx;
-  height: 80rpx;
-  border-radius: 10rpx;
-  flex-shrink: 0;
-}
-.picker-store-info {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-}
-.picker-store-name {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: var(--color-text);
-}
-.picker-store-addr {
-  font-size: 22rpx;
-  color: var(--color-text-sub);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.picker-store-tags {
-  display: flex;
-  gap: 8rpx;
-  flex-wrap: wrap;
-}
-.picker-tag {
-  font-size: 20rpx;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
-}
-.picker-store-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8rpx;
-  flex-shrink: 0;
-  margin-left: 16rpx;
-}
-.picker-store-dist {
-  font-size: 22rpx;
-  color: var(--color-text-sub);
-}
-.picker-check {
-  width: 40rpx; height: 40rpx;
-  background: var(--color-primary);
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24rpx;
-  font-weight: 700;
-}
-
-/* ── 门店选择弹层（带地图） ── */
-.picker-with-map {
-  max-height: 85vh;
-  height: 85vh;
-}
-.picker-map-wrap {
-  flex-shrink: 0;
-  height: 38vh;
-}
-.picker-map {
-  width: 100%;
-  height: 100%;
-}
-.picker-store-highlight {
-  background: #FFF3ED;
-  border-left: 6rpx solid var(--color-primary);
-}
-.picker-with-map .picker-list {
-  flex: 1;
-  min-height: 0;
-}
+.picker-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; }
+.store-picker-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 24rpx 24rpx 0 0; z-index: 201; max-height: 70vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); }
+.picker-header { display: flex; justify-content: space-between; align-items: center; padding: 28rpx 32rpx; border-bottom: 1rpx solid var(--color-border); flex-shrink: 0; }
+.picker-header-title { font-size: 32rpx; font-weight: 600; color: var(--color-text); }
+.picker-header-close { font-size: 36rpx; color: var(--color-text-sub); padding: 8rpx; }
+.picker-list { flex: 1; overflow-y: auto; }
+.picker-store-item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 32rpx; border-bottom: 1rpx solid var(--color-border); }
+.picker-store-active { background: #FDF6F2; }
+.picker-store-left { display: flex; gap: 16rpx; flex: 1; overflow: hidden; }
+.picker-store-img { width: 100rpx; height: 80rpx; border-radius: 10rpx; flex-shrink: 0; }
+.picker-store-info { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 4rpx; }
+.picker-store-name { font-size: 28rpx; font-weight: 600; color: var(--color-text); }
+.picker-store-addr { font-size: 22rpx; color: var(--color-text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker-store-tags { display: flex; gap: 8rpx; flex-wrap: wrap; }
+.picker-tag { font-size: 20rpx; color: var(--color-primary); background: var(--color-primary-light); padding: 2rpx 10rpx; border-radius: 6rpx; }
+.picker-store-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; flex-shrink: 0; margin-left: 16rpx; }
+.picker-store-dist { font-size: 22rpx; color: var(--color-text-sub); }
+.picker-check { width: 40rpx; height: 40rpx; background: var(--color-primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24rpx; font-weight: 700; }

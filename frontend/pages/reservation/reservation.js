@@ -10,13 +10,6 @@ Page({
     stores: [],           // 所有门店列表（已按距离排序）
     showStorePicker: false, // 门店选择弹层
 
-    // 门店选择器地图
-    pickerMapLat: 39.9042,
-    pickerMapLng: 116.4074,
-    pickerMarkers: [],
-    activePickerStoreId: null,
-    userLocation: null,
-
     tables: [],
     loading: true,
     selectedTable: null,
@@ -40,13 +33,8 @@ Page({
   },
 
   onLoad(options) {
-    // 检查登录态，未登录跳转到登录页
-    if (!wx.getStorageSync('token')) {
-      wx.reLaunch({ url: '/pages/login/login' })
-      return
-    }
+    if (!wx.getStorageSync('token')) return
 
-    // 生成未来7天日期
     const dateList = []
     for (let i = 0; i < 7; i++) {
       const d = new Date()
@@ -66,7 +54,6 @@ Page({
       reserveTime: '14:00'
     })
 
-    // 优先从 URL 参数获取（从首页卡片跳转过来）
     if (options.storeId) {
       this.setData({
         storeId: options.storeId,
@@ -74,9 +61,7 @@ Page({
       })
       const app = getApp()
       app.globalData.currentStore = { id: options.storeId, name: decodeURIComponent(options.storeName || 'NekoCafé') }
-    }
-    // 否则用全局缓存的当前门店
-    else {
+    } else {
       const app = getApp()
       if (app.globalData.currentStore) {
         this.setData({
@@ -85,18 +70,12 @@ Page({
         })
       }
     }
-
     this.loadStores()
   },
 
   onShow() {
-    // 检查登录态，未登录跳转到登录页
-    if (!wx.getStorageSync('token')) {
-      wx.reLaunch({ url: '/pages/login/login' })
-      return
-    }
+    if (!wx.getStorageSync('token')) return
 
-    // 每次显示时同步全局门店（可能在其他页面切换了）
     const app = getApp()
     if (app.globalData.currentStore && (!this.data.storeId || app.globalData.currentStore.id !== this.data.storeId)) {
       this.setData({
@@ -105,27 +84,21 @@ Page({
       })
       this.loadTables()
     }
-    // 如果仍然没有门店，自动弹出选择器
     if (!this.data.storeId && this.data.stores.length > 0) {
       this.setData({ showStorePicker: true })
     }
   },
 
-  // 加载所有门店 → 自动定位 → 按距离排序
   loadStores() {
     get('/api/stores').then(res => {
       if (res.code === 0) {
-        const rawStores = res.data
-        // 自动获取定位 → 计算距离 → 排序
-        this.autoSortByLocation(rawStores)
+        this.autoSortByLocation(res.data)
       }
     })
   },
 
-  // 自动定位 + 距离排序
   autoSortByLocation(rawStores) {
     getUserLocation().then(userLoc => {
-      this.setData({ userLocation: userLoc })
       const sorted = applyDistanceAndSort(rawStores, userLoc)
       this.applySortedStores(sorted)
     }).catch(() => {
@@ -135,17 +108,11 @@ Page({
     })
   },
 
-  // 应用排序后的门店列表
   applySortedStores(sorted) {
     this.setData({ stores: sorted })
-
-    // 如果还没有选中门店，用第一个（最近）作为默认
     if (!this.data.storeId && sorted.length > 0) {
       const first = sorted[0]
-      this.setData({
-        storeId: first.id,
-        storeName: first.name
-      })
+      this.setData({ storeId: first.id, storeName: first.name })
       const app = getApp()
       app.globalData.currentStore = { id: first.id, name: first.name }
       this.loadTables()
@@ -154,70 +121,9 @@ Page({
     }
   },
 
-  // 点击门店头部 → 构建标记并弹出切换面板
-  onStoreHeaderTap() {
-    this.buildPickerMarkers()
-    this.setData({ showStorePicker: true, activePickerStoreId: null })
-  },
+  onStoreHeaderTap() { this.setData({ showStorePicker: true }) },
+  hideStorePicker() { this.setData({ showStorePicker: false }) },
 
-  // 隐藏门店选择器
-  hideStorePicker() {
-    this.setData({ showStorePicker: false })
-  },
-
-  // 构建门店选择器地图标记
-  buildPickerMarkers() {
-    const { stores, userLocation } = this.data
-    if (!stores || stores.length === 0) return
-
-    const markers = stores.map((s, index) => ({
-      id: s.id,
-      latitude: s.lat,
-      longitude: s.lng,
-      title: s.name,
-      // 不设 callout（门店选择器地图不需要导航；避免 qqmap:// scheme 报错）
-      label: {
-        content: String(index + 1),
-        color: '#ffffff',
-        fontSize: 12,
-        x: 12,
-        y: -24,
-        bgColor: '#C97E5A',
-        borderRadius: 16,
-        padding: 4
-      },
-      width: 26,
-      height: 26
-    }))
-
-    // 地图居中：用户定位优先 → 所有门店中心
-    const loc = userLocation
-    let centerLat, centerLng
-    if (loc && loc.lat) {
-      centerLat = loc.lat
-      centerLng = loc.lng
-    } else {
-      const lats = stores.map(s => s.lat)
-      const lngs = stores.map(s => s.lng)
-      centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
-      centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2
-    }
-
-    this.setData({
-      pickerMarkers: markers,
-      pickerMapLat: centerLat,
-      pickerMapLng: centerLng
-    })
-  },
-
-  // 地图标记点击 → 滚动列表到对应门店
-  onPickerMarkerTap(e) {
-    const id = e.detail && e.detail.markerId
-    if (!id) return
-    this.setData({ activePickerStoreId: id })
-  },
-
-  // 切换门店
   onStoreSelect(e) {
     const store = e.currentTarget.dataset.store
     if (store.id === this.data.storeId) {
@@ -227,7 +133,7 @@ Page({
     this.setData({
       storeId: store.id,
       storeName: store.name,
-      selectedTable: null,  // 清空已选桌位
+      selectedTable: null, 
       loading: true,
       showStorePicker: false
     })
@@ -246,33 +152,24 @@ Page({
     })
   },
 
-  // 筛选桌型
   onFilterChange(e) {
     this.setData({ filterType: e.currentTarget.dataset.type, selectedTable: null })
   },
 
-  // 选择桌位
   onTableSelect(e) {
     const table = e.currentTarget.dataset.table
+    // 添加物理震动反馈，提升不可点击状态的体验
     if (table.status !== 'available') {
-      wx.showToast({ title: table.status === 'booked' ? '该桌已被预约' : '该桌暂停使用', icon: 'none' })
+      wx.vibrateShort({ type: 'medium' }) 
+      wx.showToast({ title: table.status === 'booked' ? '该桌已被预约' : '该桌维护中', icon: 'none' })
       return
     }
     this.setData({ selectedTable: table })
   },
 
-  // 日期选择
-  onDateSelect(e) {
-    this.setData({ reserveDate: e.currentTarget.dataset.date })
-  },
+  onDateSelect(e) { this.setData({ reserveDate: e.currentTarget.dataset.date }) },
+  onTimeChange(e) { this.setData({ reserveTime: this.data.timeSlots[e.detail.value] }) },
 
-  // 时间选择
-  onTimeChange(e) {
-    const timeSlots = this.data.timeSlots
-    this.setData({ reserveTime: timeSlots[e.detail.value] })
-  },
-
-  // 人数调整
   onPersonsMinus() {
     if (this.data.persons <= 1) return
     this.setData({ persons: this.data.persons - 1 })
@@ -285,7 +182,6 @@ Page({
     this.setData({ persons: this.data.persons + 1 })
   },
 
-  // 时长调整
   onDurationMinus() {
     if (this.data.duration <= 1) return
     this.setData({ duration: this.data.duration - 1 })
@@ -295,7 +191,6 @@ Page({
     this.setData({ duration: this.data.duration + 1 })
   },
 
-  // 提交预约
   onSubmit() {
     const { selectedTable, reserveDate, reserveTime, persons, storeId } = this.data
     if (!selectedTable) { wx.showToast({ title: '请先选择桌位', icon: 'none' }); return }

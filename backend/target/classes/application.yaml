@@ -1,0 +1,44 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    # 注意：这里的 /nekocafe 是你们业务数据库的名字，如果组长建的库叫别的名字，请替换
+    url: jdbc:postgresql://82.157.130.254:5432/postgres?stringtype=unspecified
+    username: admin_user
+    password: 123456789
+
+  data:
+    redis:
+      host: 82.157.130.254
+      port: 6379
+      password: 123456789
+
+  # 静态资源（uploads/）可被 /uploads/** 访问
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+# 服务端口
+server:
+  port: 8081
+
+# MyBatis 配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: cn.edu.bjfu.nekocafe.entity
+  configuration:
+    map-underscore-to-camel-case: true  # 驼峰映射：store_id → storeId
+
+# 日志（开发阶段打印 SQL 便于调试）
+logging:
+  level:
+    cn.edu.bjfu.nekocafe.mapper: debug
+
+# JWT 配置（实现 JwtUtil 时读取）
+jwt:
+  secret: nekocafe-secret-key-change-me-before-deploy
+  expiration: 604800000  # 7天，单位毫秒
+
+# 微信小程序配置（AuthServiceImpl 中调用 wx.login 时使用）
+wx:
+  appid: YOUR_APPID_HERE
+  secret: YOUR_SECRET_HERE

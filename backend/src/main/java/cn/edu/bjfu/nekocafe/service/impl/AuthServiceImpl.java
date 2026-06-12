@@ -30,18 +30,18 @@ import java.util.List;
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private UsersMapper usersMapper;
+  @Autowired
+  private UsersMapper usersMapper;
 
-    @Autowired
-    private MemberExtMapper memberExtMapper;
+  @Autowired
+  private MemberExtMapper memberExtMapper;
 
-    @Override
-    public LoginVO wxLogin(LoginDTO dto) {
-        String code = dto.getCode();
-        if (code == null || code.isEmpty()) {
-            throw new IllegalArgumentException("code 不能为空");
-        }
+  @Override
+  public LoginVO wxLogin(LoginDTO dto) {
+    String code = dto.getCode();
+    if (code == null || code.isEmpty()) {
+      throw new IllegalArgumentException("code 不能为空");
+    }
 
         // ========== 1. 课设版：用 code 当用户标识查 openid 字段 ==========
         // 正式环境应改为：调微信 code2session 拿真实 openid，然后 phone 字段存真实手机号
@@ -96,8 +96,8 @@ public class AuthServiceImpl implements AuthService {
         userInfo.setPoints(points);
         result.setUserInfo(userInfo);
 
-        return result;
-    }
+    return result;
+  }
 
     // ========== 工具方法 ==========
 
