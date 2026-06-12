@@ -9,9 +9,9 @@ Page({
     storesOriginal: [],  // 保持原始顺序用于搜索恢复
     loading: true,
     banners: [
-      { id: 1, imageUrl: 'https://placehold.co/750x350/C97E5A/white?text=Banner+1', title: '布偶猫新成员入驻' },
-      { id: 2, imageUrl: 'https://placehold.co/750x350/C97E5A/white?text=Banner+2', title: '会员日专属折扣' },
-      { id: 3, imageUrl: 'https://placehold.co/750x350/C97E5A/white?text=Banner+3', title: '新品猫爪拿铁上线' }
+      { id: 1, imageUrl: 'https://nekocafe-images.oss-cn-beijing.aliyuncs.com/uploads/banners/banner_1.png', title: '布偶猫新成员入驻' },
+      { id: 2, imageUrl: 'https://nekocafe-images.oss-cn-beijing.aliyuncs.com/uploads/banners/banner_2.png', title: '会员日专属折扣' },
+      { id: 3, imageUrl: 'https://nekocafe-images.oss-cn-beijing.aliyuncs.com/uploads/banners/banner_3.png', title: '新品猫爪拿铁上线' }
     ],
     currentBanner: 0,
     userInfo: null,

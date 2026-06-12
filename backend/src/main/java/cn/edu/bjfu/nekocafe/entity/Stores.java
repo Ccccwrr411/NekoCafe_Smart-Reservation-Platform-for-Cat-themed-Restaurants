@@ -22,6 +22,8 @@ public class Stores {
 
     private Short status;
 
+    private String imageUrl;
+
     private Date createdAt;
 
     public Integer getStoreId() {
@@ -94,6 +96,14 @@ public class Stores {
 
     public void setStatus(Short status) {
         this.status = status;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Date getCreatedAt() {

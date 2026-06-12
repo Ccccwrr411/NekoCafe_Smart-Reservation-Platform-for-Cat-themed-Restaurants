@@ -65,12 +65,12 @@
 /* ── Banner ── */
 .banner {
   width: 100%;
-  height: 300rpx;
+  height: 380rpx;
   position: relative;
 }
 .banner-img {
   width: 100%;
-  height: 300rpx;
+  height: 380rpx;
 }
 .banner-title {
   position: absolute;

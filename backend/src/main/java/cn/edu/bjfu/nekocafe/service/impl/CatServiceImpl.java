@@ -52,7 +52,8 @@ public class CatServiceImpl implements CatService {
             vo.setName(cp.getName());
             vo.setBreed(cp.getBreed());
             vo.setAge(calcAge(cp.getBirthDate()));
-            vo.setImageUrl("http://82.157.130.254:8081/uploads/cats/cat_" + cp.getCatId() + ".jpg");
+            // 直接使用数据库中的完整头像URL，不再拼接
+            vo.setImageUrl(cp.getAvatarUrl());
             if (cp.getWeightKg() != null) {
                 vo.setWeight(cp.getWeightKg().doubleValue());
             }
@@ -79,7 +80,8 @@ public class CatServiceImpl implements CatService {
         vo.setName(cp.getName());
         vo.setBreed(cp.getBreed());
         vo.setAge(calcAge(cp.getBirthDate()));
-        vo.setImageUrl("http://82.157.130.254:8081/uploads/cats/cat_" + cp.getCatId() + ".jpg");
+        // 直接使用数据库中的完整头像URL，不再拼接
+        vo.setImageUrl(cp.getAvatarUrl());
         if (cp.getWeightKg() != null) {
             vo.setWeight(cp.getWeightKg().doubleValue());
         }

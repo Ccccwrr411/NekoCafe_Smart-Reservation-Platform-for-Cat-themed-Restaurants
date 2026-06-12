@@ -17,20 +17,6 @@
     </view>
   </view> -->
 
-  <!-- ══ 搜索栏 ══ -->
-  <view class="search-bar">
-    <view class="search-inner">
-      <text class="search-icon">🔍</text>
-      <input
-        class="search-input"
-        placeholder="搜索门店、地址、猫咪品种..."
-        value="{{searchKeyword}}"
-        bindinput="onSearchInput"
-        bindconfirm="onSearch"
-      />
-    </view>
-  </view>
-
   <!-- ══ Banner 轮播 ══ -->
   <swiper
     class="banner"
