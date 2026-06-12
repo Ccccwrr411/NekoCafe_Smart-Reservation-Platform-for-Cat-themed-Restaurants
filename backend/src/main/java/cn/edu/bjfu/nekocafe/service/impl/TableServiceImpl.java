@@ -98,16 +98,19 @@ public class TableServiceImpl implements TableService {
      * 前端要求：available / booked / maintenance
      */
     private String mapTableStatus(String dbStatus) {
-      if (dbStatus == null) {
-        return "available";
-      }
-      // 兼容不同的状态命名规范
-      switch (dbStatus.toUpperCase()) {
-        case "IDLE":return "available";
-        case "OCCUPIED":return "booked";
-        case "RESERVED":return "maintenance";
-        default:
-          return "available";
-      }
+        if (dbStatus == null) {
+            return "available";
+        }
+        switch (dbStatus.toUpperCase()) {
+            case "IDLE":
+                return "available";
+            case "OCCUPIED":
+            case "RESERVED":
+                return "booked";
+            case "CLEANING":
+                return "maintenance";
+            default:
+                return "available";
+        }
     }
 }

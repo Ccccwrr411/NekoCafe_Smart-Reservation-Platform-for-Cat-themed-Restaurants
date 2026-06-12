@@ -1,0 +1,301 @@
+/* pages/index/index.wxss */
+
+/* ── 顶部 Header ── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 28rpx 16rpx;
+  background: var(--color-primary);
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255,255,255,0.6);
+}
+.greeting {
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+  display: block;
+}
+.member-badge {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+  margin-top: 4rpx;
+  display: inline-block;
+}
+.header-right { }
+.points {
+  color: #fff;
+  font-size: 26rpx;
+  background: rgba(255,255,255,0.2);
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+}
+
+/* ── 搜索栏 ── */
+.search-bar {
+  background: var(--color-primary);
+  padding: 0 24rpx 20rpx;
+}
+.search-inner {
+  background: #fff;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  padding: 14rpx 24rpx;
+}
+.search-icon { font-size: 28rpx; margin-right: 12rpx; }
+.search-input {
+  flex: 1;
+  font-size: 26rpx;
+  color: var(--color-text);
+}
+
+/* ── Banner ── */
+.banner {
+  width: 100%;
+  height: 300rpx;
+  position: relative;
+}
+.banner-img {
+  width: 100%;
+  height: 300rpx;
+}
+.banner-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.5));
+  color: #fff;
+  font-size: 26rpx;
+  padding: 20rpx 24rpx 10rpx;
+}
+
+/* ── 快捷入口 ── */
+.quick-entry {
+  display: flex;
+  justify-content: space-around;
+  padding: 24rpx 16rpx;
+  margin: 20rpx 24rpx;
+}
+.entry-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  font-size: 24rpx;
+  color: var(--color-text);
+}
+.entry-icon {
+  width: 88rpx;
+  height: 88rpx;
+  background: var(--color-primary-light);
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+}
+
+/* ── 门店卡片 ── */
+.store-card {
+  padding: 0;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+  position: relative;
+}
+.store-img {
+  width: 100%;
+  height: 280rpx;
+  display: block;
+}
+.store-badge {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  color: #fff;
+}
+.badge-open  { background: rgba(76,175,80,0.9); }
+.badge-closed { background: rgba(117,117,117,0.9); }
+
+.store-info { padding: 20rpx 24rpx; }
+
+.store-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+.store-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.store-rating {
+  font-size: 24rpx;
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.store-address {
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.store-meta {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 14rpx;
+}
+.meta-item {
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+}
+
+.tag-row {
+  display: flex;
+  gap: 10rpx;
+  flex-wrap: wrap;
+  margin-bottom: 16rpx;
+}
+
+.store-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--color-border);
+}
+.open-time {
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+}
+.store-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.btn-nav {
+  display: flex;
+  align-items: center;
+  color: var(--color-primary);
+  font-size: 26rpx;
+  padding: 12rpx 20rpx;
+  border-radius: 30rpx;
+  border: 2rpx solid var(--color-primary);
+  background: var(--color-primary-light);
+}
+.btn-reserve {
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 26rpx;
+  padding: 12rpx 36rpx;
+  border-radius: 30rpx;
+}
+
+/* ── AI 推荐区域 ── */
+.recommend-section {
+  margin: 16rpx 24rpx;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(135deg, #FFF8F5 0%, #FDF0EB 100%);
+  border: 1rpx solid #F0D5C9;
+}
+.recommend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+.recommend-title-row { display: flex; align-items: center; gap: 8rpx; }
+.recommend-icon { font-size: 32rpx; }
+.recommend-title { font-size: 28rpx; font-weight: 700; color: var(--color-text); }
+.recommend-close { font-size: 32rpx; color: var(--color-text-sub); padding: 8rpx; }
+.recommend-reason { font-size: 24rpx; color: var(--color-text-sub); margin-bottom: 16rpx; display: block; }
+.recommend-sub-title { font-size: 26rpx; font-weight: 600; color: var(--color-primary); margin: 12rpx 0 10rpx; }
+.recommend-scroll { width: 100%; white-space: nowrap; }
+.recommend-card {
+  display: inline-block;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  margin-right: 16rpx;
+  vertical-align: top;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+}
+.rec-table-card { width: 320rpx; white-space: normal; }
+.rec-table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
+.rec-table-name { font-size: 28rpx; font-weight: 600; color: var(--color-text); }
+.rec-table-type { font-size: 22rpx; background: var(--color-primary-light); color: var(--color-primary); padding: 2rpx 10rpx; border-radius: 6rpx; }
+.rec-cat-name { font-size: 24rpx; color: var(--color-text-sub); display: block; margin-bottom: 6rpx; }
+.rec-match-score { font-size: 22rpx; color: #4CAF50; font-weight: 600; display: block; margin-bottom: 4rpx; }
+.rec-match-reason { font-size: 22rpx; color: var(--color-text-sub); line-height: 1.5; white-space: normal; }
+.rec-dish-card { width: 200rpx; text-align: center; white-space: normal; }
+.rec-dish-img { width: 168rpx; height: 168rpx; border-radius: 12rpx; display: block; margin: 0 auto 10rpx; }
+.rec-dish-name { font-size: 26rpx; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 6rpx; }
+.rec-dish-bottom { display: flex; justify-content: center; align-items: center; gap: 10rpx; margin-bottom: 6rpx; }
+.rec-dish-price { font-size: 28rpx; font-weight: 700; color: var(--color-primary); }
+.rec-dish-hot { font-size: 20rpx; background: #FFF3E0; color: #E65100; padding: 2rpx 8rpx; border-radius: 6rpx; }
+.rec-dish-reason { font-size: 22rpx; color: var(--color-text-sub); white-space: normal; }
+
+/* ── LBS 排序切换 ── */
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24rpx;
+  margin: 24rpx 0 12rpx;
+}
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.sort-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  border: 1rpx solid var(--color-border);
+}
+.sort-active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+.sort-icon { font-size: 24rpx; }
+
+/* 地图入口按钮 */
+.map-entry {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 24rpx;
+  color: #fff;
+  background: var(--color-primary);
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-weight: 500;
+}
+.map-entry-icon {
+  font-size: 24rpx;
+}

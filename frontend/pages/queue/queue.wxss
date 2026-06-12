@@ -1,0 +1,51 @@
+/* pages/queue/queue.wxss */
+@import "../../app.wxss";
+
+.now-serving {
+  background: linear-gradient(135deg, #C97E5A, #A65D3A);
+  border-radius: 16rpx;
+  padding: 48rpx;
+  text-align: center;
+  color: #fff;
+  margin-bottom: 24rpx;
+}
+.now-label { font-size: 28rpx; opacity: 0.9; display: block; }
+.now-number { font-size: 96rpx; font-weight: 700; display: block; margin: 12rpx 0; }
+.now-hint { font-size: 26rpx; opacity: 0.85; display: block; }
+
+.my-number-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  border: 2rpx solid #C97E5A;
+}
+.my-number-left { margin-right: 32rpx; text-align: center; }
+.my-label { font-size: 24rpx; color: #888; display: block; }
+.my-num { font-size: 56rpx; font-weight: 700; color: #C97E5A; display: block; }
+.my-number-right { flex: 1; }
+.my-wait { font-size: 30rpx; color: #333; font-weight: 600; display: block; }
+.my-hint { font-size: 24rpx; color: #888; display: block; margin-top: 8rpx; }
+
+.queue-list { margin-top: 8rpx; }
+.queue-item {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+}
+.queue-num {
+  width: 100rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #C97E5A;
+}
+.queue-info { flex: 1; }
+.queue-info text { display: block; font-size: 28rpx; color: #333; }
+.queue-ahead { font-size: 24rpx; color: #888; margin-top: 4rpx; }

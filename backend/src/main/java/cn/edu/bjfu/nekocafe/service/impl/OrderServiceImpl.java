@@ -32,48 +32,48 @@ import java.util.*;
 @Service
 public class OrderServiceImpl implements OrderService {
 
-    @Autowired
-    private ReservationsMapper reservationsMapper;
+  @Autowired
+  private ReservationsMapper reservationsMapper;
 
-    @Autowired
-    private OrderItemsMapper orderItemsMapper;
+  @Autowired
+  private OrderItemsMapper orderItemsMapper;
 
-    @Autowired
-    private StoresMapper storesMapper;
+  @Autowired
+  private StoresMapper storesMapper;
 
-    @Autowired
-    private TablesMapper tablesMapper;
+  @Autowired
+  private TablesMapper tablesMapper;
 
-    @Autowired
-    private RefundRecordsMapper refundRecordsMapper;
+  @Autowired
+  private RefundRecordsMapper refundRecordsMapper;
 
-    @Autowired
-    private PaymentsMapper paymentsMapper;
+  @Autowired
+  private PaymentsMapper paymentsMapper;
 
-    // ==================== E-1: 订单列表 ====================
+  // ==================== E-1: 订单列表 ====================
 
-    @Override
-    public List<OrderVO> listOrders(Long userId) {
-        // 1. 查该用户所有预约
-        ReservationsExample example = new ReservationsExample();
-        example.createCriteria().andUserIdEqualTo(userId);
-        example.setOrderByClause("reservation_time DESC");
-        List<Reservations> reservationsList = reservationsMapper.selectByExample(example);
+  @Override
+  public List<OrderVO> listOrders(Long userId) {
+    // 1. 查该用户所有预约
+    ReservationsExample example = new ReservationsExample();
+    example.createCriteria().andUserIdEqualTo(userId);
+    example.setOrderByClause("reservation_time DESC");
+    List<Reservations> reservationsList = reservationsMapper.selectByExample(example);
 
-        if (reservationsList == null || reservationsList.isEmpty()) {
-            return new ArrayList<>();
-        }
+    if (reservationsList == null || reservationsList.isEmpty()) {
+      return new ArrayList<>();
+    }
 
-        // 收集所有 reservationId
-        List<Long> reservationIds = new ArrayList<>();
-        for (Reservations r : reservationsList) {
-            reservationIds.add(r.getReservationId());
-        }
+    // 收集所有 reservationId
+    List<Long> reservationIds = new ArrayList<>();
+    for (Reservations r : reservationsList) {
+      reservationIds.add(r.getReservationId());
+    }
 
-        // 2. 批量查 OrderItems
-        OrderItemsExample itemsExample = new OrderItemsExample();
-        itemsExample.createCriteria().andReservationIdIn(reservationIds);
-        List<OrderItems> allItems = orderItemsMapper.selectByExample(itemsExample);
+    // 2. 批量查 OrderItems
+    OrderItemsExample itemsExample = new OrderItemsExample();
+    itemsExample.createCriteria().andReservationIdIn(reservationIds);
+    List<OrderItems> allItems = orderItemsMapper.selectByExample(itemsExample);
 
         // 按 reservationId 分组
         Map<Long, List<OrderItems>> itemsMap = new HashMap<>();
@@ -433,10 +433,10 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "当前订单状态不允许取消");
         }
 
-        // 更新状态
-        reservation.setStatus("CANCELLED");
-        reservation.setUpdatedAt(new Date());
-        reservationsMapper.updateByPrimaryKeySelective(reservation);
+    // 更新状态
+    reservation.setStatus("CANCEL_BOOKING");
+    reservation.setUpdatedAt(new Date());
+    reservationsMapper.updateByPrimaryKeySelective(reservation);
 
         // 创建退款记录
         BigDecimal refundAmount = reservation.getOrderAmount() != null
@@ -462,11 +462,11 @@ public class OrderServiceImpl implements OrderService {
         refund.setCompletedAt(new Date());
         refundRecordsMapper.insertSelective(refund);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("status", "cancelled");
-        result.put("refundAmount", refundAmount.intValue());
-        return result;
-    }
+    Map<String, Object> result = new HashMap<>();
+    result.put("status", "CANCEL_BOOKING");
+    result.put("refundAmount", refundAmount.intValue());
+    return result;
+  }
 
     // ==================== E-5: 改约 ====================
 
@@ -546,26 +546,26 @@ public class OrderServiceImpl implements OrderService {
             paymentId = payList.get(0).getPaymentId();
         }
 
-        RefundRecords refund = new RefundRecords();
-        refund.setReservationId(reservationId);
-        refund.setPaymentId(paymentId);
-        refund.setRefundAmount(refundAmount);
-        refund.setRefundReason("用户申请退款");
-        refund.setStatus("processing");
-        refund.setCreatedAt(new Date());
-        refundRecordsMapper.insertSelective(refund);
+    RefundRecords refund = new RefundRecords();
+    refund.setReservationId(reservationId);
+    refund.setPaymentId(paymentId);
+    refund.setRefundAmount(refundAmount);
+    refund.setRefundReason("用户申请退款");
+    refund.setStatus("REQUEST_CANCEL");
+    refund.setCreatedAt(new Date());
+    refundRecordsMapper.insertSelective(refund);
 
-        // 更新订单状态为退款中
-        reservation.setStatus("refunding");
-        reservation.setUpdatedAt(new Date());
-        reservationsMapper.updateByPrimaryKeySelective(reservation);
+    // 更新订单状态为退款中
+    reservation.setStatus("REFUNDING");
+    reservation.setUpdatedAt(new Date());
+    reservationsMapper.updateByPrimaryKeySelective(reservation);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("refundId", refund.getRefundId());
-        result.put("refundAmount", refundAmount.intValue());
-        result.put("status", "processing");
-        return result;
-    }
+    Map<String, Object> result = new HashMap<>();
+    result.put("refundId", refund.getRefundId());
+    result.put("refundAmount", refundAmount.intValue());
+    result.put("status", "REQUEST_CANCEL");
+    return result;
+  }
 
     // ==================== E-7: 纯预约（创建预约，无点单） ====================
 
@@ -615,11 +615,11 @@ public class OrderServiceImpl implements OrderService {
         reservationsMapper.insertSelective(reservation);
         Long reservationId = getLatestReservationId(userId);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("orderId", formatOrderId(reservationId));
-        result.put("status", "confirmed");
-        return result;
-    }
+    Map<String, Object> result = new HashMap<>();
+    result.put("orderId", formatOrderId(reservationId));
+    result.put("status", "CONFIRMED");
+    return result;
+  }
 
     // ==================== 工具方法 ====================
 
@@ -658,33 +658,33 @@ public class OrderServiceImpl implements OrderService {
         throw new BusinessException(ErrorCode.SERVER_ERROR, "插入预约记录失败");
     }
 
-    /**
-     * 判断订单是否可取消
-     * 规则：状态为 confirmed 或 pending 时可以取消
-     */
-    private boolean canCancelOrder(Reservations reservation) {
-        if (reservation == null || reservation.getStatus() == null) return false;
-        String status = reservation.getStatus();
-        return "confirmed".equals(status) || "pending".equals(status);
-    }
+  /**
+   * 判断订单是否可取消
+   * 规则：状态为 confirmed 或 pending 时可以取消
+   */
+  private boolean canCancelOrder(Reservations reservation) {
+    if (reservation == null || reservation.getStatus() == null) return false;
+    String status = reservation.getStatus();
+    return "CONFIRMED".equals(status) || "BOOKED".equals(status);
+  }
 
-    /**
-     * 判断订单是否可改约
-     * 规则：状态为 confirmed 或 pending 时可以改约
-     */
-    private boolean canRescheduleOrder(Reservations reservation) {
-        if (reservation == null || reservation.getStatus() == null) return false;
-        String status = reservation.getStatus();
-        return "confirmed".equals(status) || "pending".equals(status);
-    }
+  /**
+   * 判断订单是否可改约
+   * 规则：状态为 confirmed 或 booked 时可以改约
+   */
+  private boolean canRescheduleOrder(Reservations reservation) {
+    if (reservation == null || reservation.getStatus() == null) return false;
+    String status = reservation.getStatus();
+    return "CONFIRMED".equals(status) || "BOOKED".equals(status);
+  }
 
-    /**
-     * 判断订单是否可退款
-     * 规则：状态为 confirmed 或 completed 时可以退款
-     */
-    private boolean canRefundOrder(Reservations reservation) {
-        if (reservation == null || reservation.getStatus() == null) return false;
-        String status = reservation.getStatus();
-        return "confirmed".equals(status) || "completed".equals(status);
-    }
+  /**
+   * 判断订单是否可退款
+   * 规则：状态为 confirmed 或 completed 时可以退款
+   */
+  private boolean canRefundOrder(Reservations reservation) {
+    if (reservation == null || reservation.getStatus() == null) return false;
+    String status = reservation.getStatus();
+    return "CONFIRMED".equals(status) || "COMPLETED".equals(status);
+  }
 }

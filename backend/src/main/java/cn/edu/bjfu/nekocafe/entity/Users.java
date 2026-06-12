@@ -7,6 +7,10 @@ public class Users {
 
     private String phone;
 
+    private String email;
+
+    private String openid;
+
     private String passwordHash;
 
     private String nickname;
@@ -25,10 +29,6 @@ public class Users {
 
     private Date updatedAt;
 
-    private String email;
-
-    private String openid;
-
     public Long getUserId() {
         return userId;
     }
@@ -43,6 +43,22 @@ public class Users {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getOpenid() {
+        return openid;
+    }
+
+    public void setOpenid(String openid) {
+        this.openid = openid;
     }
 
     public String getPasswordHash() {
@@ -115,20 +131,5 @@ public class Users {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
-    }
-    public String getEmail() {
-      return email;
-    }
-
-    public void setEmail(String email) {
-      this.email = email;
-    }
-
-    public String getOpenid() {
-      return openid;
-    }
-
-    public void setOpenid(String openid) {
-      this.openid = openid;
     }
 }

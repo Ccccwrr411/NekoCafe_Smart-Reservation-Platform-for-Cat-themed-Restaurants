@@ -39,7 +39,6 @@ public class UsersExample {
         oredCriteria.add(criteria);
     }
 
-
     public Criteria or() {
         Criteria criteria = createCriteriaInternal();
         oredCriteria.add(criteria);
@@ -72,48 +71,6 @@ public class UsersExample {
             super();
             criteria = new ArrayList<>();
         }
-
-      // ================= 新增 email 的查询条件 =================
-      public Criteria andEmailIsNull() {
-        addCriterion("email is null");
-        return (Criteria) this;
-      }
-
-      public Criteria andEmailIsNotNull() {
-        addCriterion("email is not null");
-        return (Criteria) this;
-      }
-
-      public Criteria andEmailEqualTo(String value) {
-        addCriterion("email =", value, "email");
-        return (Criteria) this;
-      }
-
-      public Criteria andEmailNotEqualTo(String value) {
-        addCriterion("email <>", value, "email");
-        return (Criteria) this;
-      }
-
-      // ================= 新增 openid 的查询条件 =================
-      public Criteria andOpenidIsNull() {
-        addCriterion("openid is null");
-        return (Criteria) this;
-      }
-
-      public Criteria andOpenidIsNotNull() {
-        addCriterion("openid is not null");
-        return (Criteria) this;
-      }
-
-      public Criteria andOpenidEqualTo(String value) {
-        addCriterion("openid =", value, "openid");
-        return (Criteria) this;
-      }
-
-      public Criteria andOpenidNotEqualTo(String value) {
-        addCriterion("openid <>", value, "openid");
-        return (Criteria) this;
-      }
 
         public boolean isValid() {
             return criteria.size() > 0;
@@ -275,6 +232,51 @@ public class UsersExample {
 
         public Criteria andPhoneNotBetween(String value1, String value2) {
             addCriterion("phone not between", value1, value2, "phone");
+            return (Criteria) this;
+        }
+
+        public Criteria andEmailIsNull() {
+            addCriterion("email is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andEmailIsNotNull() {
+            addCriterion("email is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andEmailEqualTo(String value) {
+            addCriterion("email =", value, "email");
+            return (Criteria) this;
+        }
+
+        public Criteria andEmailNotEqualTo(String value) {
+            addCriterion("email <>", value, "email");
+            return (Criteria) this;
+        }
+
+        public Criteria andEmailLike(String value) {
+            addCriterion("email like", value, "email");
+            return (Criteria) this;
+        }
+
+        public Criteria andOpenidIsNull() {
+            addCriterion("openid is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOpenidIsNotNull() {
+            addCriterion("openid is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andOpenidEqualTo(String value) {
+            addCriterion("openid =", value, "openid");
+            return (Criteria) this;
+        }
+
+        public Criteria andOpenidNotEqualTo(String value) {
+            addCriterion("openid <>", value, "openid");
             return (Criteria) this;
         }
 

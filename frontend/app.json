@@ -1,0 +1,49 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/reservation/reservation",
+    "pages/menu/menu",
+    "pages/order/order",
+    "pages/profile/profile",
+    "pages/staff/staff",
+    "pages/staff/refund",
+    "pages/login/login",
+    "pages/review/review",
+    "pages/orderDetail/orderDetail",
+    "pages/queue/queue",
+    "pages/realname/realname",
+    "pages/coupons/coupons",
+    "pages/cats/cats",
+    "pages/dashboard/dashboard",
+    "pages/orderList/orderList",
+    "pages/map/map"
+  ],
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#C97E5A",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/reservation/reservation", "text": "预约" },
+      { "pagePath": "pages/menu/menu", "text": "点单" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "NekoCafé 猫咖",
+    "navigationBarBackgroundColor": "#C97E5A",
+    "backgroundColor": "#F7F0EB"
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "requiredPrivateInfos": ["getLocation"],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于推荐离您最近的NekoCafé门店"
+    }
+  }
+}

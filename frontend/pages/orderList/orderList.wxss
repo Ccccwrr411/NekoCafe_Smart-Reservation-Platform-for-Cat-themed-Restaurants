@@ -1,0 +1,40 @@
+/* pages/orderList/orderList.wxss */
+.order-card { margin: 16rpx 24rpx; padding: 20rpx 24rpx; }
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+  padding-bottom: 12rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.order-id { font-size: 24rpx; color: #999; }
+.order-status { font-size: 26rpx; font-weight: 600; }
+.order-body { display: flex; flex-direction: column; gap: 6rpx; }
+.order-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 26rpx;
+}
+.order-store { color: #333; font-weight: 500; }
+.order-table { color: #888; font-size: 24rpx; }
+.order-time { color: #666; }
+.order-persons { color: #C97E5A; }
+.order-items { display: flex; flex-wrap: wrap; gap: 8rpx; margin-top: 10rpx; }
+.dish-name {
+  font-size: 22rpx;
+  color: #999;
+  background: #F5F5F5;
+  padding: 2rpx 12rpx;
+  border-radius: 10rpx;
+}
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+.order-total { font-size: 30rpx; font-weight: 700; color: #C97E5A; }
+.order-arrow { font-size: 24rpx; color: #999; }

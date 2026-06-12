@@ -1,0 +1,131 @@
+<!--pages/cats/cats.wxml-->
+<view class="container">
+
+  <!-- ══ 列表模式 ══ -->
+  <view wx:if="{{!detailMode}}">
+    <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
+
+    <view wx:else>
+      <view wx:if="{{cats.length === 0}}" class="empty-state">
+        <text>暂无猫咪档案</text>
+      </view>
+
+      <view class="cats-grid">
+        <view
+          wx:for="{{cats}}"
+          wx:key="id"
+          class="cat-card"
+          bindtap="onCatClick"
+          data-cat="{{item}}"
+        >
+          <image class="cat-img" src="{{item.imageUrl}}" mode="aspectFill" />
+          <view class="cat-info">
+            <view class="cat-name-row">
+              <text class="cat-name">{{item.name}}</text>
+              <view class="cat-gender {{item.gender === '母' ? 'gender-female' : 'gender-male'}}">
+                {{item.gender}}
+              </view>
+            </view>
+            <text class="cat-breed">{{item.breed}} · {{item.age}}岁</text>
+            <view class="cat-meta">
+              <text class="cat-meta-item">⚖ {{item.weight}}kg</text>
+              <text class="cat-meta-item">💉 {{item.vaccineDue}}</text>
+            </view>
+            <view class="cat-personality">
+              <text
+                wx:for="{{item.personality}}"
+                wx:for-item="tag"
+                wx:key="*this"
+                class="personality-tag"
+              >{{tag}}</text>
+            </view>
+            <text class="cat-tap-hint">点击查看健康档案 →</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 详情模式 ══ -->
+  <view wx:else>
+    <view wx:if="{{detailLoading}}" class="loading-wrap"><text>加载详情...</text></view>
+
+    <view wx:else class="detail-wrap">
+      <!-- 返回按钮 -->
+      <view class="detail-back" bindtap="goBackList">← 返回列表</view>
+
+      <!-- 猫咪头像信息 -->
+      <view class="detail-hero">
+        <image class="detail-img" src="{{catDetail.imageUrl}}" mode="aspectFill" />
+        <view class="detail-hero-info">
+          <view class="detail-name-row">
+            <text class="detail-name">{{catDetail.name}}</text>
+            <view class="cat-gender {{catDetail.gender === '母' ? 'gender-female' : 'gender-male'}}">
+              {{catDetail.gender}}
+            </view>
+          </view>
+          <text class="detail-breed-age">{{catDetail.breed}} · {{catDetail.age}}岁</text>
+          <text class="detail-desc">{{catDetail.desc}}</text>
+          <view class="detail-personality">
+            <text wx:for="{{catDetail.personality}}" wx:for-item="tag" wx:key="*this" class="personality-tag">{{tag}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 健康评分 -->
+      <view class="detail-card health-score-card">
+        <view class="detail-card-title">🏥 健康评分</view>
+        <view class="health-score-circle">
+          <text class="score-number">{{catDetail.healthScore}}</text>
+          <text class="score-label">分</text>
+        </view>
+        <text class="health-advice">{{catDetail.healthAdvice}}</text>
+      </view>
+
+      <!-- 体重趋势图 -->
+      <view class="detail-card">
+        <view class="detail-card-title">📊 体重变化趋势（kg）</view>
+        <view class="weight-info">
+          <text>当前体重：{{catDetail.currentWeight}}kg</text>
+          <text class="weight-range">（理想范围 {{catDetail.idealWeight.min}}~{{catDetail.idealWeight.max}}kg）</text>
+        </view>
+        <canvas type="2d" id="weightChart" class="weight-chart-canvas"></canvas>
+      </view>
+
+      <!-- 疫苗记录 -->
+      <view class="detail-card">
+        <view class="detail-card-title">💉 疫苗记录</view>
+        <view wx:for="{{catDetail.vaccines}}" wx:key="name" class="vaccine-item">
+          <view class="vaccine-left">
+            <text class="vaccine-name">{{item.name}}</text>
+            <text class="vaccine-date">{{item.date}} → {{item.nextDue}}</text>
+          </view>
+          <view class="vaccine-status {{item.status === 'valid' ? 'status-valid' : item.status === 'expiring' ? 'status-expiring' : 'status-expired'}}">
+            {{item.status === 'valid' ? '有效' : item.status === 'expiring' ? '即将到期' : '已过期'}}
+          </view>
+        </view>
+      </view>
+
+      <!-- 互动记录时间线 -->
+      <view class="detail-card">
+        <view class="detail-card-title">📝 互动记录</view>
+        <view class="timeline">
+          <view wx:for="{{catDetail.interactions}}" wx:key="date" class="timeline-item">
+            <view class="timeline-dot {{item.mood === 'happy' ? 'mood-happy' : item.mood === 'grumpy' ? 'mood-grumpy' : 'mood-neutral'}}"></view>
+            <view class="timeline-content">
+              <view class="timeline-header">
+                <text class="timeline-date">{{item.date}}</text>
+                <text class="timeline-type">{{item.type}}</text>
+              </view>
+              <text class="timeline-desc">{{item.desc}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 底部占位 -->
+      <view style="height: 40rpx;"></view>
+    </view>
+  </view>
+
+</view>

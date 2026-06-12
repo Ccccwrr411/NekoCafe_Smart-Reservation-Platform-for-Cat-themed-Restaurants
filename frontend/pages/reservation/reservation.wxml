@@ -1,173 +1,164 @@
-<!--pages/reservation/reservation.wxml-->
 <view class="container">
 
-  <!-- ══ 门店名称（可点击切换） ══ -->
-  <view class="store-header" bindtap="onStoreHeaderTap">
-    <text class="store-title">📍 {{storeName || '请选择门店'}}</text>
-    <text class="store-sub">{{storeId ? '点击切换门店 ▾' : '请先选择一家门店'}}</text>
-  </view>
+<view class="store-header" bindtap="onStoreHeaderTap">
+  <text class="store-title">📍 {{storeName || '请选择门店'}}</text>
+  <text class="store-sub">{{storeId ? '点击切换门店 ▾' : '请先选择一家门店'}}</text>
+</view>
 
-  <!-- ══ 日期选择 ══ -->
-  <view class="section-block">
-    <view class="block-title">选择日期</view>
-    <scroll-view scroll-x class="date-scroll">
-      <view class="date-list">
-        <view
-          wx:for="{{dateList}}"
-          wx:key="full"
-          class="date-item {{reserveDate === item.full ? 'date-active' : ''}}"
-          bindtap="onDateSelect"
-          data-date="{{item.full}}"
-        >
-          <text class="date-label">{{item.label}}</text>
-          <text class="date-full">{{item.full.slice(5)}}</text>
-        </view>
-      </view>
-    </scroll-view>
-  </view>
-
-  <!-- ══ 时间 / 人数 / 时长 ══ -->
-  <view class="section-block form-block">
-    <view class="form-row">
-      <text class="form-label">到店时间</text>
-      <picker mode="selector" range="{{timeSlots}}" bindchange="onTimeChange">
-        <view class="form-value picker-val">{{reserveTime}} ▾</view>
-      </picker>
-    </view>
-
-    <view class="form-row">
-      <text class="form-label">就餐人数</text>
-      <view class="counter">
-        <view class="counter-btn" bindtap="onPersonsMinus">－</view>
-        <text class="counter-val">{{persons}} 人</text>
-        <view class="counter-btn" bindtap="onPersonsPlus">＋</view>
-      </view>
-    </view>
-
-    <view class="form-row">
-      <text class="form-label">预约时长</text>
-      <view class="counter">
-        <view class="counter-btn" bindtap="onDurationMinus">－</view>
-        <text class="counter-val">{{duration}} 小时</text>
-        <view class="counter-btn" bindtap="onDurationPlus">＋</view>
-      </view>
-    </view>
-  </view>
-
-  <!-- ══ 桌型筛选 ══ -->
-  <view class="section-block">
-    <view class="block-title">选择桌位</view>
-    <scroll-view scroll-x class="filter-scroll">
-      <view class="filter-list">
-        <view
-          wx:for="{{tableTypes}}"
-          wx:key="*this"
-          class="filter-item {{filterType === item ? 'filter-active' : ''}}"
-          bindtap="onFilterChange"
-          data-type="{{item}}"
-        >{{tableTypeLabels[item]}}</view>
-      </view>
-    </scroll-view>
-
-    <!-- 图例 -->
-    <view class="legend">
-      <view class="legend-item"><view class="legend-dot dot-available"></view><text>可预约</text></view>
-      <view class="legend-item"><view class="legend-dot dot-booked"></view><text>已预约</text></view>
-      <view class="legend-item"><view class="legend-dot dot-maintenance"></view><text>维护中</text></view>
-    </view>
-  </view>
-  <!-- 实景平面图 -->
-  <view class="floor-plan-box">
-    <view class="floor-title">🐾 店面实景平面图</view>
-    
-    <view class="map-container">
-      <view wx:if="{{loading}}" class="map-loading"><text>正在构建店铺布局...</text></view>
-      
-      <block wx:else>
-        <view
-          wx:for="{{tables}}"
-          wx:key="id"
-          wx:if="{{filterType === 'all' || item.type === filterType}}"
-          class="floor-table status-{{item.status}} {{selectedTable && selectedTable.id === item.id ? 'table-selected' : ''}}"
-          bindtap="onTableSelect"
-          data-table="{{item}}"
-        >
-          <view class="table-content">
-            <text class="t-name">{{item.name}}</text>
-            <view class="t-cat" wx:if="{{item.catName}}">🐱 {{item.catName}}</view>
-            <text class="t-state" wx:if="{{item.status === 'available'}}">{{item.type}}</text>
-            <text class="t-state state-booked" wx:if="{{item.status === 'booked'}}">已占座</text>
-            <text class="t-state state-main" wx:if="{{item.status === 'maintenance'}}">维护中</text>
-          </view>
-        </view>
-      </block>
-    </view>
-  </view>
-  
-  <!-- ══ 已选桌位详情 ══ -->
-  <view wx:if="{{selectedTable}}" class="selected-info card">
-    <view class="selected-title">已选桌位</view>
-    <view class="selected-row">
-      <text class="sel-label">桌位</text>
-      <text class="sel-val">{{selectedTable.name}}（{{selectedTable.type}}）</text>
-    </view>
-    <view class="selected-row">
-      <text class="sel-label">猫咪</text>
-      <text class="sel-val">🐾 {{selectedTable.catType}} · {{selectedTable.catName}}</text>
-    </view>
-    <view class="selected-row">
-      <text class="sel-label">容纳</text>
-      <text class="sel-val">{{selectedTable.capacity}} 人</text>
-    </view>
-    <view class="selected-row" wx:if="{{selectedTable.price > 0}}">
-      <text class="sel-label">包间费</text>
-      <text class="sel-val price-red">¥{{selectedTable.price}}/次</text>
-    </view>
-  </view>
-
-  <!-- ══ 提交按钮 ══ -->
-  <view class="submit-bar">
-    <view class="submit-info" wx:if="{{selectedTable}}">
-      <text>{{reserveDate}} {{reserveTime}} · {{persons}}人 · {{duration}}小时</text>
-    </view>
-    <button
-      class="btn-submit {{!selectedTable ? 'btn-disabled' : ''}}"
-      bindtap="onSubmit"
-      disabled="{{!selectedTable}}"
-    >确认预约 →</button>
-  </view>
-
-  <!-- ══ 门店选择弹层 ══ -->
-  <view wx:if="{{showStorePicker}}" class="picker-mask" bindtap="hideStorePicker"></view>
-  <view wx:if="{{showStorePicker}}" class="store-picker-panel">
-    <view class="picker-header">
-      <text class="picker-header-title">选择门店</text>
-      <text class="picker-header-close" bindtap="hideStorePicker">✕</text>
-    </view>
-    <scroll-view scroll-y class="picker-list">
+<view class="section-block">
+  <view class="block-title">选择日期</view>
+  <scroll-view scroll-x class="date-scroll">
+    <view class="date-list">
       <view
-        wx:for="{{stores}}"
-        wx:key="id"
-        class="picker-store-item {{storeId === item.id ? 'picker-store-active' : ''}}"
-        bindtap="onStoreSelect"
-        data-store="{{item}}"
+        wx:for="{{dateList}}"
+        wx:key="full"
+        class="date-item {{reserveDate === item.full ? 'date-active' : ''}}"
+        bindtap="onDateSelect"
+        data-date="{{item.full}}"
       >
-        <view class="picker-store-left">
-          <image class="picker-store-img" src="{{item.imageUrl}}" mode="aspectFill" />
-          <view class="picker-store-info">
-            <text class="picker-store-name">{{item.name}}</text>
-            <text class="picker-store-addr">{{item.address}}</text>
-            <view class="picker-store-tags">
-              <text wx:for="{{item.tags}}" wx:key="*this" wx:for-item="t" class="picker-tag">{{t}}</text>
-            </view>
-          </view>
-        </view>
-        <view class="picker-store-right">
-          <text class="picker-store-dist">{{item.distanceText}}</text>
-          <text wx:if="{{storeId === item.id}}" class="picker-check">✓</text>
+        <text class="date-label">{{item.label}}</text>
+        <text class="date-full">{{item.full.slice(5)}}</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>
+
+<view class="section-block form-block">
+  <view class="form-row">
+    <text class="form-label">到店时间</text>
+    <picker mode="selector" range="{{timeSlots}}" bindchange="onTimeChange">
+      <view class="form-value picker-val">{{reserveTime}} ▾</view>
+    </picker>
+  </view>
+
+  <view class="form-row">
+    <text class="form-label">就餐人数</text>
+    <view class="counter">
+      <view class="counter-btn" bindtap="onPersonsMinus">－</view>
+      <text class="counter-val">{{persons}} 人</text>
+      <view class="counter-btn" bindtap="onPersonsPlus">＋</view>
+    </view>
+  </view>
+
+  <view class="form-row">
+    <text class="form-label">预约时长</text>
+    <view class="counter">
+      <view class="counter-btn" bindtap="onDurationMinus">－</view>
+      <text class="counter-val">{{duration}} 小时</text>
+      <view class="counter-btn" bindtap="onDurationPlus">＋</view>
+    </view>
+  </view>
+</view>
+
+<view class="section-block">
+  <view class="block-title">选择桌位</view>
+  <scroll-view scroll-x class="filter-scroll">
+    <view class="filter-list">
+      <view
+        wx:for="{{tableTypes}}"
+        wx:key="*this"
+        class="filter-item {{filterType === item ? 'filter-active' : ''}}"
+        bindtap="onFilterChange"
+        data-type="{{item}}"
+      >{{tableTypeLabels[item]}}</view>
+    </view>
+  </scroll-view>
+
+  <view class="legend">
+    <view class="legend-item"><view class="legend-dot dot-available"></view><text>可预约</text></view>
+    <view class="legend-item"><view class="legend-dot dot-booked"></view><text>已预约</text></view>
+    <view class="legend-item"><view class="legend-dot dot-maintenance"></view><text>维护中</text></view>
+  </view>
+</view>
+
+<view class="floor-plan-box">
+  <view class="floor-title">🐾 店面实景平面图</view>
+  
+  <view class="map-container">
+    <view wx:if="{{loading}}" class="map-loading"><text>正在构建店铺布局...</text></view>
+    
+    <block wx:else>
+      <view
+        wx:for="{{tables}}"
+        wx:key="id"
+        wx:if="{{filterType === 'all' || item.type === filterType}}"
+        class="floor-table status-{{item.status}} {{selectedTable && selectedTable.id === item.id ? 'table-selected' : ''}}"
+        bindtap="onTableSelect"
+        data-table="{{item}}"
+      >
+        <view class="table-content">
+          <text class="t-name">{{item.name}}</text>
+          <view class="t-cat" wx:if="{{item.catName}}">🐱 {{item.catName}}</view>
+          <text class="t-state" wx:if="{{item.status === 'available'}}">{{item.type}}</text>
+          <text class="t-state state-booked" wx:if="{{item.status === 'booked'}}">已占座</text>
+          <text class="t-state state-main" wx:if="{{item.status === 'maintenance'}}">维护中</text>
         </view>
       </view>
-    </scroll-view>
+    </block>
   </view>
+</view>
+
+<view wx:if="{{selectedTable}}" class="selected-info card">
+  <view class="selected-title">已选桌位</view>
+  <view class="selected-row">
+    <text class="sel-label">桌位</text>
+    <text class="sel-val">{{selectedTable.name}}（{{selectedTable.type}}）</text>
+  </view>
+  <view class="selected-row">
+    <text class="sel-label">猫咪</text>
+    <text class="sel-val">🐾 {{selectedTable.catType}} · {{selectedTable.catName || '全场巡游'}}</text>
+  </view>
+  <view class="selected-row">
+    <text class="sel-label">容纳</text>
+    <text class="sel-val">{{selectedTable.capacity}} 人</text>
+  </view>
+  <view class="selected-row" wx:if="{{selectedTable.price > 0}}">
+    <text class="sel-label">包间费</text>
+    <text class="sel-val price-red">¥{{selectedTable.price}}/次</text>
+  </view>
+</view>
+
+<view class="submit-bar">
+  <view class="submit-info" wx:if="{{selectedTable}}">
+    <text>{{reserveDate}} {{reserveTime}} · {{persons}}人 · {{duration}}小时</text>
+  </view>
+  <button
+    class="btn-submit {{!selectedTable ? 'btn-disabled' : ''}}"
+    bindtap="onSubmit"
+    disabled="{{!selectedTable}}"
+  >确认预约 →</button>
+</view>
+
+<view wx:if="{{showStorePicker}}" class="picker-mask" bindtap="hideStorePicker"></view>
+<view wx:if="{{showStorePicker}}" class="store-picker-panel">
+  <view class="picker-header">
+    <text class="picker-header-title">选择门店</text>
+    <text class="picker-header-close" bindtap="hideStorePicker">✕</text>
+  </view>
+  <scroll-view scroll-y class="picker-list">
+    <view
+      wx:for="{{stores}}"
+      wx:key="id"
+      class="picker-store-item {{storeId === item.id ? 'picker-store-active' : ''}}"
+      bindtap="onStoreSelect"
+      data-store="{{item}}"
+    >
+      <view class="picker-store-left">
+        <image class="picker-store-img" src="{{item.imageUrl}}" mode="aspectFill" />
+        <view class="picker-store-info">
+          <text class="picker-store-name">{{item.name}}</text>
+          <text class="picker-store-addr">{{item.address}}</text>
+          <view class="picker-store-tags">
+            <text wx:for="{{item.tags}}" wx:key="*this" wx:for-item="t" class="picker-tag">{{t}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="picker-store-right">
+        <text class="picker-store-dist">{{item.distanceText}}</text>
+        <text wx:if="{{storeId === item.id}}" class="picker-check">✓</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>
 
 </view>

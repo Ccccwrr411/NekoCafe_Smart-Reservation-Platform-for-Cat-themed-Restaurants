@@ -1,0 +1,76 @@
+<!--pages/staff/refund.wxml—退款审核页-->
+<view class="refund-page">
+
+  <!-- 顶部 -->
+  <view class="refund-header">
+    <text class="refund-title">💰 退款审核</text>
+    <text class="refund-sub">{{storeName}}</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 筛选 -->
+  <view wx:if="{{!loading}}" class="refund-filter">
+    <view class="rf-item {{refundFilter === 'pending' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="pending">待审核</view>
+    <view class="rf-item {{refundFilter === 'approved' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="approved">已通过</view>
+    <view class="rf-item {{refundFilter === 'rejected' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="rejected">已拒绝</view>
+    <view class="rf-item {{refundFilter === 'all' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="all">全部</view>
+  </view>
+
+  <!-- 列表 -->
+  <view wx:if="{{!loading && filteredRefunds.length === 0}}" class="empty-state">
+    <text class="empty-icon">✅</text>
+    <text class="empty-text">暂无退款申请</text>
+  </view>
+  <view class="refund-list">
+    <view wx:for="{{filteredRefunds}}" wx:key="refundId" class="refund-card">
+      <view class="refund-card-top">
+        <text class="refund-id">退款 #{{item.refundId}}</text>
+        <view class="refund-status-tag rst-{{item.status}}">{{item.statusLabel}}</view>
+      </view>
+      <view class="refund-card-body">
+        <view class="refund-row">
+          <text class="refund-label">退款金额</text>
+          <text class="refund-amount">¥{{item.refundAmount}}</text>
+        </view>
+        <view class="refund-row">
+          <text class="refund-label">退款原因</text>
+          <text class="refund-value">{{item.refundReason || '—'}}</text>
+        </view>
+        <view class="refund-row">
+          <text class="refund-label">关联订单</text>
+          <text class="refund-value">#{{item.reservationId}}</text>
+        </view>
+        <view class="refund-row">
+          <text class="refund-label">桌位</text>
+          <text class="refund-value">{{item.tableNo || '—'}}</text>
+        </view>
+        <view class="refund-row">
+          <text class="refund-label">申请时间</text>
+          <text class="refund-value">{{item.createdAt || '—'}}</text>
+        </view>
+      </view>
+      <view wx:if="{{item.status === 'PENDING' || item.status === 'pending'}}" class="refund-actions">
+        <view class="btn btn-danger-outline" bindtap="onRejectRefund" data-refund="{{item}}">拒绝</view>
+        <view class="btn btn-primary" bindtap="onApproveRefund" data-refund="{{item}}">通过退款</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 拒绝弹层 -->
+  <view wx:if="{{showRejectModal}}" class="modal-mask" bindtap="onCloseRejectModal">
+    <view class="modal-panel" catchtap="">
+      <text class="modal-title">拒绝退款原因</text>
+      <textarea class="reject-textarea" placeholder="请输入拒绝原因..." value="{{rejectReason}}" bindinput="onInputReason" maxlength="200" />
+      <view class="modal-btns">
+        <view class="btn btn-block btn-outline" bindtap="onCloseRejectModal">取消</view>
+        <view class="btn btn-block btn-danger" bindtap="onConfirmRejectRefund">确认拒绝</view>
+      </view>
+    </view>
+  </view>
+
+</view>
