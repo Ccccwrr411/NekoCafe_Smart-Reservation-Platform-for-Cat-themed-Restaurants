@@ -26,7 +26,15 @@ Page({
     get(`/api/order/detail?orderId=${this.data.orderId}`).then(res => {
       wx.stopPullDownRefresh()
       if (res.code === 0) {
-        this.setData({ order: res.data, loading: false })
+        const data = res.data
+        // 取消订单后 order_items 已删除，用保存的菜品列表补回来
+        if (this._cancelItems && (!data.items || data.items.length === 0)) {
+          data.items = this._cancelItems
+          data.refundAmount = this._cancelRefundAmount
+          this._cancelItems = null
+          this._cancelRefundAmount = null
+        }
+        this.setData({ order: data, loading: false })
       }
     }).catch(() => {
       wx.stopPullDownRefresh()
@@ -34,11 +42,18 @@ Page({
     })
   },
 
-  // 取消订单
+  // 取消预约 / 取消订单
   onCancel() {
+    const order = this.data.order
+    const status = order && order.status
+    const isBooked = status === 'booked'
+    const title = isBooked ? '取消预约' : '取消订单'
+    const content = isBooked
+      ? '确定要取消该预约吗？桌位将释放。'
+      : '款项将原路退回，桌位保留不释放，确定取消订单吗？'
     wx.showModal({
-      title: '取消预约',
-      content: '取消后款项将原路退回，确定取消吗？',
+      title: title,
+      content: content,
       confirmColor: '#F44336',
       success: (res) => {
         if (!res.confirm) return
@@ -46,29 +61,23 @@ Page({
         post('/api/order/cancel', { orderId: this.data.orderId }).then(r => {
           wx.hideLoading()
           if (r.code === 0) {
-            wx.showToast({ title: '已取消', icon: 'success' })
-            this.loadDetail()
+            wx.showToast({ title: isBooked ? '取消预约成功' : '取消订单成功', icon: 'success', duration: 1500 })
+            // 保存后端返回的菜品列表（CONFIRMED 取消后 order_items 会被删除，需要先存下来）
+            if (!isBooked && r.data && r.data.items) {
+              this._cancelItems = r.data.items
+              this._cancelRefundAmount = r.data.refundAmount
+            }
+            // 统一调用 loadDetail 从后端获取完整的最新数据（含时间线）
+            setTimeout(() => {
+              this.loadDetail()
+            }, 800)
+          } else {
+            wx.showToast({ title: r.message || '取消失败', icon: 'none' })
           }
-        }).catch(() => wx.hideLoading())
-      }
-    })
-  },
-
-  // 改约
-  onReschedule() {
-    wx.showModal({
-      title: '修改预约时间',
-      content: '改约需要门店重新确认，是否继续？',
-      success: (res) => {
-        if (!res.confirm) return
-        wx.showLoading({ title: '提交中...' })
-        post('/api/order/reschedule', { orderId: this.data.orderId }).then(r => {
+        }).catch(() => {
           wx.hideLoading()
-          if (r.code === 0) {
-            wx.showToast({ title: '改约成功', icon: 'success' })
-            this.loadDetail()
-          }
-        }).catch(() => wx.hideLoading())
+          wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+        })
       }
     })
   },
@@ -87,8 +96,13 @@ Page({
           if (r.code === 0) {
             wx.showToast({ title: '退款申请已提交', icon: 'success' })
             this.loadDetail()
+          } else {
+            wx.showToast({ title: r.message || '申请失败', icon: 'none' })
           }
-        }).catch(() => wx.hideLoading())
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+        })
       }
     })
   },
@@ -96,5 +110,74 @@ Page({
   // 去评价
   goReview() {
     wx.navigateTo({ url: `/pages/review/review?orderId=${this.data.orderId}` })
+  },
+
+  // 去点单（预约成功后进入点单流程）
+  goOrder() {
+    const order = this.data.order
+    if (!order) return
+    const app = getApp()
+    // 将预约信息写入 globalData，供 order 页面使用
+    app.globalData.selectedTable = {
+      id: order.tableId,
+      name: order.tableName,
+      type: order.tableType,
+      capacity: order.tableCapacity
+    }
+    app.globalData.currentStore = {
+      id: order.storeId,
+      name: order.storeName
+    }
+    // 跳转到 menu 页面点菜
+    wx.switchTab({ url: '/pages/menu/menu' })
+  },
+
+  // 重新点单（取消订单后，复用原预约记录重新激活为 BOOKED，跳到菜单页重新选菜）
+  goReorder() {
+    const order = this.data.order
+    if (!order) return
+
+    // 激活已取消的预约（CANCEL_ORDER → BOOKED），复用同一预约记录
+    wx.showLoading({ title: '激活预约中...' })
+    post('/api/order/reactivate', { orderId: this.data.orderId }).then(r => {
+      wx.hideLoading()
+      if (r.code === 0 && r.data && r.data.orderId) {
+        const app = getApp()
+        const data = r.data
+
+        // 将预约信息写入 globalData（使用后端返回的完整信息）
+        app.globalData.selectedTable = {
+          id: data.tableId || order.tableId,
+          name: data.tableName || order.tableName,
+          type: data.tableType || order.tableType,
+          capacity: data.tableCapacity || order.tableCapacity
+        }
+        app.globalData.currentStore = {
+          id: data.storeId || order.storeId,
+          name: data.storeName || order.storeName
+        }
+
+        // 将原订单菜品预填入购物车，用户可在菜单页调整后重新下单
+        if (order.items && order.items.length > 0) {
+          app.globalData.cartItems = order.items.map(item => ({
+            id: item.dishId,
+            name: item.name,
+            price: item.price,
+            imageUrl: item.imageUrl || '',
+            qty: item.quantity
+          }))
+        } else {
+          app.globalData.cartItems = []
+        }
+
+        // 跳转到菜单页选菜（和"去点单"流程一致：switchTab 到 menu）
+        wx.switchTab({ url: '/pages/menu/menu' })
+      } else {
+        wx.showToast({ title: r.message || '激活预约失败', icon: 'none' })
+      }
+    }).catch(() => {
+      wx.hideLoading()
+      wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+    })
   }
 })

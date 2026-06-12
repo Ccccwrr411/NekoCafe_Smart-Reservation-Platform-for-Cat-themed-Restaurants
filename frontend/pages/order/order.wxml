@@ -1,53 +1,136 @@
 <!--pages/order/order.wxml-->
 <view class="container">
 
-  <!-- ══ 预约信息 ══ -->
-  <view class="card reserve-card">
-    <view class="card-title">📅 预约信息</view>
-    <view wx:if="{{reserveInfo}}">
-      <view class="info-row">
-        <text class="info-label">门店</text>
-        <text class="info-val">{{reserveInfo.store.name}}</text>
-      </view>
-      <view class="info-row">
-        <text class="info-label">桌位</text>
-        <text class="info-val">{{reserveInfo.table.name}}（{{reserveInfo.table.type}}）</text>
-      </view>
-      <view class="info-row">
-        <text class="info-label">猫咪</text>
-        <text class="info-val">🐾 {{reserveInfo.table.catName}}</text>
-      </view>
-    </view>
-    <view wx:else class="no-reserve-hint">
-      <text>未选择桌位（仅点餐）</text>
+  <!-- ══ 页面头部 ══ -->
+  <view class="page-header">
+    <text class="page-header-title">确认下单</text>
+    <text class="page-header-sub">核对信息，提交订单</text>
+  </view>
+
+  <!-- ══ 无预约：引导去预约 ══ -->
+  <view wx:if="{{!hasReservation}}" class="no-reserve-block">
+    <view class="nr-icon">📅</view>
+    <text class="nr-title">还没有预约哦</text>
+    <text class="nr-desc">点单需要先预约桌位，选择你喜欢的猫咪桌吧~</text>
+    <view class="nr-btn" bindtap="goReserve">
+      <text>去预约</text>
     </view>
   </view>
 
+  <!-- ══ 有预约：预约信息卡 ══ -->
+  <block wx:if="{{hasReservation}}">
+  <view class="card reserve-card">
+    <view class="card-header">
+      <view class="card-icon-wrap" style="background:#FFF0E8;">
+        <text class="card-icon">📅</text>
+      </view>
+      <view class="card-header-text">
+        <text class="card-header-title">预约信息</text>
+        <text wx:if="{{reservationList.length > 0}}" class="reservation-switch" bindtap="onOpenReservationPicker">选择预约 ›</text>
+      </view>
+    </view>
+    <!-- 已选中的预约详情 -->
+    <view wx:if="{{reserveInfo && reserveInfo.store}}" class="reserve-detail">
+      <view class="reserve-duo">
+        <view class="reserve-duo-item">
+          <text class="rd-icon">🏠</text>
+          <text class="rd-label">门店</text>
+          <text class="rd-val">{{reserveInfo.store.name}}</text>
+        </view>
+        <view wx:if="{{reserveInfo.table}}" class="reserve-duo-item">
+          <text class="rd-icon">🪑</text>
+          <text class="rd-label">桌位</text>
+          <text class="rd-val">{{reserveInfo.table.name}}（{{reserveInfo.table.type}}）</text>
+        </view>
+      </view>
+      <view class="reserve-meta-list">
+        <view wx:if="{{reserveInfo.table && reserveInfo.table.catName}}" class="reserve-meta-tag">
+          <text>🐾 {{reserveInfo.table.catName}}</text>
+        </view>
+        <view wx:if="{{reserveInfo.reserveDate}}" class="reserve-meta-tag">
+          <text>{{reserveInfo.reserveDate}}</text>
+        </view>
+        <view wx:if="{{reserveInfo.reserveTime}}" class="reserve-meta-tag">
+          <text>{{reserveInfo.reserveTime}} · {{reserveInfo.duration || 2}}h</text>
+        </view>
+        <view wx:if="{{reserveInfo.persons}}" class="reserve-meta-tag">
+          <text>{{reserveInfo.persons}}人</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  </block>
+
+  <!-- ══ 预约选择弹层 ══ -->
+  <view wx:if="{{showReservationPicker}}" class="picker-mask" bindtap="onCloseReservationPicker"></view>
+  <view wx:if="{{showReservationPicker}}" class="picker-panel" catchtap="">
+    <view class="picker-handle"></view>
+    <view class="picker-header">
+      <text class="picker-header-title">选择预约</text>
+      <text class="picker-header-close" bindtap="onCloseReservationPicker">✕</text>
+    </view>
+    <view class="picker-list">
+      <view
+        wx:for="{{reservationList}}"
+        wx:key="orderId"
+        wx:for-item="item"
+        data-index="{{index}}"
+        class="picker-item {{selectedReservationIdx === index ? 'picker-item-on' : ''}}"
+        bindtap="onSelectReservation"
+      >
+        <view class="picker-item-left">
+          <text class="picker-item-store">{{item.storeName}}</text>
+          <text class="picker-item-table">{{item.tableName}} · {{item.tableType}}</text>
+          <text class="picker-item-time">{{item.reserveDate}} {{item.reserveTime}} · {{item.persons}}人 · {{item.duration}}h</text>
+        </view>
+        <view class="picker-radio {{selectedReservationIdx === index ? 'radio-on' : ''}}">
+          <text wx:if="{{selectedReservationIdx === index}}">✓</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 以下仅在有预约时展示 ══ -->
+  <block wx:if="{{hasReservation}}">
   <!-- ══ 菜品清单 ══ -->
   <view class="card">
-    <view class="card-title">🍽 已点菜品</view>
+    <view class="card-header">
+      <view class="card-icon-wrap" style="background:#FFF5EC;">
+        <text class="card-icon">🍽️</text>
+      </view>
+      <view class="card-header-text">
+        <text class="card-header-title">已点菜品</text>
+        <text wx:if="{{cartItems.length > 0}}" class="card-header-badge">{{cartItems.length}}</text>
+      </view>
+    </view>
     <view wx:if="{{cartItems.length === 0}}" class="empty-state">
-      <text>🛒 购物车是空的，请先点单</text>
+      <text class="empty-icon">🛒</text>
+      <text>购物车是空的，请先选菜</text>
     </view>
     <view wx:else>
-      <view
-        wx:for="{{cartItems}}"
-        wx:key="id"
-        class="order-item"
-      >
-        <image class="order-item-img" src="{{item.imageUrl}}" mode="aspectFill" />
-        <view class="order-item-info">
-          <text class="order-item-name">{{item.name}}</text>
-          <text class="order-item-price">¥{{item.price}} × {{item.qty}}</text>
+      <view wx:for="{{cartItems}}" wx:key="id" class="cart-item">
+        <image wx:if="{{item.imageUrl}}" class="cart-item-img" src="{{item.imageUrl}}" mode="aspectFill" />
+        <view wx:else class="cart-item-img-placeholder">🐱</view>
+        <view class="cart-item-body">
+          <text class="cart-item-name">{{item.name}}</text>
+          <view class="cart-item-bottom">
+            <text class="cart-item-unit">¥{{item.price}}</text>
+            <text class="cart-item-qty">×{{item.qty}}</text>
+          </view>
         </view>
-        <text class="order-item-subtotal">¥{{item.price * item.qty}}</text>
+        <text class="cart-item-price">¥{{item.price * item.qty}}</text>
       </view>
     </view>
   </view>
 
   <!-- ══ 备注 ══ -->
   <view class="card">
-    <view class="card-title">📝 备注</view>
+    <view class="card-header" style="margin-bottom:12rpx;">
+      <view class="card-icon-wrap" style="background:#F5F0EB;">
+        <text class="card-icon">📝</text>
+      </view>
+      <text class="card-header-title">备注</text>
+    </view>
     <textarea
       class="remark-input"
       placeholder="有什么特殊需求？比如不要香菜、宝宝椅..."
@@ -57,74 +140,56 @@
   </view>
 
   <!-- ══ 优惠券 ══ -->
-  <view class="card coupon-row" bindtap="onOpenCouponPicker">
-    <view class="card-title">🎫 优惠券与活动</view>
+  <view class="card coupon-card" bindtap="onOpenCouponPicker">
+    <view class="card-header" style="margin-bottom:0;">
+      <view class="card-icon-wrap" style="background:#FFF9E6;">
+        <text class="card-icon">🎫</text>
+      </view>
+      <text class="card-header-title">优惠券与活动</text>
+    </view>
     <view class="coupon-right">
-      <text wx:if="{{selectedCouponIds.length > 0}}" class="coupon-selected">已选{{selectedCouponIds.length}}张 -¥{{totalDiscount}}</text>
+      <view wx:if="{{selectedCouponIds.length > 0}}" class="coupon-tag-selected">
+        <text>已选{{selectedCouponIds.length}}张</text>
+        <text class="coupon-save">-¥{{totalDiscount}}</text>
+      </view>
       <text wx:else class="coupon-hint">点击选择优惠</text>
       <text class="coupon-arrow">›</text>
     </view>
   </view>
 
-  <!-- ══ 优惠券选择弹层 ══ -->
-  <view wx:if="{{showCouponPicker}}" class="picker-mask" bindtap="onCloseCouponPicker"></view>
-  <view wx:if="{{showCouponPicker}}" class="coupon-picker-panel" catchtap="onPickerPanelTap">
-    <view class="picker-header">
-      <text class="picker-header-title">选择优惠</text>
-      <text class="picker-header-close" bindtap="onCloseCouponPicker">✕</text>
-    </view>
-
-    <!-- 叠加规则 -->
-    <view wx:if="{{stackingRules}}" class="stacking-rules">
-      <text class="stacking-title">📋 叠加规则：最多叠加{{stackingRules.maxStackCount}}张</text>
-      <text wx:for="{{stackingRules.rules}}" wx:for-item="rule" wx:key="idx" class="stacking-rule-item">· {{rule.text}}</text>
-    </view>
-
-    <!-- 可用优惠券 -->
-    <view class="picker-list">
-      <view wx:if="{{coupons.length === 0}}" class="empty-coupon">
-        <text>暂无可用优惠券</text>
-      </view>
-      <view
-        wx:for="{{coupons}}"
-        wx:for-item="coupon"
-        wx:key="id"
-        class="coupon-picker-item {{coupon.itemClass}}"
-        catchtap="onToggleCoupon"
-        data-coupon-id="{{coupon.id}}"
-      >
-        <view class="coupon-picker-left">
-          <text class="coupon-picker-name">{{coupon.name}}</text>
-          <text class="coupon-picker-rule">{{coupon.ruleText}}</text>
-          <text class="coupon-picker-expire">有效期至 {{coupon.expireDate}}</text>
-          <text wx:if="{{coupon.unavailableHint}}" class="coupon-unavailable">{{coupon.unavailableHint}}</text>
-          <text wx:elif="{{!coupon.stackable}}" class="coupon-not-stackable">⚠ 不可叠加</text>
-        </view>
-        <view class="coupon-checkbox {{coupon.checkboxClass}}">
-          {{coupon.checkboxText}}
-        </view>
-      </view>
-    </view>
-  </view>
-
   <!-- ══ 价格明细 ══ -->
-  <view class="card price-detail">
+  <view class="card price-card">
+    <view class="card-header">
+      <view class="card-icon-wrap" style="background:#EEF5EE;">
+        <text class="card-icon">💰</text>
+      </view>
+      <text class="card-header-title">价格明细</text>
+    </view>
     <view wx:for="{{discountBreakdown}}" wx:for-item="row" wx:key="label" class="price-row {{row.rowClass}}">
       <text class="{{row.labelClass}}">{{row.label}}</text>
       <text class="{{row.amountClass}}">{{row.amountText}}</text>
     </view>
     <view class="divider"></view>
-    <view class="price-row total-row">
-      <text class="total-label">实付金额</text>
-      <text class="total-val">¥{{finalTotal}}</text>
+    <view class="price-row final-price-row">
+      <text class="final-price-label">实付金额</text>
+      <view class="final-price-block">
+        <text class="final-price-symbol">¥</text>
+        <text class="final-price-num">{{finalTotal}}</text>
+      </view>
     </view>
   </view>
 
-  <!-- ══ 底部提交 ══ -->
+  <!-- 底部占位 -->
+  <view style="height: 140rpx;"></view>
+
+  <!-- ══ 底部提交栏 ══ -->
   <view class="submit-bar">
-    <view class="submit-total">
+    <view class="submit-left">
       <text class="submit-label">合计</text>
-      <text class="submit-price">¥{{finalTotal}}</text>
+      <view class="submit-price-block">
+        <text class="submit-currency">¥</text>
+        <text class="submit-price">{{finalTotal}}</text>
+      </view>
     </view>
     <button
       class="btn-submit {{submitting ? 'btn-disabled' : ''}}"
@@ -132,5 +197,6 @@
       loading="{{submitting}}"
     >{{submitting ? '提交中...' : '立即下单'}}</button>
   </view>
+  </block>
 
 </view>

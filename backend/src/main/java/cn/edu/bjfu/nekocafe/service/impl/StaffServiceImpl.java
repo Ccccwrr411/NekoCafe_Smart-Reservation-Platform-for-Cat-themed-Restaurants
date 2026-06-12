@@ -37,6 +37,15 @@ public class StaffServiceImpl implements StaffService {
     @Autowired
     private RefundRecordsMapper refundRecordsMapper;
 
+    @Autowired
+    private PaymentsMapper paymentsMapper;
+
+    @Autowired
+    private MemberExtMapper memberExtMapper;
+
+    @Autowired
+    private PointsLogMapper pointsLogMapper;
+
     // =========================================================
     // K-1  GET /api/dashboard/metrics?storeId=&range=
     // =========================================================
@@ -562,58 +571,107 @@ public class StaffServiceImpl implements StaffService {
             return result;
         }
 
-        // 2. 校验当前状态（仅 PENDING 状态可审核）
-        if (!"PENDING".equals(refund.getStatus()) && !"pending".equals(refund.getStatus())) {
+        // 2. 校验当前状态（仅 REQUEST_REFUND 状态可审核）
+        if (!"REQUEST_REFUND".equals(refund.getStatus())) {
             result.put("success", false);
             result.put("message", "该退款申请已被处理，当前状态：" + refund.getStatus());
             return result;
         }
 
+        Date now = new Date();
+
         // 3. 执行审核操作
         String upperAction = action != null ? action.toLowerCase() : "";
         switch (upperAction) {
             case "approve":
-                // 通过退款：更新退款记录状态
-                refund.setStatus("APPROVED");
+                // 通过退款：
+                //   refund_records.status → COMPLETED
+                //   payments.status → REFUNDED
+                //   reservations 保持 REFUNDING（前端通过 refund_records.status 区分售后状态）
+                refund.setStatus("COMPLETED");
                 refund.setOperatorId(operatorId);
-                refund.setCompletedAt(new Date());
+                refund.setCompletedAt(now);
                 refundRecordsMapper.updateByPrimaryKeySelective(refund);
 
-                // 更新关联预约状态为 CANCEL_ORDER
-                if (refund.getReservationId() != null) {
-                    Reservations res = reservationsMapper.selectByPrimaryKey(refund.getReservationId());
-                    if (res != null) {
-                        res.setStatus("CANCEL_ORDER");
-                        res.setUpdatedAt(new Date());
-                        reservationsMapper.updateByPrimaryKeySelective(res);
-
-                        // 释放桌位
-                        if (res.getTableId() != null) {
-                            TableStatus ts = tableStatusMapper.selectByPrimaryKey(res.getTableId());
-                            if (ts != null) {
-                                ts.setStatus("IDLE");
-                                ts.setCurrentReservationId(null);
-                                tableStatusMapper.updateByPrimaryKeySelective(ts);
-                            }
-                        }
+                // 更新 payments 状态为 REFUNDED
+                if (refund.getPaymentId() != null) {
+                    Payments payment = paymentsMapper.selectByPrimaryKey(refund.getPaymentId());
+                    if (payment != null && "REFUNDING".equals(payment.getStatus())) {
+                        payment.setStatus("REFUNDED");
+                        paymentsMapper.updateByPrimaryKeySelective(payment);
                     }
                 }
                 break;
 
             case "reject":
-                // 拒绝退款：更新退款记录状态
+                // 拒绝退款：
+                //   refund_records.status → REJECTED
+                //   payments.status → PAID（恢复支付状态）
+                //   reservations.status → CONFIRMED（恢复用餐状态）
+                //   积分恢复：退还已扣除的 pointsEarned，扣回已退还的 pointsUsed
                 refund.setStatus("REJECTED");
                 refund.setOperatorId(operatorId);
-                refund.setCompletedAt(new Date());
+                refund.setCompletedAt(now);
                 refundRecordsMapper.updateByPrimaryKeySelective(refund);
 
-                // 恢复关联预约状态为 CONFIRMED
                 if (refund.getReservationId() != null) {
                     Reservations res = reservationsMapper.selectByPrimaryKey(refund.getReservationId());
                     if (res != null && "REFUNDING".equals(res.getStatus())) {
                         res.setStatus("CONFIRMED");
-                        res.setUpdatedAt(new Date());
+                        res.setUpdatedAt(now);
                         reservationsMapper.updateByPrimaryKeySelective(res);
+
+                        // 恢复 payments 状态
+                        if (refund.getPaymentId() != null) {
+                            Payments payment = paymentsMapper.selectByPrimaryKey(refund.getPaymentId());
+                            if (payment != null && "REFUNDING".equals(payment.getStatus())) {
+                                payment.setStatus("PAID");
+                                paymentsMapper.updateByPrimaryKeySelective(payment);
+                            }
+                        }
+
+                        // 恢复积分（applyRefund 扣了 pointsEarned 并退了 pointsUsed，现在反向操作）
+                        MemberExt memberExt = memberExtMapper.selectByPrimaryKey(res.getUserId());
+                        if (memberExt != null) {
+                            int pointsEarned = res.getPointsEarned() != null ? res.getPointsEarned() : 0;
+                            int pointsUsed = res.getPointsUsed() != null ? res.getPointsUsed() : 0;
+                            int currentPoints = memberExt.getTotalPoints() != null ? memberExt.getTotalPoints() : 0;
+                            // 恢复：加回 pointsEarned，减去退还的 pointsUsed
+                            int newPoints = currentPoints + pointsEarned - pointsUsed;
+                            BigDecimal orderAmount = res.getOrderAmount() != null ? res.getOrderAmount() : BigDecimal.ZERO;
+                            BigDecimal currentCumulative = memberExt.getCumulativeAmount() != null
+                                ? memberExt.getCumulativeAmount() : BigDecimal.ZERO;
+                            BigDecimal newCumulative = currentCumulative.add(orderAmount);
+
+                            MemberExt updateMe = new MemberExt();
+                            updateMe.setUserId(res.getUserId());
+                            updateMe.setTotalPoints(newPoints);
+                            updateMe.setCumulativeAmount(newCumulative);
+                            memberExtMapper.updateByPrimaryKeySelective(updateMe);
+
+                            // 积分流水：加回消费获得积分
+                            if (pointsEarned > 0) {
+                                PointsLog restoreLog = new PointsLog();
+                                restoreLog.setUserId(res.getUserId());
+                                restoreLog.setChangeAmount(pointsEarned);
+                                restoreLog.setBalanceAfter(currentPoints + pointsEarned);
+                                restoreLog.setSource("REFUND_REJECT_RESTORE_EARN");
+                                restoreLog.setReservationId(refund.getReservationId());
+                                restoreLog.setCreatedAt(now);
+                                pointsLogMapper.insertSelective(restoreLog);
+                            }
+                            // 积分流水：扣回已退还的使用积分
+                            if (pointsUsed > 0) {
+                                PointsLog deductUsedLog = new PointsLog();
+                                deductUsedLog.setUserId(res.getUserId());
+                                deductUsedLog.setChangeAmount(-pointsUsed);
+                                deductUsedLog.setBalanceAfter(currentPoints + pointsEarned - pointsUsed);
+                                deductUsedLog.setSource("REFUND_REJECT_DEDUCT_USED");
+                                deductUsedLog.setReservationId(refund.getReservationId());
+                                deductUsedLog.setCreatedAt(now);
+                                pointsLogMapper.insertSelective(deductUsedLog);
+                            }
+                        }
                     }
                 }
                 break;

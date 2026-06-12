@@ -423,7 +423,7 @@ module.exports = {
   '/api/reservation/create': {
     code: 0,
     message: 'success',
-    data: { orderId: 'ORD20260603002', status: 'confirmed' }
+    data: { orderId: 'ORD20260603002', status: 'BOOKED' }
   },
 
   // ─────────────────────────────────────────────

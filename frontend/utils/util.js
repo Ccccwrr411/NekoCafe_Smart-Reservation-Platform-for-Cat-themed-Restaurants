@@ -51,11 +51,16 @@ const calcDistance = (lat1, lng1, lat2, lng2) => {
  * 订单状态映射
  */
 const ORDER_STATUS_MAP = {
-  pending:    { text: '待确认', color: '#FF9800' },
-  confirmed:  { text: '已确认', color: '#4CAF50' },
-  occupied:   { text: '进行中', color: '#E74C3C' },
-  completed:  { text: '已完成', color: '#888888' },
-  cancelled:  { text: '已取消', color: '#F44336' }
+  booked:                  { text: '已预约', color: '#4CAF50', bg: '#E8F5E9' },
+  pending:                 { text: '待确认', color: '#FF9800', bg: '#FFF3E0' },
+  confirmed:               { text: '用餐中', color: '#4CAF50', bg: '#E8F5E9' },
+  occupied:                { text: '进行中', color: '#E74C3C', bg: '#FFEBEE' },
+  completed:               { text: '已完成', color: '#888888', bg: '#F5F5F5' },
+  cancel_booking:          { text: '取消预约', color: '#F44336', bg: '#FFEBEE' },
+  cancel_order:            { text: '取消订单', color: '#F44336', bg: '#FFEBEE' },
+  after_sales_pending:     { text: '售后中', color: '#FF9800', bg: '#FFF3E0' },
+  after_sales_rejected:    { text: '拒绝售后', color: '#F44336', bg: '#FFEBEE' },
+  after_sales_completed:   { text: '售后完成', color: '#888888', bg: '#F5F5F5' }
 }
 
 /**

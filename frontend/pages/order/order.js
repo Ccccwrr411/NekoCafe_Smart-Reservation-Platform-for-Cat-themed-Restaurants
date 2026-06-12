@@ -6,6 +6,7 @@ const { requestWxPayment, getWxLoginCode } = require('../../utils/payment')
 Page({
   data: {
     storeId: null,
+    tableId: null,
     cartItems: [],
     cartTotal: 0,
     coupons: [],
@@ -18,7 +19,12 @@ Page({
     reserveInfo: null,
     remark: '',
     submitting: false,
-    showCouponPicker: false
+    showCouponPicker: false,
+    // 多预约选择
+    hasReservation: false,       // 是否有可用预约（后端查询或 globalData）
+    reservationList: [],         // 所有 BOOKED 预约列表
+    selectedReservationIdx: -1,  // 当前选中的预约索引
+    showReservationPicker: false
   },
 
   onLoad(options) {
@@ -26,25 +32,155 @@ Page({
     const cartItems = app.globalData.cartItems || []
     const selectedTable = app.globalData.selectedTable
     const currentStore = app.globalData.currentStore
+    // 从 URL 参数或 globalData 获取 storeId 和 tableId
+    const storeId = options.storeId || (currentStore ? currentStore.id : null) || 1
+    const tableId = options.tableId || (selectedTable ? selectedTable.id : null)
+    // "再来一单"场景传入的 orderId（新创建的预约）
+    const reorderOrderId = options.orderId || ''
 
     const cartTotal = calcCartTotal(cartItems)
     const discountResult = this.calcDiscount([], cartTotal)
 
+    // 先设置 localData（从 globalData 或 URL 参数），然后尝试从后端加载预约信息覆盖
+    const localReserveInfo = selectedTable ? {
+      table: selectedTable,
+      store: currentStore
+    } : (currentStore ? { store: currentStore } : null)
+
+    // 如果是"再来一单"，把新预约的 orderId 注入 reserveInfo
+    if (reorderOrderId && localReserveInfo) {
+      localReserveInfo.orderId = reorderOrderId
+    }
+
     this.setData({
-      storeId: options.storeId || 1,
+      storeId: storeId,
+      tableId: tableId,
       cartItems,
       cartTotal,
       finalTotal: discountResult.finalTotal,
       totalDiscount: discountResult.totalDiscount,
       discountBreakdown: discountResult.discountBreakdown,
-      reserveInfo: selectedTable ? {
-        table: selectedTable,
-        store: currentStore
-      } : null
+      reserveInfo: localReserveInfo
     })
+
+    // 主动从后端查询用户当前所有 BOOKED 预约
+    this.loadCurrentReservations()
 
     this.loadCoupons(cartTotal)
     this.loadPromotionRules()
+  },
+
+  /**
+   * 从后端加载用户当前所有 BOOKED 预约列表，支持多预约选择
+   */
+  loadCurrentReservations() {
+    get('/api/reservation/current').then(res => {
+      if (res.code === 0 && res.data && res.data.length > 0) {
+        // 有预约 → 列表 + 自动选中第一个
+        const list = res.data
+        this.setData({ reservationList: list, hasReservation: true })
+        this.selectReservation(0)
+      } else {
+        // 无预约 → 尝试 globalData（从预约页跳转来的）
+        const app = getApp()
+        const selectedTable = app.globalData.selectedTable
+        const currentStore = app.globalData.currentStore
+        if (selectedTable && currentStore) {
+          // 刚完成预约 → 有可用预约信息
+          this.setData({
+            hasReservation: true,
+            reservationList: [],
+            selectedReservationIdx: -1,
+            reserveInfo: {
+              store: { id: currentStore.id, name: currentStore.name },
+              table: selectedTable
+            },
+            storeId: currentStore.id,
+            tableId: selectedTable.id
+          })
+        } else {
+          // 完全没有预约 → 引导去预约
+          this.setData({
+            hasReservation: false,
+            reservationList: [],
+            selectedReservationIdx: -1,
+            reserveInfo: null,
+            storeId: null,
+            tableId: null
+          })
+        }
+      }
+    }).catch(err => {
+      console.warn('[loadCurrentReservations] 查询预约列表失败:', err)
+    })
+  },
+
+  /**
+   * 选中某个预约
+   */
+  selectReservation(idx) {
+    const list = this.data.reservationList
+    if (idx < 0 || idx >= list.length) return
+    const r = list[idx]
+    const app = getApp()
+    // 更新 globalData
+    app.globalData.selectedTable = {
+      id: r.tableId,
+      name: r.tableName,
+      type: r.tableType,
+      capacity: r.tableCapacity,
+      catName: r.catName,
+      catTheme: r.catTheme
+    }
+    app.globalData.currentStore = {
+      id: r.storeId,
+      name: r.storeName
+    }
+    // 更新页面数据
+    this.setData({
+      selectedReservationIdx: idx,
+      showReservationPicker: false,
+      storeId: r.storeId,
+      tableId: r.tableId,
+      reserveInfo: {
+        store: { id: r.storeId, name: r.storeName },
+        table: {
+          id: r.tableId,
+          name: r.tableName,
+          type: r.tableType,
+          capacity: r.tableCapacity,
+          catName: r.catName,
+          catTheme: r.catTheme
+        },
+        reserveDate: r.reserveDate,
+        reserveTime: r.reserveTime,
+        duration: r.duration,
+        persons: r.persons,
+        orderId: r.orderId
+      }
+    })
+  },
+
+  /** 打开预约选择器 */
+  onOpenReservationPicker() {
+    if (this.data.reservationList.length === 0) return
+    this.setData({ showReservationPicker: true })
+  },
+
+  /** 跳转预约页 */
+  goReserve() {
+    wx.switchTab({ url: '/pages/reservation/reservation' })
+  },
+
+  /** 关闭预约选择器 */
+  onCloseReservationPicker() {
+    this.setData({ showReservationPicker: false })
+  },
+
+  /** 在预约选择器中选中 */
+  onSelectReservation(e) {
+    const idx = e.currentTarget.dataset.index
+    this.selectReservation(idx)
   },
 
   // 为优惠券列表附加选中态 UI 字段（避免 WXML indexOf 兼容问题）
@@ -297,20 +433,34 @@ Page({
       couponIds: this.data.selectedCouponIds,
       remark: this.data.remark
     }
-    if (this.data.reserveInfo && this.data.reserveInfo.table) {
-      payload.tableId = this.data.reserveInfo.table.id
+    // orderId：优先使用选中的预约 orderId（格式 ORD0000000001），后端直接用其定位预约记录
+    const orderId = (this.data.reserveInfo && this.data.reserveInfo.orderId)
+    if (orderId) {
+      payload.orderId = orderId
+    }
+    // tableId 作为 fallback（当没有 orderId 时后端用 userId+tableId 匹配）
+    const tableId = this.data.tableId
+      || (this.data.reserveInfo && this.data.reserveInfo.table && this.data.reserveInfo.table.id)
+    if (tableId) {
+      payload.tableId = Number(tableId)
     }
     if (wxCode) payload.code = wxCode
     return payload
   },
 
-  onPaymentSuccess() {
+  onPaymentSuccess(orderId) {
     this.setData({ submitting: false })
     getApp().globalData.cartItems = []
-    wx.showToast({ title: '支付成功！', icon: 'success' })
+    wx.showToast({ title: '下单成功！', icon: 'success', duration: 1500 })
+    // 跳转到订单详情页
+    const targetId = orderId || (this.data.reserveInfo && this.data.reserveInfo.orderId)
     setTimeout(() => {
-      wx.reLaunch({ url: '/pages/profile/profile' })
-    }, 1000)
+      if (targetId) {
+        wx.redirectTo({ url: `/pages/orderDetail/orderDetail?orderId=${targetId}` })
+      } else {
+        wx.switchTab({ url: '/pages/orderList/orderList' })
+      }
+    }, 1500)
   },
 
   onPaymentFail(err) {
@@ -325,6 +475,10 @@ Page({
   },
 
   onSubmit() {
+    if (!this.data.hasReservation || !this.data.reserveInfo) {
+      wx.showToast({ title: '请先选择预约', icon: 'none' })
+      return
+    }
     if (this.data.cartItems.length === 0) {
       wx.showToast({ title: '购物车是空的', icon: 'none' })
       return
@@ -340,16 +494,16 @@ Page({
           return
         }
 
-        const { payInfo, finalAmount } = res.data
+        const { payInfo, finalAmount, orderId } = res.data
 
         // 0 元订单无需调起支付
         if (!payInfo || finalAmount === 0 || this.data.finalTotal === 0) {
-          this.onPaymentSuccess()
+          this.onPaymentSuccess(orderId)
           return
         }
 
         requestWxPayment(payInfo, {
-          onSuccess: () => this.onPaymentSuccess(),
+          onSuccess: () => this.onPaymentSuccess(orderId),
           onFail: (err) => this.onPaymentFail(err),
           onCancel: () => this.onPaymentCancel()
         })

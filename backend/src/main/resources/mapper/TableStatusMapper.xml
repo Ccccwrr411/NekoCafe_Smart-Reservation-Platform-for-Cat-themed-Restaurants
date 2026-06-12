@@ -193,4 +193,36 @@
       version = #{version,jdbcType=INTEGER}
     where table_id = #{tableId,jdbcType=INTEGER}
   </update>
+
+  <!-- 乐观锁更新：将桌位从 IDLE 改为 RESERVED，version 自增 -->
+  <update id="reserveTableOptimistic">
+    update public.table_status
+    set status = 'RESERVED'::status_enum,
+        current_reservation_id = #{reservationId,jdbcType=BIGINT},
+        version = version + 1
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status = 'IDLE'::status_enum
+      and version = #{expectedVersion,jdbcType=INTEGER}
+  </update>
+
+  <!-- 乐观锁释放桌位：RESERVED → IDLE，current_reservation_id → NULL，version 自增 -->
+  <update id="releaseTableOptimistic">
+    update public.table_status
+    set status = 'IDLE'::status_enum,
+        current_reservation_id = NULL,
+        version = version + 1
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status = 'RESERVED'::status_enum
+      and version = #{expectedVersion,jdbcType=INTEGER}
+  </update>
+
+  <!-- 乐观锁占用桌位：RESERVED → OCCUPIED，version 自增（下单确认后） -->
+  <update id="occupyTableOptimistic">
+    update public.table_status
+    set status = 'OCCUPIED'::status_enum,
+        version = version + 1
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status = 'RESERVED'::status_enum
+      and version = #{expectedVersion,jdbcType=INTEGER}
+  </update>
 </mapper>

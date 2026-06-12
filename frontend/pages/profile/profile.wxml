@@ -48,51 +48,12 @@
     </view>
   </view>
 
-  <!-- ══ 最近订单 ══ -->
-  <view class="section-header">
-    <text class="section-title-text">最近订单</text>
-    <text class="section-more" bindtap="goAllOrders">全部订单 ›</text>
-  </view>
-
-  <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
-
-  <view wx:else>
-    <view wx:if="{{orders.length === 0}}" class="empty-state">
-      <text>暂无订单记录</text>
-    </view>
-    <view
-      wx:for="{{orders}}"
-      wx:key="id"
-      class="order-card card"
-      bindtap="goOrderDetail"
-      data-orderid="{{item.id}}"
-    >
-      <view class="order-header">
-        <text class="order-store">{{item.storeName}}</text>
-        <text
-          class="order-status"
-          style="color: {{ORDER_STATUS_MAP[item.status].color}}"
-        >{{ORDER_STATUS_MAP[item.status].text}}</text>
-      </view>
-      <view class="order-meta">
-        <text>{{item.reserveDate}} {{item.reserveTime}} · {{item.persons}}人</text>
-        <text>{{item.tableName}}</text>
-      </view>
-      <view class="order-items-preview" wx:if="{{item.items.length > 0}}">
-        <text
-          wx:for="{{item.items}}"
-          wx:for-item="dish"
-          wx:key="name"
-          class="order-dish-name"
-        >{{dish.name}}×{{dish.qty}}</text>
-      </view>
-      <view class="order-footer">
-        <text class="order-total" wx:if="{{item.totalAmount > 0}}">¥{{item.totalAmount}}</text>
-        <view class="order-actions">
-          <view wx:if="{{item.status === 'completed' && !item.hasReview}}" class="btn-review">去评价</view>
-          <view wx:if="{{item.status === 'confirmed'}}" class="btn-cancel">取消预约</view>
-        </view>
-      </view>
+  <!-- ══ 我的订单 ══ -->
+  <view class="menu-section card">
+    <view class="menu-row" bindtap="goAllOrders">
+      <view class="menu-icon">📋</view>
+      <text class="menu-label">我的订单</text>
+      <text class="menu-arrow">›</text>
     </view>
   </view>
 

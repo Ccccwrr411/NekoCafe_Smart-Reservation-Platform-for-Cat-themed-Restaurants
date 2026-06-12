@@ -126,7 +126,8 @@
       #{pointsUsed,jdbcType=INTEGER}, #{pointsEarned,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP}, 
       #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations">
+  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations"
+    useGeneratedKeys="true" keyProperty="reservationId" keyColumn="reservation_id">
     insert into public.reservations
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="reservationId != null">
@@ -397,6 +398,32 @@
       <foreach collection="statuses" item="s" open="(" separator="," close=")">
         #{s}::reservation_status
       </foreach>
+    order by reservation_time DESC
+  </select>
+
+  <!--
+    专用查询：按 userId 查全部预约（用于"全部"标签）。
+  -->
+  <select id="selectByUserId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+    order by reservation_time DESC
+  </select>
+
+  <!--
+    专用查询：按 userId + tableId + status 查询预约（用于确认订单等场景），
+    对 status 枚举字段显式 CAST。
+  -->
+  <select id="selectByUserIdAndTableIdAndStatus" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+      and table_id = #{tableId,jdbcType=INTEGER}
+      and status = #{status,jdbcType=VARCHAR}::reservation_status
+    order by created_at DESC
   </select>
 
   <!--

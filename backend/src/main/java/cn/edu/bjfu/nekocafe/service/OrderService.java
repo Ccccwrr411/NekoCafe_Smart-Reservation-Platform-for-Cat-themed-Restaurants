@@ -3,6 +3,7 @@ package cn.edu.bjfu.nekocafe.service;
 import cn.edu.bjfu.nekocafe.dto.OrderSubmitDTO;
 import cn.edu.bjfu.nekocafe.dto.ReservationCreateDTO;
 import cn.edu.bjfu.nekocafe.dto.RescheduleDTO;
+import cn.edu.bjfu.nekocafe.vo.CurrentReservationVO;
 import cn.edu.bjfu.nekocafe.vo.OrderVO;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +16,11 @@ public interface OrderService {
 
     /**
      * 获取用户订单列表（E-1）
+     * @param userId  用户ID
+     * @param status  状态筛选（前端值：booked/confirmed/completed/cancelled/refunding/refunded，null=全部）
+     * @param keyword 搜索关键词（匹配门店名/桌位名/订单号）
      */
-    List<OrderVO> listOrders(Long userId);
+    List<OrderVO> listOrders(Long userId, String status, String keyword);
 
     /**
      * 提交点单订单（E-2）
@@ -51,4 +55,17 @@ public interface OrderService {
      * 返回 orderId + status
      */
     Map<String, Object> createReservation(Long userId, ReservationCreateDTO dto);
+
+    /**
+     * 获取用户当前 BOOKED 状态的预约列表（供点单页面选择）
+     * 返回所有 BOOKED 状态的预约，若无则返回空列表
+     */
+    List<CurrentReservationVO> getCurrentReservations(Long userId);
+
+    /**
+     * 重新激活已取消的订单（CANCEL_ORDER → BOOKED）
+     * 取消订单时桌位保留不释放，点击"再来一单"直接复用同一预约
+     * 返回 orderId + 预约信息（storeId/storeName/tableId/tableName 等）
+     */
+    Map<String, Object> reactivateReservation(Long userId, String orderId);
 }

@@ -318,12 +318,21 @@ Page({
           if (result.code === 0) {
             const app = getApp()
             app.globalData.selectedTable = selectedTable
-            wx.showToast({ title: '预约成功！', icon: 'success' })
+            // 将 orderId 和状态也存入 globalData，供后续页面使用
+            app.globalData.currentOrderId = result.data.orderId
+            app.globalData.currentOrderStatus = result.data.status
+            wx.showToast({ title: '预约成功！', icon: 'success', duration: 1500 })
+            // 跳转到订单详情页
             setTimeout(() => {
-              wx.navigateTo({ url: `/pages/menu/menu?storeId=${storeId}&tableId=${selectedTable.id}` })
-            }, 800)
+              wx.navigateTo({ url: `/pages/orderDetail/orderDetail?orderId=${result.data.orderId}` })
+            }, 1500)
+          } else {
+            wx.showToast({ title: result.message || '预约失败', icon: 'none' })
           }
-        }).catch(() => wx.hideLoading())
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+        })
       }
     })
   }
