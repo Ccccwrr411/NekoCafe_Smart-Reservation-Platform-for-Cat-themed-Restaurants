@@ -27,4 +27,27 @@ public interface ReservationsMapper {
     int updateByPrimaryKeySelective(Reservations row);
 
     int updateByPrimaryKey(Reservations row);
+
+    /**
+     * 按用户ID和状态列表查询预约记录。
+     * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换，
+     * 解决 PostgreSQL 自定义枚举类型无法与 character varying 直接比较的问题。
+     */
+    List<Reservations> selectByUserIdAndStatuses(
+            @Param("userId") Long userId,
+            @Param("statuses") List<String> statuses);
+
+    /**
+     * 按门店ID和状态列表查询预约记录。
+     * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换。
+     */
+    List<Reservations> selectByStoreIdAndStatuses(
+            @Param("storeId") Integer storeId,
+            @Param("statuses") List<String> statuses);
+
+    /**
+     * 按门店ID查询全部预约记录（店员工作台用）。
+     * 对 status 字段使用 ::reservation_status 显式类型转换。
+     */
+    List<Reservations> selectByStoreId(@Param("storeId") Integer storeId);
 }

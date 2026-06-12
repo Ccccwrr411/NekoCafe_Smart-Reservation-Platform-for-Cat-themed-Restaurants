@@ -237,7 +237,7 @@
         SELECT r.reservation_id
         FROM public.reservations r
         WHERE r.user_id = #{userId}
-          AND r.status IN ('confirmed', 'completed')
+          AND r.status IN ('CONFIRMED'::reservation_status, 'COMPLETED'::reservation_status)
     )
     GROUP BY oi.dish_id
     ORDER BY totalquantity DESC
@@ -262,7 +262,7 @@
     INNER JOIN public.member_ext me ON r.user_id = me.user_id
     WHERE r.user_id != #{currentUserId}
       AND me.preferences::text LIKE CONCAT('%', #{flavorPreference}, '%')
-      AND r.status IN ('confirmed', 'completed')
+      AND r.status IN ('CONFIRMED'::reservation_status, 'COMPLETED'::reservation_status)
     GROUP BY oi.dish_id
     ORDER BY ordercount DESC
     LIMIT #{limit}

@@ -20,6 +20,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**")               // 拦截所有 /api 接口
                 .excludePathPatterns(
                         "/api/auth/login",         // 登录接口
+                        "/api/stores",             // 门店列表（公开浏览）
+                        "/api/stores/**",          // 门店详情（公开浏览）
+                        "/api/tables",             // 桌位列表（公开浏览）
+                        "/api/menu",               // 菜品列表（公开浏览）
+                        "/api/menu/**",            // 菜品详情（公开浏览）
+                        "/api/cats/**",            // 猫咪列表/详情（公开浏览）
                         "/api/pay/simulate",       // 模拟支付（测试用，无需登录）
                         "/api/pay/status",          // 查询支付状态
                         "/api/queue/**",        // ⚠️ 测试用临时放行，上线前移除

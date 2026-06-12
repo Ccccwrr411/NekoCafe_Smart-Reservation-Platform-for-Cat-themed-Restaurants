@@ -250,7 +250,7 @@ public class OrderServiceImpl implements OrderService {
     reservation.setSpecialRequest(dto.getRemark());
     reservation.setTotalAmount(new BigDecimal(totalAmount));
     reservation.setOrderAmount(new BigDecimal(finalAmount));
-    reservation.setStatus("confirmed");
+    reservation.setStatus("CONFIRMED");
     reservation.setCreatedAt(new Date());
     reservation.setUpdatedAt(new Date());
 
@@ -434,7 +434,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // 更新状态
-    reservation.setStatus("cancelled");
+    reservation.setStatus("CANCEL_BOOKING");
     reservation.setUpdatedAt(new Date());
     reservationsMapper.updateByPrimaryKeySelective(reservation);
 
@@ -457,13 +457,13 @@ public class OrderServiceImpl implements OrderService {
     refund.setPaymentId(paymentId);
     refund.setRefundAmount(refundAmount);
     refund.setRefundReason("用户取消订单");
-    refund.setStatus("completed");
+    refund.setStatus("COMPLETED");
     refund.setCreatedAt(new Date());
     refund.setCompletedAt(new Date());
     refundRecordsMapper.insertSelective(refund);
 
     Map<String, Object> result = new HashMap<>();
-    result.put("status", "cancelled");
+    result.put("status", "CANCEL_BOOKING");
     result.put("refundAmount", refundAmount.intValue());
     return result;
   }
@@ -551,19 +551,19 @@ public class OrderServiceImpl implements OrderService {
     refund.setPaymentId(paymentId);
     refund.setRefundAmount(refundAmount);
     refund.setRefundReason("用户申请退款");
-    refund.setStatus("processing");
+    refund.setStatus("REQUEST_CANCEL");
     refund.setCreatedAt(new Date());
     refundRecordsMapper.insertSelective(refund);
 
     // 更新订单状态为退款中
-    reservation.setStatus("refunding");
+    reservation.setStatus("REFUNDING");
     reservation.setUpdatedAt(new Date());
     reservationsMapper.updateByPrimaryKeySelective(reservation);
 
     Map<String, Object> result = new HashMap<>();
     result.put("refundId", refund.getRefundId());
     result.put("refundAmount", refundAmount.intValue());
-    result.put("status", "processing");
+    result.put("status", "REQUEST_CANCEL");
     return result;
   }
 
@@ -608,7 +608,7 @@ public class OrderServiceImpl implements OrderService {
     reservation.setPartySize(dto.getPersons() != null ? dto.getPersons() : 1);
     reservation.setTotalAmount(BigDecimal.ZERO);
     reservation.setOrderAmount(BigDecimal.ZERO);
-    reservation.setStatus("confirmed");
+    reservation.setStatus("CONFIRMED");
     reservation.setCreatedAt(new Date());
     reservation.setUpdatedAt(new Date());
 
@@ -617,7 +617,7 @@ public class OrderServiceImpl implements OrderService {
 
     Map<String, Object> result = new HashMap<>();
     result.put("orderId", formatOrderId(reservationId));
-    result.put("status", "confirmed");
+    result.put("status", "CONFIRMED");
     return result;
   }
 
@@ -665,17 +665,17 @@ public class OrderServiceImpl implements OrderService {
   private boolean canCancelOrder(Reservations reservation) {
     if (reservation == null || reservation.getStatus() == null) return false;
     String status = reservation.getStatus();
-    return "confirmed".equals(status) || "pending".equals(status);
+    return "CONFIRMED".equals(status) || "BOOKED".equals(status);
   }
 
   /**
    * 判断订单是否可改约
-   * 规则：状态为 confirmed 或 pending 时可以改约
+   * 规则：状态为 confirmed 或 booked 时可以改约
    */
   private boolean canRescheduleOrder(Reservations reservation) {
     if (reservation == null || reservation.getStatus() == null) return false;
     String status = reservation.getStatus();
-    return "confirmed".equals(status) || "pending".equals(status);
+    return "CONFIRMED".equals(status) || "BOOKED".equals(status);
   }
 
   /**
@@ -685,6 +685,6 @@ public class OrderServiceImpl implements OrderService {
   private boolean canRefundOrder(Reservations reservation) {
     if (reservation == null || reservation.getStatus() == null) return false;
     String status = reservation.getStatus();
-    return "confirmed".equals(status) || "completed".equals(status);
+    return "CONFIRMED".equals(status) || "COMPLETED".equals(status);
   }
 }

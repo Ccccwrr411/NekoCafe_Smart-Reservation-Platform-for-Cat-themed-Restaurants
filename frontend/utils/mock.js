@@ -866,6 +866,33 @@ module.exports = {
   },
 
   // ─────────────────────────────────────────────
+  // 店员-订单进度推进  POST /api/staff/order/progress
+  // ─────────────────────────────────────────────
+  '/api/staff/order/progress': function(body) {
+    return { code: 0, message: 'success', data: { success: true, message: '订单状态已更新', reservationId: body.reservationId, status: body.targetStatus } }
+  },
+
+  // ─────────────────────────────────────────────
+  // 店员-退款申请列表  GET /api/staff/refunds?storeId=
+  // ─────────────────────────────────────────────
+  '/api/staff/refunds': {
+    code: 0,
+    message: 'success',
+    data: [
+      { refundId: 1, reservationId: 1001, refundAmount: 68, refundReason: '菜品售罄', status: 'PENDING', createdAt: '2026-06-12 12:30', tableNo: 'A01', tableType: '双人桌', totalAmount: 68, userId: 10, reservationTime: '2026-06-12 12:00' },
+      { refundId: 2, reservationId: 1002, refundAmount: 146, refundReason: '等待时间过长', status: 'PENDING', createdAt: '2026-06-12 11:20', tableNo: 'B03', tableType: '四人桌', totalAmount: 146, userId: 11, reservationTime: '2026-06-12 10:30' },
+      { refundId: 3, reservationId: 1003, refundAmount: 52, refundReason: '改变主意', status: 'APPROVED', createdAt: '2026-06-11 15:00', completedAt: '2026-06-11 15:30', tableNo: 'A02', tableType: '双人桌', totalAmount: 52, userId: 12, reservationTime: '2026-06-11 14:00' }
+    ]
+  },
+
+  // ─────────────────────────────────────────────
+  // 店员-审核退款  POST /api/staff/refund/review
+  // ─────────────────────────────────────────────
+  '/api/staff/refund/review': function(body) {
+    return { code: 0, message: 'success', data: { success: true, message: body.action === 'approve' ? '退款已通过' : '退款已拒绝', refundId: body.refundId, status: body.action === 'approve' ? 'APPROVED' : 'REJECTED' } }
+  },
+
+  // ─────────────────────────────────────────────
   // 总部运营-各门店概览  GET /api/hq/stores-overview
   // ─────────────────────────────────────────────
   '/api/hq/stores-overview': {

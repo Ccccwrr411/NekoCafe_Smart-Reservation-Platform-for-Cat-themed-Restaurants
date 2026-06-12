@@ -6,6 +6,7 @@ import cn.edu.bjfu.nekocafe.service.StaffService;
 import cn.edu.bjfu.nekocafe.vo.DashboardMetricsVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -13,7 +14,7 @@ import java.util.*;
 
 /**
  * 店员 & 数据看板服务实现
- * 负责接口：K-1 / L-1 / L-2
+ * 负责接口：K-1 / L-1 / L-2 / L-3 / L-4 / L-5
  */
 @Service
 public class StaffServiceImpl implements StaffService {
@@ -32,6 +33,9 @@ public class StaffServiceImpl implements StaffService {
 
     @Autowired
     private ShiftExceptionsMapper shiftExceptionsMapper;
+
+    @Autowired
+    private RefundRecordsMapper refundRecordsMapper;
 
     // =========================================================
     // K-1  GET /api/dashboard/metrics?storeId=&range=
@@ -138,27 +142,31 @@ public class StaffServiceImpl implements StaffService {
         tablesExample.setOrderByClause("table_no ASC");
         List<Tables> tablesList = tablesMapper.selectByExample(tablesExample);
 
-        // 2. 查所有桌位实时状态（table_id → TableStatus）
+        // 2. 查所有桌位实时状态（仅该门店的桌位 ID）
         Map<Integer, TableStatus> statusMap = new HashMap<>();
         if (tablesList != null && !tablesList.isEmpty()) {
+            // 收集该门店的 tableId 列表，只查这些桌位的状态
+            java.util.Set<Integer> storeTableIds = new java.util.HashSet<>();
+            for (Tables t : tablesList) {
+                storeTableIds.add(t.getTableId());
+            }
             TableStatusExample tsExample = new TableStatusExample();
-            // 不加额外条件，拉取所有有状态记录的桌
             List<TableStatus> tsList = tableStatusMapper.selectByExample(tsExample);
             if (tsList != null) {
                 for (TableStatus ts : tsList) {
-                    statusMap.put(ts.getTableId(), ts);
+                    if (storeTableIds.contains(ts.getTableId())) {
+                        statusMap.put(ts.getTableId(), ts);
+                    }
                 }
             }
         }
 
-        // 3. 查今日 serving 预约信息（status = 'serving'）
+        // 3. 查今日已确认（CONFIRMED）的预约信息
         //    用于填 customer / arriveTime / estLeaveTime
+        //    使用带 ::reservation_status CAST 的自定义查询，避免 PostgreSQL 枚举类型不匹配
         Map<Long, Reservations> reservationMap = new HashMap<>();
-        ReservationsExample resExample = new ReservationsExample();
-        resExample.createCriteria()
-                .andStoreIdEqualTo(storeId)
-                .andStatusEqualTo("serving");
-        List<Reservations> resList = reservationsMapper.selectByExample(resExample);
+        List<Reservations> resList = reservationsMapper.selectByStoreIdAndStatuses(
+                storeId, java.util.Arrays.asList("CONFIRMED"));
         if (resList != null) {
             for (Reservations r : resList) {
                 reservationMap.put(r.getReservationId(), r);
@@ -178,10 +186,11 @@ public class StaffServiceImpl implements StaffService {
                 row.put("tableType", t.getTableType());
                 row.put("catTheme", t.getCatTheme());
 
-                // 状态：从 table_status 取，默认 available
+                // 状态：从 table_status 取，默认 available（转换为前端小写格式）
                 TableStatus ts = statusMap.get(t.getTableId());
-                String status = (ts != null && ts.getStatus() != null)
-                        ? ts.getStatus() : "available";
+                String rawStatus = (ts != null && ts.getStatus() != null)
+                        ? ts.getStatus() : "IDLE";
+                String status = toFrontendTableStatus(rawStatus);
                 row.put("status", status);
 
                 // 若有关联预约，填运营字段
@@ -258,6 +267,371 @@ public class StaffServiceImpl implements StaffService {
     }
 
     // =========================================================
+    // L-3  GET /api/staff/orders?storeId=
+    // =========================================================
+    @Override
+    public List<Map<String, Object>> getStaffOrders(Integer storeId) {
+
+        List<Reservations> resList = reservationsMapper.selectByStoreId(storeId);
+
+        SimpleDateFormat dtFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd");
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        if (resList != null) {
+            for (Reservations r : resList) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("id", r.getReservationId());
+                row.put("reservationId", r.getReservationId());
+                row.put("userId", r.getUserId());
+                row.put("storeId", r.getStoreId());
+                row.put("tableId", r.getTableId());
+                row.put("partySize", r.getPartySize());
+                row.put("status", toFrontendOrderStatus(r.getStatus()));
+                row.put("orderAmount", r.getOrderAmount() != null ? r.getOrderAmount().doubleValue() : 0);
+                row.put("totalAmount", r.getTotalAmount() != null ? r.getTotalAmount().doubleValue() : 0);
+                row.put("reservationTime",
+                        r.getReservationTime() != null ? dtFmt.format(r.getReservationTime()) : null);
+                row.put("durationMin", r.getDurationMin());
+                row.put("specialRequest", r.getSpecialRequest());
+                row.put("createdAt",
+                        r.getCreatedAt() != null ? dtFmt.format(r.getCreatedAt()) : null);
+
+                // 桌位信息
+                if (r.getTableId() != null) {
+                    Tables table = tablesMapper.selectByPrimaryKey(r.getTableId());
+                    if (table != null) {
+                        row.put("tableNo", table.getTableNo());
+                        row.put("tableType", table.getTableType());
+                    }
+                }
+
+                result.add(row);
+            }
+        }
+
+        return result;
+    }
+
+    // =========================================================
+    // L-4  POST /api/staff/order/accept
+    // =========================================================
+    @Override
+    @Transactional
+    public Map<String, Object> acceptOrder(Long reservationId) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 1. 查预约记录
+        Reservations reservation = reservationsMapper.selectByPrimaryKey(reservationId);
+        if (reservation == null) {
+            result.put("success", false);
+            result.put("message", "预约记录不存在");
+            return result;
+        }
+
+        // 2. 校验状态：只有 BOOKED 状态可以接单
+        if (!"BOOKED".equals(reservation.getStatus())) {
+            result.put("success", false);
+            result.put("message", "当前状态不允许接单，当前状态：" + reservation.getStatus());
+            return result;
+        }
+
+        // 3. 更新预约状态 BOOKED → CONFIRMED
+        reservation.setStatus("CONFIRMED");
+        reservation.setUpdatedAt(new Date());
+        reservationsMapper.updateByPrimaryKeySelective(reservation);
+
+        // 4. 更新桌位状态为 OCCUPIED
+        Integer tableId = reservation.getTableId();
+        if (tableId != null) {
+            TableStatus tableStatus = tableStatusMapper.selectByPrimaryKey(tableId);
+            if (tableStatus == null) {
+                // 首次创建桌位状态记录
+                tableStatus = new TableStatus();
+                tableStatus.setTableId(tableId);
+                tableStatus.setStatus("OCCUPIED");
+                tableStatus.setCurrentReservationId(reservationId);
+                tableStatus.setVersion(0);
+                tableStatusMapper.insertSelective(tableStatus);
+            } else {
+                tableStatus.setStatus("OCCUPIED");
+                tableStatus.setCurrentReservationId(reservationId);
+                tableStatusMapper.updateByPrimaryKeySelective(tableStatus);
+            }
+        }
+
+        result.put("success", true);
+        result.put("message", "接单成功");
+        result.put("reservationId", reservationId);
+        result.put("status", "CONFIRMED");
+        return result;
+    }
+
+    // =========================================================
+    // L-5  POST /api/staff/table/dispatch
+    // =========================================================
+    @Override
+    @Transactional
+    public Map<String, Object> dispatchTable(Integer tableId, String status) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 1. 校验桌位是否存在
+        Tables table = tablesMapper.selectByPrimaryKey(tableId);
+        if (table == null) {
+            result.put("success", false);
+            result.put("message", "桌位不存在");
+            return result;
+        }
+
+        // 2. 校验状态值合法性
+        Set<String> validStatuses = new HashSet<>(
+                Arrays.asList("IDLE", "RESERVED", "OCCUPIED", "CLEANING"));
+        // 同时兼容前端传入的小写值
+        String upperStatus = status != null ? status.toUpperCase() : null;
+        if (!validStatuses.contains(upperStatus)) {
+            result.put("success", false);
+            result.put("message", "非法的桌位状态：" + status);
+            return result;
+        }
+
+        // 3. 更新 table_status
+        TableStatus tableStatus = tableStatusMapper.selectByPrimaryKey(tableId);
+        if (tableStatus == null) {
+            tableStatus = new TableStatus();
+            tableStatus.setTableId(tableId);
+            tableStatus.setStatus(upperStatus);
+            // 如果切为空闲/打扫，清除关联预约
+            if ("IDLE".equals(upperStatus) || "CLEANING".equals(upperStatus)) {
+                tableStatus.setCurrentReservationId(null);
+            }
+            tableStatus.setVersion(0);
+            tableStatusMapper.insertSelective(tableStatus);
+        } else {
+            tableStatus.setStatus(upperStatus);
+            // 如果切为空闲/打扫，清除关联预约
+            if ("IDLE".equals(upperStatus) || "CLEANING".equals(upperStatus)) {
+                tableStatus.setCurrentReservationId(null);
+            }
+            tableStatusMapper.updateByPrimaryKeySelective(tableStatus);
+        }
+
+        result.put("success", true);
+        result.put("message", "桌位状态已更新");
+        result.put("tableId", tableId);
+        result.put("status", upperStatus);
+        return result;
+    }
+
+    // =========================================================
+    // L-6  POST /api/staff/order/progress
+    // =========================================================
+    @Override
+    @Transactional
+    public Map<String, Object> progressOrder(Long reservationId, String targetStatus) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 1. 查预约记录
+        Reservations reservation = reservationsMapper.selectByPrimaryKey(reservationId);
+        if (reservation == null) {
+            result.put("success", false);
+            result.put("message", "预约记录不存在");
+            return result;
+        }
+
+        // 2. 校验状态流转合法性
+        String currentStatus = reservation.getStatus();
+        String upperTarget = targetStatus != null ? targetStatus.toUpperCase() : null;
+
+        boolean valid = false;
+        if ("CONFIRMED".equals(currentStatus) && "MAKING".equals(upperTarget)) valid = true;
+        if ("MAKING".equals(currentStatus) && "SERVING".equals(upperTarget)) valid = true;
+        if ("SERVING".equals(currentStatus) && "COMPLETED".equals(upperTarget)) valid = true;
+
+        if (!valid) {
+            result.put("success", false);
+            result.put("message", "不允许的状态流转：" + currentStatus + " → " + upperTarget);
+            return result;
+        }
+
+        // 3. 更新预约状态
+        reservation.setStatus(upperTarget);
+        reservation.setUpdatedAt(new Date());
+        reservationsMapper.updateByPrimaryKeySelective(reservation);
+
+        // 4. 若推进到 COMPLETED，同步将桌位状态设为 CLEANING
+        if ("COMPLETED".equals(upperTarget)) {
+            Integer tableId = reservation.getTableId();
+            if (tableId != null) {
+                TableStatus tableStatus = tableStatusMapper.selectByPrimaryKey(tableId);
+                if (tableStatus == null) {
+                    tableStatus = new TableStatus();
+                    tableStatus.setTableId(tableId);
+                    tableStatus.setStatus("CLEANING");
+                    tableStatus.setCurrentReservationId(null);
+                    tableStatus.setVersion(0);
+                    tableStatusMapper.insertSelective(tableStatus);
+                } else {
+                    tableStatus.setStatus("CLEANING");
+                    tableStatus.setCurrentReservationId(null);
+                    tableStatusMapper.updateByPrimaryKeySelective(tableStatus);
+                }
+            }
+        }
+
+        result.put("success", true);
+        result.put("message", "订单状态已更新");
+        result.put("reservationId", reservationId);
+        result.put("status", toFrontendOrderStatus(upperTarget));
+        return result;
+    }
+
+    // =========================================================
+    // L-7  GET /api/staff/refunds?storeId=
+    // =========================================================
+    @Override
+    public List<Map<String, Object>> getRefundList(Integer storeId) {
+
+        // 查该门店的退款记录
+        RefundRecordsExample example = new RefundRecordsExample();
+        example.setOrderByClause("created_at DESC");
+        List<RefundRecords> refundList = refundRecordsMapper.selectByExample(example);
+
+        SimpleDateFormat dtFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        if (refundList != null) {
+            for (RefundRecords r : refundList) {
+                // 仅返回该门店的退款记录（通过 reservation 关联判断）
+                if (r.getReservationId() != null) {
+                    Reservations res = reservationsMapper.selectByPrimaryKey(r.getReservationId());
+                    if (res == null || !storeId.equals(res.getStoreId())) continue;
+
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("refundId", r.getRefundId());
+                    row.put("reservationId", r.getReservationId());
+                    row.put("refundAmount", r.getRefundAmount() != null ? r.getRefundAmount().doubleValue() : 0);
+                    row.put("refundReason", r.getRefundReason());
+                    row.put("status", r.getStatus());
+                    row.put("operatorId", r.getOperatorId());
+                    row.put("createdAt", r.getCreatedAt() != null ? dtFmt.format(r.getCreatedAt()) : null);
+                    row.put("completedAt", r.getCompletedAt() != null ? dtFmt.format(r.getCompletedAt()) : null);
+
+                    // 关联预约信息
+                    row.put("userId", res.getUserId());
+                    row.put("tableId", res.getTableId());
+                    row.put("orderStatus", toFrontendOrderStatus(res.getStatus()));
+                    row.put("totalAmount", res.getTotalAmount() != null ? res.getTotalAmount().doubleValue() : 0);
+                    row.put("reservationTime",
+                            res.getReservationTime() != null ? dtFmt.format(res.getReservationTime()) : null);
+                    row.put("specialRequest", res.getSpecialRequest());
+
+                    // 桌位信息
+                    if (res.getTableId() != null) {
+                        Tables table = tablesMapper.selectByPrimaryKey(res.getTableId());
+                        if (table != null) {
+                            row.put("tableNo", table.getTableNo());
+                            row.put("tableType", table.getTableType());
+                        }
+                    }
+
+                    result.add(row);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    // =========================================================
+    // L-8  POST /api/staff/refund/review
+    // =========================================================
+    @Override
+    @Transactional
+    public Map<String, Object> reviewRefund(Long refundId, String action, Long operatorId) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 1. 查退款记录
+        RefundRecords refund = refundRecordsMapper.selectByPrimaryKey(refundId);
+        if (refund == null) {
+            result.put("success", false);
+            result.put("message", "退款记录不存在");
+            return result;
+        }
+
+        // 2. 校验当前状态（仅 PENDING 状态可审核）
+        if (!"PENDING".equals(refund.getStatus()) && !"pending".equals(refund.getStatus())) {
+            result.put("success", false);
+            result.put("message", "该退款申请已被处理，当前状态：" + refund.getStatus());
+            return result;
+        }
+
+        // 3. 执行审核操作
+        String upperAction = action != null ? action.toLowerCase() : "";
+        switch (upperAction) {
+            case "approve":
+                // 通过退款：更新退款记录状态
+                refund.setStatus("APPROVED");
+                refund.setOperatorId(operatorId);
+                refund.setCompletedAt(new Date());
+                refundRecordsMapper.updateByPrimaryKeySelective(refund);
+
+                // 更新关联预约状态为 CANCEL_ORDER
+                if (refund.getReservationId() != null) {
+                    Reservations res = reservationsMapper.selectByPrimaryKey(refund.getReservationId());
+                    if (res != null) {
+                        res.setStatus("CANCEL_ORDER");
+                        res.setUpdatedAt(new Date());
+                        reservationsMapper.updateByPrimaryKeySelective(res);
+
+                        // 释放桌位
+                        if (res.getTableId() != null) {
+                            TableStatus ts = tableStatusMapper.selectByPrimaryKey(res.getTableId());
+                            if (ts != null) {
+                                ts.setStatus("IDLE");
+                                ts.setCurrentReservationId(null);
+                                tableStatusMapper.updateByPrimaryKeySelective(ts);
+                            }
+                        }
+                    }
+                }
+                break;
+
+            case "reject":
+                // 拒绝退款：更新退款记录状态
+                refund.setStatus("REJECTED");
+                refund.setOperatorId(operatorId);
+                refund.setCompletedAt(new Date());
+                refundRecordsMapper.updateByPrimaryKeySelective(refund);
+
+                // 恢复关联预约状态为 CONFIRMED
+                if (refund.getReservationId() != null) {
+                    Reservations res = reservationsMapper.selectByPrimaryKey(refund.getReservationId());
+                    if (res != null && "REFUNDING".equals(res.getStatus())) {
+                        res.setStatus("CONFIRMED");
+                        res.setUpdatedAt(new Date());
+                        reservationsMapper.updateByPrimaryKeySelective(res);
+                    }
+                }
+                break;
+
+            default:
+                result.put("success", false);
+                result.put("message", "非法的审核操作：" + action);
+                return result;
+        }
+
+        result.put("success", true);
+        result.put("message", "approve".equals(upperAction) ? "退款已通过" : "退款已拒绝");
+        result.put("refundId", refundId);
+        result.put("status", refund.getStatus());
+        return result;
+    }
+
+    // =========================================================
     //  私有工具方法
     // =========================================================
 
@@ -286,6 +660,41 @@ public class StaffServiceImpl implements StaffService {
         row.put("arriveTime", null);
         row.put("estLeaveTime", null);
         row.put("reservationId", null);
+    }
+
+    /**
+     * 桌位状态映射：数据库枚举（大写） → 前端期望值（小写）
+     * IDLE → available, RESERVED → booked, OCCUPIED → occupied, CLEANING → cleaning
+     */
+    private String toFrontendTableStatus(String dbStatus) {
+        if (dbStatus == null) return "available";
+        switch (dbStatus.toUpperCase()) {
+            case "IDLE":       return "available";
+            case "RESERVED":  return "booked";
+            case "OCCUPIED":  return "occupied";
+            case "CLEANING":  return "cleaning";
+            default:          return dbStatus.toLowerCase();
+        }
+    }
+
+    /**
+     * 预约状态映射：数据库枚举（大写） → 前端期望值（小写）
+     * BOOKED → booked, CONFIRMED → confirmed, COMPLETED → completed,
+     * CANCEL_BOOKING / CANCEL_ORDER → cancelled, REFUNDING → refunding
+     */
+    private String toFrontendOrderStatus(String dbStatus) {
+        if (dbStatus == null) return "pending";
+        switch (dbStatus.toUpperCase()) {
+            case "BOOKED":         return "booked";
+            case "CONFIRMED":      return "confirmed";
+            case "MAKING":         return "making";
+            case "SERVING":        return "serving";
+            case "COMPLETED":      return "completed";
+            case "CANCEL_BOOKING":
+            case "CANCEL_ORDER":   return "cancelled";
+            case "REFUNDING":      return "refunding";
+            default:               return dbStatus.toLowerCase();
+        }
     }
 
     /**

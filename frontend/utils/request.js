@@ -21,7 +21,8 @@ function isUseMock() {
 const PUBLIC_PATHS = [
   '/api/stores',      // 门店列表
   '/api/tables',      // 桌位列表（只读）
-  '/api/menu'         // 菜品列表（只读）
+  '/api/menu',        // 菜品列表（只读）
+  '/api/cats'         // 猫咪列表/详情（只读）
 ]
 
 /**
@@ -115,16 +116,22 @@ function realRequest(url, method, data) {
         if (res.statusCode === 200) {
           resolve(res.data)
         } else if (res.statusCode === 401) {
-          // token 过期，清除本地登录态并跳转登录
-          wx.removeStorageSync('token')
-          wx.removeStorageSync('userInfo')
-          wx.removeStorageSync('userRole')
-          if (app.globalData) {
-            app.globalData.userInfo = null
-            app.globalData.userRole = null
+          if (isPublicPath(url)) {
+            // 公开接口收到 401：后端配置遗漏，不跳登录页，静默返回错误
+            console.warn('[Request] 公开接口返回 401，请检查后端拦截器排除配置：', url)
+            resolve(res.data || { code: -1, message: '接口暂不可用', data: null })
+          } else {
+            // 非公开接口 token 过期，清除本地登录态并跳转登录
+            wx.removeStorageSync('token')
+            wx.removeStorageSync('userInfo')
+            wx.removeStorageSync('userRole')
+            if (app.globalData) {
+              app.globalData.userInfo = null
+              app.globalData.userRole = null
+            }
+            wx.reLaunch({ url: '/pages/login/login' })
+            reject(new Error('登录已过期，请重新登录'))
           }
-          wx.reLaunch({ url: '/pages/login/login' })
-          reject(new Error('登录已过期，请重新登录'))
         } else {
           reject(new Error(`请求失败：${res.statusCode}`))
         }

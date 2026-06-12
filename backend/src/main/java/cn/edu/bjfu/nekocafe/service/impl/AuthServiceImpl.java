@@ -43,17 +43,18 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("code 不能为空");
         }
 
-        // ========== 1. 课设版：用 code 当用户标识查 phone 字段 ==========
-        // 正式环境应改为：调微信 code2session 拿 openid，然后 phone 字段存真实手机号
+        // ========== 1. 课设版：用 code 当用户标识查 openid 字段 ==========
+        // 正式环境应改为：调微信 code2session 拿真实 openid，然后 phone 字段存真实手机号
+        // 注意：微信 code 长度约 32 字符，超过 phone 字段 varchar(20) 限制，必须存 openid 字段
         UsersExample example = new UsersExample();
-        example.createCriteria().andPhoneEqualTo(code);
+        example.createCriteria().andOpenidEqualTo(code);
         List<Users> list = usersMapper.selectByExample(example);
 
         Users user;
         if (list.isEmpty()) {
             // 新用户：自动注册
             user = new Users();
-            user.setPhone(code);                    // 课设用 code 暂存
+            user.setOpenid(code);                   // 课设用 code 存 openid 字段（varchar 足够长）
             user.setNickname("猫咖爱好者");           // 默认昵称
             user.setAvatarUrl("/uploads/avatars/default.png");
             user.setStatus((short) 1);              // 1=正常
@@ -90,7 +91,7 @@ public class AuthServiceImpl implements AuthService {
         userInfo.setId(user.getUserId());
         userInfo.setNickName(user.getNickname());
         userInfo.setAvatarUrl(user.getAvatarUrl());
-        userInfo.setPhone(maskPhone(user.getPhone()));       // 手机号脱敏
+        userInfo.setPhone(maskPhone(user.getPhone()));       // 手机号脱敏（phone 为 null 时返回 null，前端可做判断）
         userInfo.setMemberLevel(levelToString(level));
         userInfo.setPoints(points);
         result.setUserInfo(userInfo);
