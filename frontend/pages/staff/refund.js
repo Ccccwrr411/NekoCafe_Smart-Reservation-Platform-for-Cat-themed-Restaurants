@@ -3,21 +3,20 @@ const { get, post } = require('../../utils/request')
 const app = getApp()
 
 const REFUND_STATUS_LABEL = {
-  PENDING: '待审核',
-  APPROVED: '已通过',
-  REJECTED: '已拒绝',
-  pending: '待审核',
-  approved: '已通过',
-  rejected: '已拒绝'
+  REQUEST_CANCEL: '待审核',
+  REQUEST_REFUND: '待审核',
+  COMPLETED: '已通过',
+  REJECTED: '已拒绝'
 }
 
 Page({
   data: {
     storeId: 1,
     storeName: '',
+    reservationId: null,   // 从订单列表传入，自动定位到该订单的退款记录
     refunds: [],
     filteredRefunds: [],
-    refundFilter: 'pending',
+    refundFilter: 'pending',  // 默认显示待审核
     loading: true,
     // 拒绝弹层
     showRejectModal: false,
@@ -28,7 +27,8 @@ Page({
   onLoad(options) {
     if (!app.requireRole(['staff', 'manager', 'hq_ops'])) return
     const storeId = options.storeId ? parseInt(options.storeId) : (app.globalData.userInfo && app.globalData.userInfo.storeId || 1)
-    this.setData({ storeId })
+    const reservationId = options.reservationId ? parseInt(options.reservationId) : null
+    this.setData({ storeId, reservationId })
     this.loadRefunds()
   },
 
@@ -62,15 +62,30 @@ Page({
   },
 
   applyFilter() {
-    const { refundFilter, refunds } = this.data
-    const filtered = refundFilter === 'all'
-      ? refunds
-      : refunds.filter(r => r.status && r.status.toUpperCase() === refundFilter.toUpperCase())
+    const { refundFilter, refunds, reservationId } = this.data
+    let filtered = refunds
+
+    // 若传入了 reservationId，优先展示该订单的退款记录
+    if (reservationId) {
+      filtered = refunds.filter(r => r.reservationId === reservationId)
+    } else if (refundFilter !== 'all') {
+      // 按状态筛选
+      if (refundFilter === 'pending') {
+        filtered = refunds.filter(r => {
+          const s = (r.status || '').toUpperCase()
+          return s === 'REQUEST_CANCEL' || s === 'REQUEST_REFUND'
+        })
+      } else if (refundFilter === 'approved') {
+        filtered = refunds.filter(r => (r.status || '').toUpperCase() === 'COMPLETED')
+      } else if (refundFilter === 'rejected') {
+        filtered = refunds.filter(r => (r.status || '').toUpperCase() === 'REJECTED')
+      }
+    }
     this.setData({ filteredRefunds: filtered })
   },
 
   onFilterRefund(e) {
-    this.setData({ refundFilter: e.currentTarget.dataset.filter })
+    this.setData({ refundFilter: e.currentTarget.dataset.filter, reservationId: null })
     this.applyFilter()
   },
 
@@ -78,9 +93,12 @@ Page({
   onApproveRefund(e) {
     const refund = e.currentTarget.dataset.refund
     if (!refund) return
+    const refundTypeText = refund.status === 'REQUEST_CANCEL'
+      ? '取消重下单（顾客继续用餐）'
+      : '全单退款（释放桌位）'
     wx.showModal({
-      title: '确认通过退款',
-      content: `退款金额 ¥${refund.refundAmount}，确认通过？`,
+      title: '⚠️ 确认通过退款',
+      content: `金额：¥${refund.refundAmount}\n类型：${refundTypeText}\n\n此操作不可撤销，确认通过？`,
       confirmText: '确认通过',
       confirmColor: '#C97E5A',
       success: (res) => {

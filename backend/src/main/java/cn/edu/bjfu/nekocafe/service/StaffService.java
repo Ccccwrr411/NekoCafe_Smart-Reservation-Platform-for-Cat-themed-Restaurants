@@ -87,4 +87,25 @@ public interface StaffService {
      * @return 操作结果
      */
     Map<String, Object> reviewRefund(Long refundId, String action, Long operatorId);
+
+    /**
+     * 告警已知晓（L-9）
+     * 店员确认收到告警，状态 PENDING → ACKNOWLEDGED
+     *
+     * @param exceptionId 异常记录 ID
+     * @param operatorId  操作人用户 ID
+     * @return 操作结果
+     */
+    Map<String, Object> acknowledgeAlert(Long exceptionId, Long operatorId);
+
+    /**
+     * 解决告警（L-10）
+     * 店员完成告警处理，状态 ACKNOWLEDGED → RESOLVED
+     *
+     * @param exceptionId 异常记录 ID
+     * @param resolution  解决说明
+     * @param operatorId  操作人用户 ID
+     * @return 操作结果
+     */
+    Map<String, Object> resolveAlert(Long exceptionId, String resolution, Long operatorId);
 }

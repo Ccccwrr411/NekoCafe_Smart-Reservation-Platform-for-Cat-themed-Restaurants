@@ -31,4 +31,5 @@
 ## 店员工作台开发状态
 - **P0 已完成**：枚举 Bug 修复、GET/POST 接口补齐（orders/accept/dispatch）、前端 API 对接、全量枚举 CAST 修复
 - **P1 已完成**：POST /api/staff/order/progress（状态推进 CONFIRMED→MAKING→SERVING→COMPLETED）、GET /api/staff/refunds、POST /api/staff/refund/review、前端退款审核 Tab、V003 迁移（CLEANING 枚举）
-- **P2 待完成**：恢复 /api/staff/** 认证与角色校验、FR23 操作日志 AOP
+- **P2 已完成**：通知中心系统（M-1~M-7 接口 + 底部导航改造 + 前端通知 Tab）
+- **P3 待完成**：恢复 /api/staff/** 认证与角色校验、FR23 操作日志 AOP

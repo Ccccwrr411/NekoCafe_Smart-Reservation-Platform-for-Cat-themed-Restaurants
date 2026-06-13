@@ -94,12 +94,31 @@ public class AuthServiceImpl implements AuthService {
         userInfo.setPhone(maskPhone(user.getPhone()));       // 手机号脱敏（phone 为 null 时返回 null，前端可做判断）
         userInfo.setMemberLevel(levelToString(level));
         userInfo.setPoints(points);
+        // 根据前端传入的角色设置权限
+        String loginRole = dto.getRole();
+        if (loginRole == null || loginRole.isEmpty()) {
+            loginRole = "customer";
+        }
+        userInfo.setRole(loginRole);
+        userInfo.setRoleLabel(resolveRoleLabel(loginRole));
         result.setUserInfo(userInfo);
 
     return result;
   }
 
     // ========== 工具方法 ==========
+
+    /** 角色英文 → 中文 */
+    private String resolveRoleLabel(String role) {
+        if (role == null) return "顾客";
+        switch (role) {
+            case "staff":       return "店员";
+            case "manager":     return "店长";
+            case "hq_ops":      return "总部运营";
+            case "cat_keeper":  return "猫咪管家";
+            default:            return "顾客";
+        }
+    }
 
     /** 手机号脱敏：保留前3后4，中间变 **** */
     private String maskPhone(String phone) {

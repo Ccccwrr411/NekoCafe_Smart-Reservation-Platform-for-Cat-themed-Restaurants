@@ -802,10 +802,11 @@ module.exports = {
     code: 0,
     message: 'success',
     data: [
-      { id: 'ALT001', level: 'warning', type: 'overstay', title: 'B2 超时未离店', desc: '橘猫爱好者已超预约时长30分钟', time: '16:00' },
-      { id: 'ALT002', level: 'critical', type: 'no_show', title: 'A2 顾客未到店', desc: '豆腐粉丝预约15:00，已超时15分钟', time: '15:15' },
-      { id: 'ALT003', level: 'info', type: 'equipment', title: 'C2 空调故障', desc: '包间空调温度异常，请安排维修', time: '14:30' },
-      { id: 'ALT004', level: 'warning', type: 'low_stock', title: '猫爪拿铁库存不足', desc: '今日原料剩余不足10杯', time: '13:00' }
+      { alertId: 1, storeId: 1, staffId: 2, type: 'OVERTIME', level: 'high', status: 'PENDING', statusLabel: '待处理', reason: '客人超时占座 | 桌号 102 | 预约 1001', exceptionDate: '2026-06-12', createdAt: '2026-06-12 14:20' },
+      { alertId: 2, storeId: 1, staffId: 3, type: 'NO_SHOW', level: 'high', status: 'PENDING', statusLabel: '待处理', reason: '客人预约未到店 | 预约 1005 | 时间 2026-06-12 13:00', exceptionDate: '2026-06-12', createdAt: '2026-06-12 13:20' },
+      { alertId: 3, storeId: 1, staffId: 3, type: 'LEAVE', level: 'medium', status: 'ACKNOWLEDGED', statusLabel: '已知晓', reason: '病假', exceptionDate: '2026-06-11', createdAt: '2026-06-10 09:00' },
+      { alertId: 4, storeId: 1, staffId: 2, type: 'SWAP', level: 'medium', status: 'PENDING', statusLabel: '待处理', reason: '与同事换班', exceptionDate: '2026-06-15', createdAt: '2026-06-12 10:30' },
+      { alertId: 5, storeId: 2, staffId: 5, type: 'LEAVE', level: 'medium', status: 'REJECTED', statusLabel: '已驳回', reason: '事假', exceptionDate: '2026-06-16', createdAt: '2026-06-11 15:00' }
     ]
   },
 
@@ -911,5 +912,57 @@ module.exports = {
         { id: 5, name: 'NekoCafé 丰台店', manager: '吴店长', managerPhone: '138****0005', status: 'closed', todayRevenue: 0, todayOrders: 0, tableCount: 4, availableTables: 4, occupancyRate: 0, rating: 4.3 }
       ]
     }
+  },
+
+  // ─────────────────────────────────────────────
+  // 店员-告警已知晓  POST /api/staff/alert/acknowledge
+  // ─────────────────────────────────────────────
+  '/api/staff/alert/acknowledge': function(body) {
+    return { code: 0, message: 'success', data: { success: true, message: '已标记为已知晓', exceptionId: body.exceptionId } }
+  },
+
+  // ─────────────────────────────────────────────
+  // 店员-解决告警  POST /api/staff/alert/resolve
+  // ─────────────────────────────────────────────
+  '/api/staff/alert/resolve': function(body) {
+    return { code: 0, message: 'success', data: { success: true, message: '告警已解决', exceptionId: body.exceptionId } }
+  },
+
+  // ─────────────────────────────────────────────
+  // 通知列表  GET /api/notifications/store?storeId=1&page=1&size=50
+  // ─────────────────────────────────────────────
+  '/api/notifications/store': {
+    code: 0,
+    message: 'success',
+    data: [
+      { notificationId: 1, storeId: 1, type: 'order_new', title: '新订单提醒', content: '有新的预约订单 #1001 已确认到店', relatedType: 'reservation', relatedId: 1001, isRead: false, createdAt: '2026-06-12 15:30' },
+      { notificationId: 2, storeId: 1, type: 'order_progress', title: '订单已完成', content: '预约 #1002 已用餐完成，桌位已设为清洁状态', relatedType: 'reservation', relatedId: 1002, isRead: false, createdAt: '2026-06-12 14:45' },
+      { notificationId: 3, storeId: 1, type: 'refund_result', title: '退款已通过', content: '预约 #1003 的退款申请已通过', relatedType: 'refund', relatedId: 1, isRead: false, createdAt: '2026-06-12 11:20' },
+      { notificationId: 4, storeId: 1, type: 'new_order', title: '新订单提醒', content: '有新的预约订单 #1004 已确认到店', relatedType: 'reservation', relatedId: 1004, isRead: true, createdAt: '2026-06-11 16:00' },
+      { notificationId: 5, storeId: 1, type: 'order_progress', title: '订单已完成', content: '预约 #1005 已用餐完成', relatedType: 'reservation', relatedId: 1005, isRead: true, createdAt: '2026-06-11 12:00' }
+    ]
+  },
+
+  // ─────────────────────────────────────────────
+  // 通知未读数量  GET /api/notifications/unread/store?storeId=1
+  // ─────────────────────────────────────────────
+  '/api/notifications/unread/store': {
+    code: 0,
+    message: 'success',
+    data: 3
+  },
+
+  // ─────────────────────────────────────────────
+  // 标记单条已读  POST /api/notifications/read
+  // ─────────────────────────────────────────────
+  '/api/notifications/read': function(body) {
+    return { code: 0, message: 'success', data: { success: true, message: '已标记为已读' } }
+  },
+
+  // ─────────────────────────────────────────────
+  // 门店全部已读  POST /api/notifications/read-all/store
+  // ─────────────────────────────────────────────
+  '/api/notifications/read-all/store': function(body) {
+    return { code: 0, message: 'success', data: { success: true, message: '已全部标记为已读', count: 3 } }
   }
 }

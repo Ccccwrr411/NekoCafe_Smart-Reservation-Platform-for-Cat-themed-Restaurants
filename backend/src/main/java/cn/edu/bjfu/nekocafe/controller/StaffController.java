@@ -17,6 +17,11 @@ import java.util.Map;
  *       L-3 GET /api/staff/orders
  *       L-4 POST /api/staff/order/accept
  *       L-5 POST /api/staff/table/dispatch
+ *       L-6 POST /api/staff/order/progress
+ *       L-7 GET /api/staff/refunds
+ *       L-8 POST /api/staff/refund/review
+ *       L-9 POST /api/staff/alert/acknowledge
+ *       L-10 POST /api/staff/alert/resolve
  */
 @RestController
 @RequestMapping("/api")
@@ -87,5 +92,24 @@ public class StaffController {
         Long operatorId = body.get("operatorId") != null
                 ? Long.valueOf(body.get("operatorId").toString()) : null;
         return Result.success(staffService.reviewRefund(refundId, action, operatorId));
+    }
+
+    /** L-9 告警已知晓 */
+    @PostMapping("/staff/alert/acknowledge")
+    public Result<Map<String, Object>> acknowledgeAlert(@RequestBody Map<String, Object> body) {
+        Long exceptionId = Long.valueOf(body.get("exceptionId").toString());
+        Long operatorId = body.get("operatorId") != null
+                ? Long.valueOf(body.get("operatorId").toString()) : null;
+        return Result.success(staffService.acknowledgeAlert(exceptionId, operatorId));
+    }
+
+    /** L-10 解决告警 */
+    @PostMapping("/staff/alert/resolve")
+    public Result<Map<String, Object>> resolveAlert(@RequestBody Map<String, Object> body) {
+        Long exceptionId = Long.valueOf(body.get("exceptionId").toString());
+        String resolution = (String) body.get("resolution");
+        Long operatorId = body.get("operatorId") != null
+                ? Long.valueOf(body.get("operatorId").toString()) : null;
+        return Result.success(staffService.resolveAlert(exceptionId, resolution, operatorId));
     }
 }

@@ -4,20 +4,20 @@ const app = getApp()
 
 // ── 常量 ──────────────────────────────────────
 const ORDER_STATUS_LABEL = {
-  booked:    '待接单',
+  booked:    '待下单',
   confirmed: '已确认',
   making:    '制作中',
   serving:   '已上菜',
   completed: '已完成',
   cancelled: '已取消',
-  refunding: '退款中'
+  refunding: '退款中',
+  refunded:  '已退款'
 }
 const TABLE_STATUS_LABEL = {
   available:   '空闲',
   booked:      '已预约',
   occupied:    '用餐中',
   cleaning:    '待清洁',
-  maintenance: '维修中'
 }
 const ALERT_LEVEL_LABEL = {
   high:   '🔴 严重',
@@ -29,7 +29,6 @@ const DISPATCH_OPTIONS = [
   { key: 'booked', label: '⚪ 设为预定' },
   { key: 'occupied', label: '🔴 设为用餐中' },
   { key: 'cleaning', label: '🟡 设为待清洁' },
-  { key: 'maintenance', label: '⚫ 设为维修' }
 ]
 const STATUS_TO_DB = {
   available: 'IDLE',
@@ -51,7 +50,7 @@ Page({
     // 导航
     activeTab: 'orders',   // orders | tables | alerts | profile
     // 订单
-    orderFilter: 'booked', // booked | confirmed | making | serving | completed | refunding | cancelled | all | pending
+    orderFilter: 'all', // booked | confirmed | making | serving | completed | refunding | cancelled | all | pending
     orders: [],
     filteredOrders: [],
     countByStatus: {},
@@ -66,12 +65,16 @@ Page({
     countCleaning: 0,
     // 告警
     alerts: [],
-    alertFilter: 'pending',  // pending | resolved | all
+    alertFilter: 'pending',  // pending | acknowledged | resolved | all
     filteredAlerts: [],
     pendingAlertCount: 0,
+    // 通知
+    notifications: [],
+    unreadCount: 0,
     // 概览
     todayOrderCount: 0,
     pendingCount: 0,
+    refundCount: 0,
     occupancyRate: '0%',
     todayRevenue: 0,
     // 用户
@@ -92,6 +95,10 @@ Page({
     showRejectModal: false,
     rejectOrder: null,
     rejectReason: '',
+    // 退款审核弹层
+    showRefundModal: false,
+    refundModalData: null,   // 当前审核的退款记录
+    refundModalOrder: null,  // 当前审核的订单
     // 常量（供 wxml 引用）
     ORDER_STATUS_LABEL
   },
@@ -148,18 +155,35 @@ Page({
     Promise.all([
       get('/api/staff/tables?storeId=' + sid),
       get('/api/staff/alerts?storeId=' + sid),
-      get('/api/staff/orders?storeId=' + sid)
-    ]).then(([tableRes, alertRes, orderRes]) => {
+      get('/api/staff/orders?storeId=' + sid),
+      get('/api/staff/refunds?storeId=' + sid),
+      get('/api/notifications/store?storeId=' + sid + '&page=1&size=50'),
+      get('/api/notifications/unread/store?storeId=' + sid)
+    ]).then(([tableRes, alertRes, orderRes, refundRes, notifRes, unreadRes]) => {
       wx.stopPullDownRefresh()
       const tables = (tableRes.code === 0) ? tableRes.data : []
       const alerts = (alertRes.code === 0) ? alertRes.data : []
       const allOrders = (orderRes.code === 0) ? orderRes.data : []
+      const allRefunds = (refundRes.code === 0) ? refundRes.data : []
+      const notifications = (notifRes.code === 0) ? notifRes.data : []
+      const unreadCount = (unreadRes.code === 0) ? unreadRes.data : 0
 
-      // 订单处理
-      const orders = allOrders.map(o => ({
-        ...o,
-        statusLabel: ORDER_STATUS_LABEL[o.status] || o.status
-      }))
+      // 待审核退款数：退款记录中状态为 REQUEST_CANCEL / REQUEST_REFUND
+      const refundCount = allRefunds.filter(r => {
+        const s = (r.status || '').toUpperCase()
+        return s === 'REQUEST_CANCEL' || s === 'REQUEST_REFUND'
+      }).length
+
+      // 订单处理：后端返回 refundStatus 字段区分"退款中(refunding)"和"已退款(refunded)"
+      const orders = allOrders.map(o => {
+        // 若 refundStatus=refunded，前端显示为"已退款"而不是"退款中"
+        const effectiveStatus = (o.refundStatus === 'refunded') ? 'refunded' : o.status
+        return {
+          ...o,
+          status: effectiveStatus,
+          statusLabel: ORDER_STATUS_LABEL[effectiveStatus] || o.status
+        }
+      })
       // 按时间升序排序（最早的排最前）
       orders.sort((a, b) => {
         const ta = a.reservationTime ? new Date(a.reservationTime).getTime() : 0
@@ -189,7 +213,10 @@ Page({
         levelLabel: ALERT_LEVEL_LABEL[a.level] || a.level,
         level: a.level || 'low'
       }))
-      const pendingAlertCount = alertsWithLabel.filter(a => a.status === 'pending').length
+      const pendingAlertCount = alertsWithLabel.filter(a => {
+        const s = (a.status || '').toUpperCase()
+        return s === 'PENDING' || s === 'ACKNOWLEDGED'
+      }).length
 
       // 概览统计
       const todayOrderCount = allOrders.length
@@ -200,10 +227,10 @@ Page({
       const todayRevenue = allOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
 
       this.setData({
-        tables: tablesWithLabel, alerts: alertsWithLabel, orders,
-        countByStatus, countAvailable, countOccupied, countBooked, countCleaning,
-        todayOrderCount, pendingCount, occupancyRate, todayRevenue,
-        pendingAlertCount, loading: false
+        tables: tablesWithLabel, alerts: alertsWithLabel, orders, notifications,
+        allRefunds, countByStatus, countAvailable, countOccupied, countBooked, countCleaning,
+        todayOrderCount, pendingCount, refundCount, occupancyRate, todayRevenue,
+        unreadCount, pendingAlertCount, loading: false
       })
       this.applyFilters()
     }).catch(() => {
@@ -225,13 +252,22 @@ Page({
     } else {
       filteredOrders = orders.filter(o => o.status === orderFilter)
     }
-    // 告警筛选
+    // 告警筛选（三态：待处理/已知晓/已处理）
     const { alertFilter, alerts } = this.data
-    const filteredAlerts = alertFilter === 'all'
-      ? alerts
-      : alertFilter === 'pending'
-        ? alerts.filter(a => a.status === 'pending')
-        : alerts.filter(a => a.status !== 'pending')
+    let filteredAlerts
+    if (alertFilter === 'all') {
+      filteredAlerts = alerts
+    } else if (alertFilter === 'pending') {
+      filteredAlerts = alerts.filter(a => (a.status || '').toUpperCase() === 'PENDING')
+    } else if (alertFilter === 'acknowledged') {
+      filteredAlerts = alerts.filter(a => (a.status || '').toUpperCase() === 'ACKNOWLEDGED')
+    } else {
+      // resolved：已处理（RESOLVED / APPROVED / REJECTED）
+      filteredAlerts = alerts.filter(a => {
+        const s = (a.status || '').toUpperCase()
+        return s !== 'PENDING' && s !== 'ACKNOWLEDGED'
+      })
+    }
     this.setData({ filteredOrders, filteredAlerts })
   },
 
@@ -383,9 +419,88 @@ Page({
     })
   },
 
-  // ── 退款审核跳转 ─────────────────────────────
+  // ── 退款审核跳转（概览栏用）──────────────────
   onViewRefund() {
     wx.navigateTo({ url: '/pages/staff/refund?storeId=' + this.data.storeId })
+  },
+
+  // ── 审核退款弹窗（订单页用）──────────────────
+  onViewRefundDetail(e) {
+    const order = e.currentTarget.dataset.order
+    const allRefunds = this.data.allRefunds || []
+    const refund = allRefunds.find(r =>
+      r.reservationId === (order.reservationId || order.id)
+      && (r.status === 'REQUEST_CANCEL' || r.status === 'REQUEST_REFUND')
+    )
+    if (!refund) {
+      wx.showToast({ title: '未找到待审核退款记录', icon: 'none' })
+      return
+    }
+    this.setData({ showRefundModal: true, refundModalData: refund, refundModalOrder: order })
+  },
+  onCloseRefundModal() {
+    this.setData({ showRefundModal: false, refundModalData: null, refundModalOrder: null })
+  },
+  onApproveRefund() {
+    const refund = this.data.refundModalData
+    if (!refund) return
+    const typeText = refund.status === 'REQUEST_CANCEL' ? '取消重下单（顾客继续用餐）' : '全单退款（释放桌位）'
+    wx.showModal({
+      title: '⚠️ 确认通过退款',
+      content: `金额：¥${refund.refundAmount}\n类型：${typeText}\n\n此操作不可撤销，确认通过？`,
+      confirmText: '确认通过',
+      confirmColor: '#C97E5A',
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '处理中...' })
+        post('/api/staff/refund/review', {
+          refundId: refund.refundId, action: 'approve',
+          operatorId: app.globalData.userInfo?.id || null
+        }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0 && apiRes.data?.success) {
+            wx.showToast({ title: '退款已通过', icon: 'success' })
+            this.setData({ showRefundModal: false })
+            this.loadData()
+          } else {
+            wx.showToast({ title: (apiRes.data && apiRes.data.message) || '操作失败', icon: 'none' })
+          }
+        }).catch(() => { wx.hideLoading(); wx.showToast({ title: '网络异常', icon: 'none' }) })
+      }
+    })
+  },
+  onRejectRefund() {
+    const refund = this.data.refundModalData
+    if (!refund) return
+    wx.showModal({
+      title: '⚠️ 拒绝退款 ¥' + (refund.refundAmount || ''),
+      content: '请输入拒绝原因',
+      editable: true,
+      placeholderText: '请填写拒绝原因（必填）',
+      confirmText: '确认拒绝',
+      confirmColor: '#E74C3C',
+      success: (res) => {
+        if (!res.confirm) return
+        if (!res.content || !res.content.trim()) {
+          wx.showToast({ title: '请填写拒绝原因', icon: 'none' })
+          return
+        }
+        wx.showLoading({ title: '处理中...' })
+        post('/api/staff/refund/review', {
+          refundId: refund.refundId, action: 'reject',
+          operatorId: app.globalData.userInfo?.id || null
+        }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0 && apiRes.data?.success) {
+            wx.showToast({ title: '已拒绝', icon: 'success' })
+            this.setData({ showRefundModal: false })
+            this.loadData()
+          } else {
+            wx.showToast({ title: (apiRes.data && apiRes.data.message) || '操作失败', icon: 'none' })
+          }
+        }).catch(() => { wx.hideLoading(); wx.showToast({ title: '网络异常', icon: 'none' }) })
+      }
+    })
   },
 
   // ── 数据看板跳转 ─────────────────────────────
@@ -448,13 +563,103 @@ Page({
       confirmColor: '#C97E5A',
       success: (res) => {
         if (!res.confirm) return
-        // 目前告警为只读，标记为已知后本地更新状态
-        const idx = this.data.alerts.findIndex(a => a.alertId === alert.alertId)
-        if (idx >= 0) {
-          this.setData({ [`alerts[${idx}].status`]: 'resolved' })
-          this.applyFilters()
-        }
+        wx.showLoading({ title: '处理中...' })
+        post('/api/staff/alert/acknowledge', {
+          exceptionId: alert.alertId,
+          operatorId: app.globalData.userInfo?.id || null
+        }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0 && apiRes.data && apiRes.data.success) {
+            wx.showToast({ title: '已标记', icon: 'success' })
+            this.loadData()
+          } else {
+            wx.showToast({ title: (apiRes.data && apiRes.data.message) || '操作失败', icon: 'none' })
+          }
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常', icon: 'none' })
+        })
+      }
+    })
+  },
+
+  // ── 告警解决 ─────────────────────────────────
+  onResolveAlert(e) {
+    const alert = e.currentTarget.dataset.alert
+    wx.showModal({
+      title: '解决告警',
+      content: `确认已解决「${alert.reason || alert.type}」？`,
+      editable: true,
+      placeholderText: '可选：输入解决说明',
+      confirmText: '确认解决',
+      confirmColor: '#4CAF50',
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '处理中...' })
+        post('/api/staff/alert/resolve', {
+          exceptionId: alert.alertId,
+          resolution: res.content || '已处理',
+          operatorId: app.globalData.userInfo?.id || null
+        }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0 && apiRes.data && apiRes.data.success) {
+            wx.showToast({ title: '已解决', icon: 'success' })
+            this.loadData()
+          } else {
+            wx.showToast({ title: (apiRes.data && apiRes.data.message) || '操作失败', icon: 'none' })
+          }
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常', icon: 'none' })
+        })
+      }
+    })
+  },
+
+  // ── 通知标记已读 ──────────────────────────────
+  onMarkNotificationRead(e) {
+    const notif = e.currentTarget.dataset.notif
+    wx.showLoading({ title: '处理中...' })
+    post('/api/notifications/read', {
+      notificationId: notif.notificationId
+    }).then(apiRes => {
+      wx.hideLoading()
+      if (apiRes.code === 0 && apiRes.data && apiRes.data.success) {
         wx.showToast({ title: '已标记', icon: 'success' })
+        this.loadData()
+      } else {
+        wx.showToast({ title: '操作失败', icon: 'none' })
+      }
+    }).catch(() => {
+      wx.hideLoading()
+      wx.showToast({ title: '网络异常', icon: 'none' })
+    })
+  },
+
+  // ── 通知全部已读 ──────────────────────────────
+  onMarkAllRead() {
+    wx.showModal({
+      title: '全部已读',
+      content: '确认将所有消息标记为已读？',
+      confirmText: '全部已读',
+      confirmColor: '#3498DB',
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '处理中...' })
+        post('/api/notifications/read-all/store', {
+          storeId: this.data.storeId
+        }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0) {
+            wx.showToast({ title: '已全部标记', icon: 'success' })
+            this.loadData()
+          } else {
+            wx.showToast({ title: '操作失败', icon: 'none' })
+          }
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常', icon: 'none' })
+        })
       }
     })
   },
