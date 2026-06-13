@@ -56,6 +56,7 @@ const ORDER_STATUS_MAP = {
   confirmed:               { text: '用餐中', color: '#4CAF50', bg: '#E8F5E9' },
   occupied:                { text: '进行中', color: '#E74C3C', bg: '#FFEBEE' },
   completed:               { text: '已完成', color: '#888888', bg: '#F5F5F5' },
+  cancelled:               { text: '已取消', color: '#F44336', bg: '#FFEBEE' },
   cancel_booking:          { text: '取消预约', color: '#F44336', bg: '#FFEBEE' },
   cancel_order:            { text: '取消订单', color: '#F44336', bg: '#FFEBEE' },
   after_sales_pending:     { text: '售后中', color: '#FF9800', bg: '#FFF3E0' },

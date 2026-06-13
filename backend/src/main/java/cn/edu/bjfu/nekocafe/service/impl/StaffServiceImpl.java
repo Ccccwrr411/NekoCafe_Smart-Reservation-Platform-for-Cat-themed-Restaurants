@@ -2,6 +2,7 @@ package cn.edu.bjfu.nekocafe.service.impl;
 
 import cn.edu.bjfu.nekocafe.entity.*;
 import cn.edu.bjfu.nekocafe.mapper.*;
+import cn.edu.bjfu.nekocafe.service.NotificationService;
 import cn.edu.bjfu.nekocafe.service.StaffService;
 import cn.edu.bjfu.nekocafe.vo.DashboardMetricsVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,7 @@ import java.util.*;
 
 /**
  * 店员 & 数据看板服务实现
- * 负责接口：K-1 / L-1 / L-2 / L-3 / L-4 / L-5
+ * 负责接口：K-1 / L-1 ~ L-10
  */
 @Service
 public class StaffServiceImpl implements StaffService {
@@ -45,6 +46,9 @@ public class StaffServiceImpl implements StaffService {
 
     @Autowired
     private PointsLogMapper pointsLogMapper;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // =========================================================
     // K-1  GET /api/dashboard/metrics?storeId=&range=
@@ -259,7 +263,8 @@ public class StaffServiceImpl implements StaffService {
                 row.put("staffId", ex.getStaffId());
                 row.put("type", ex.getType());                  // overstay / no_show / equipment 等
                 row.put("level", resolveLevel(ex.getType()));   // high / medium / low
-                row.put("status", ex.getStatus());              // pending / approved / rejected
+                row.put("status", ex.getStatus());              // PENDING / ACKNOWLEDGED / RESOLVED
+                row.put("statusLabel", resolveAlertStatusLabel(ex.getStatus()));
                 row.put("reason", ex.getReason());
                 row.put("exceptionDate",
                         ex.getExceptionDate() != null
@@ -313,6 +318,24 @@ public class StaffServiceImpl implements StaffService {
                         row.put("tableNo", table.getTableNo());
                         row.put("tableType", table.getTableType());
                     }
+                }
+
+                // 若订单状态为 REFUNDING，关联查 refund_records 区分"退款中/已退款"
+                if ("REFUNDING".equals(r.getStatus())) {
+                    String refundDetail = "refunding"; // 默认：退款处理中
+                    try {
+                        RefundRecordsExample refEx = new RefundRecordsExample();
+                        refEx.createCriteria().andReservationIdEqualTo(r.getReservationId());
+                        refEx.setOrderByClause("created_at DESC");
+                        List<RefundRecords> refundList = refundRecordsMapper.selectByExample(refEx);
+                        if (refundList != null && !refundList.isEmpty()) {
+                            RefundRecords latestRefund = refundList.get(0);
+                            if ("COMPLETED".equals(latestRefund.getStatus())) {
+                                refundDetail = "refunded"; // 已退款完成
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                    row.put("refundStatus", refundDetail);
                 }
 
                 result.add(row);
@@ -374,6 +397,15 @@ public class StaffServiceImpl implements StaffService {
         result.put("message", "接单成功");
         result.put("reservationId", reservationId);
         result.put("status", "CONFIRMED");
+
+        // 发送通知：店员端新订单提醒
+        if (reservation.getStoreId() != null) {
+            notificationService.createNotification(
+                    reservation.getStoreId(), null, "staff",
+                    "order_new", "新订单提醒",
+                    "有新的预约订单 #" + reservationId + " 已确认到店",
+                    "reservation", reservationId);
+        }
         return result;
     }
 
@@ -490,6 +522,15 @@ public class StaffServiceImpl implements StaffService {
             }
         }
 
+        // 订单完成时，发送通知
+        if ("COMPLETED".equals(upperTarget) && reservation.getStoreId() != null) {
+            notificationService.createNotification(
+                    reservation.getStoreId(), null, "staff",
+                    "order_progress", "订单已完成",
+                    "预约 #" + reservationId + " 已用餐完成，桌位已设为清洁状态",
+                    "reservation", reservationId);
+        }
+
         result.put("success", true);
         result.put("message", "订单状态已更新");
         result.put("reservationId", reservationId);
@@ -571,12 +612,17 @@ public class StaffServiceImpl implements StaffService {
             return result;
         }
 
-        // 2. 校验当前状态（仅 REQUEST_REFUND 状态可审核）
-        if (!"REQUEST_REFUND".equals(refund.getStatus())) {
+        // 2. 校验当前状态（REQUEST_CANCEL / REQUEST_REFUND 可审核）
+        String currentRefundStatus = refund.getStatus();
+        boolean isReviewable = "REQUEST_CANCEL".equals(currentRefundStatus)
+                || "REQUEST_REFUND".equals(currentRefundStatus);
+        if (!isReviewable) {
             result.put("success", false);
-            result.put("message", "该退款申请已被处理，当前状态：" + refund.getStatus());
+            result.put("message", "该退款申请已被处理，当前状态：" + currentRefundStatus);
             return result;
         }
+
+        boolean isCancelOrder = "REQUEST_CANCEL".equals(currentRefundStatus);
 
         Date now = new Date();
 
@@ -599,6 +645,34 @@ public class StaffServiceImpl implements StaffService {
                     if (payment != null && "REFUNDING".equals(payment.getStatus())) {
                         payment.setStatus("REFUNDED");
                         paymentsMapper.updateByPrimaryKeySelective(payment);
+                    }
+                }
+
+                // 仅 REQUEST_REFUND（全单退款）释放桌位
+                if (!isCancelOrder && refund.getReservationId() != null) {
+                    Reservations res = reservationsMapper.selectByPrimaryKey(refund.getReservationId());
+                    if (res != null && res.getTableId() != null) {
+                        TableStatus ts = tableStatusMapper.selectByPrimaryKey(res.getTableId());
+                        if (ts != null) {
+                            ts.setStatus("IDLE");
+                            ts.setCurrentReservationId(null);
+                            tableStatusMapper.updateByPrimaryKeySelective(ts);
+                        }
+                    }
+                }
+
+                // 通知
+                if (refund.getReservationId() != null) {
+                    Reservations res = reservationsMapper.selectByPrimaryKey(refund.getReservationId());
+                    if (res != null && res.getStoreId() != null) {
+                        notificationService.createNotification(
+                                res.getStoreId(), null, "staff",
+                                "refund_result",
+                                isCancelOrder ? "取消重下单已通过" : "退款已通过",
+                                isCancelOrder
+                                        ? "预约 #" + refund.getReservationId() + " 取消重下单已通过"
+                                        : "预约 #" + refund.getReservationId() + " 退款已通过，桌位已释放",
+                                "refund", refundId);
                     }
                 }
                 break;
@@ -674,6 +748,18 @@ public class StaffServiceImpl implements StaffService {
                         }
                     }
                 }
+
+                // 通知
+                if (refund.getReservationId() != null) {
+                    Reservations res = reservationsMapper.selectByPrimaryKey(refund.getReservationId());
+                    if (res != null && res.getStoreId() != null) {
+                        notificationService.createNotification(
+                                res.getStoreId(), null, "staff",
+                                "refund_result", "退款已拒绝",
+                                "预约 #" + refund.getReservationId() + " 的退款申请已被拒绝",
+                                "refund", refundId);
+                    }
+                }
                 break;
 
             default:
@@ -687,6 +773,175 @@ public class StaffServiceImpl implements StaffService {
         result.put("refundId", refundId);
         result.put("status", refund.getStatus());
         return result;
+    }
+
+    // =========================================================
+    // L-9  POST /api/staff/alert/acknowledge
+    // =========================================================
+    @Override
+    public Map<String, Object> acknowledgeAlert(Long exceptionId, Long operatorId) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 1. 查告警记录
+        ShiftExceptions ex = shiftExceptionsMapper.selectByPrimaryKey(exceptionId);
+        if (ex == null) {
+            result.put("success", false);
+            result.put("message", "告警记录不存在");
+            return result;
+        }
+
+        // 2. 校验状态：只有 PENDING 可以标记为已知晓
+        if (!"PENDING".equals(ex.getStatus())) {
+            result.put("success", false);
+            result.put("message", "该告警已被处理，当前状态：" + ex.getStatus());
+            return result;
+        }
+
+        // 3. 更新状态 PENDING → ACKNOWLEDGED
+        ex.setStatus("ACKNOWLEDGED");
+        ex.setApproverId(operatorId);
+        shiftExceptionsMapper.updateByPrimaryKeySelective(ex);
+
+        result.put("success", true);
+        result.put("message", "已标记为已知晓");
+        result.put("exceptionId", exceptionId);
+        return result;
+    }
+
+    // =========================================================
+    // L-10  POST /api/staff/alert/resolve
+    // =========================================================
+    @Override
+    public Map<String, Object> resolveAlert(Long exceptionId, String resolution, Long operatorId) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 1. 查告警记录
+        ShiftExceptions ex = shiftExceptionsMapper.selectByPrimaryKey(exceptionId);
+        if (ex == null) {
+            result.put("success", false);
+            result.put("message", "告警记录不存在");
+            return result;
+        }
+
+        // 2. 校验状态：ACKNOWLEDGED / PROCESSING 可以解决
+        String status = ex.getStatus();
+        if (!"ACKNOWLEDGED".equals(status) && !"PROCESSING".equals(status)) {
+            result.put("success", false);
+            result.put("message", "当前状态不允许解决：" + status);
+            return result;
+        }
+
+        // 3. 更新状态 → RESOLVED，追加解决说明
+        String oldReason = ex.getReason();
+        ex.setStatus("RESOLVED");
+        if (resolution != null && !resolution.trim().isEmpty()) {
+            ex.setReason((oldReason != null ? oldReason + "\n" : "") + "[解决] " + resolution.trim());
+        }
+        ex.setApproverId(operatorId);
+        shiftExceptionsMapper.updateByPrimaryKeySelective(ex);
+
+        result.put("success", true);
+        result.put("message", "告警已解决");
+        result.put("exceptionId", exceptionId);
+        return result;
+    }
+
+    // =========================================================
+    //  自动告警生成（定时任务）
+    // =========================================================
+
+    /**
+     * 每 5 分钟扫描：table_status 为 OCCUPIED 但预约已结束的桌位 → OVERTIME 告警
+     */
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 5 * 60 * 1000)
+    public void checkOverstayAlerts() {
+        // 查所有 OCCUPIED 的桌位
+        List<TableStatus> occupiedList = null;
+        try {
+            TableStatusExample example = new TableStatusExample();
+            example.createCriteria().andStatusEqualTo("OCCUPIED");
+            occupiedList = tableStatusMapper.selectByExample(example);
+        } catch (Exception e) {
+            return;
+        }
+        if (occupiedList == null || occupiedList.isEmpty()) return;
+
+        for (TableStatus ts : occupiedList) {
+            if (ts.getCurrentReservationId() == null) continue;
+            try {
+                Reservations res = reservationsMapper.selectByPrimaryKey(ts.getCurrentReservationId());
+                if (res == null || res.getReservationTime() == null) continue;
+
+                // 预约结束时间 = 预约时间 + 时长
+                long endMs = res.getReservationTime().getTime()
+                        + (res.getDurationMin() != null ? (long) res.getDurationMin() * 60 * 1000 : 0);
+                // 超过结束时间 10 分钟仍未完成 → 超时
+                if (System.currentTimeMillis() > endMs + 10 * 60 * 1000) {
+                    createAlertIfNotExists(res.getStoreId(), res.getUserId(), ts.getTableId(),
+                            "OVERTIME",
+                            "客人超时占座 | 桌号 " + ts.getTableId() + " | 预约 " + res.getReservationId());
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    /**
+     * 每 10 分钟扫描：BOOKED 状态的预约且已过预约时间 20 分钟 → NO_SHOW 告警
+     */
+    @org.springframework.scheduling.annotation.Scheduled(fixedRate = 10 * 60 * 1000)
+    public void checkNoShowAlerts() {
+        try {
+            // 查询所有 BOOKED 状态的预约（使用 CAST 避免枚举问题）
+            List<Reservations> bookedList = reservationsMapper.selectByStoreIdAndStatuses(
+                    null, java.util.Arrays.asList("BOOKED"));
+            if (bookedList == null) return;
+
+            long now = System.currentTimeMillis();
+            long gracePeriod = 20 * 60 * 1000L; // 20 分钟宽限期
+
+            for (Reservations res : bookedList) {
+                if (res.getReservationTime() == null) continue;
+                // 预约时间 + 20 分钟 < 现在 → no_show
+                if (now > res.getReservationTime().getTime() + gracePeriod) {
+                    createAlertIfNotExists(res.getStoreId(), res.getUserId(), res.getTableId(),
+                            "NO_SHOW",
+                            "客人预约未到店 | 预约 " + res.getReservationId()
+                                    + " | 时间 " + new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(res.getReservationTime()));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * 工具：创建告警（幂等，同一 reservation 不重复生成）
+     */
+    private void createAlertIfNotExists(Integer storeId, Long staffId, Integer tableId,
+                                        String type, String reason) {
+        try {
+            // 检查是否已存在相同 type + 关联对象 的未解决告警
+            ShiftExceptionsExample example = new ShiftExceptionsExample();
+            example.createCriteria()
+                    .andStoreIdEqualTo(storeId != null ? storeId : 0)
+                    .andTypeEqualTo(type)
+                    .andReasonLike("%预约 " + (tableId != null ? tableId : 0) + "%");
+            List<ShiftExceptions> existing = shiftExceptionsMapper.selectByExample(example);
+            if (existing != null && !existing.isEmpty()) return; // 已有告警，不重复生成
+
+            ShiftExceptions se = new ShiftExceptions();
+            se.setStoreId(storeId != null ? storeId : 0);
+            se.setStaffId(staffId != null ? staffId : 0L);
+            se.setExceptionDate(new java.sql.Date(System.currentTimeMillis()));
+            se.setType(type);
+            se.setStatus("PENDING");
+            se.setReason(reason);
+            se.setCreatedAt(new Date());
+            shiftExceptionsMapper.insertSelective(se);
+        } catch (Exception ignored) {
+        }
     }
 
     // =========================================================
@@ -757,21 +1012,39 @@ public class StaffServiceImpl implements StaffService {
 
     /**
      * 根据异常类型推断告警等级
-     * overstay / no_show → high
-     * late / swap       → medium
-     * 其他              → low
+     * overstay / no_show / overtime → high
+     * late / swap / leave          → medium
+     * 其他                          → low
      */
     private String resolveLevel(String type) {
         if (type == null) return "low";
         switch (type.toLowerCase()) {
             case "overstay":
             case "no_show":
+            case "overtime":
                 return "high";
             case "late":
             case "swap":
+            case "leave":
                 return "medium";
             default:
                 return "low";
+        }
+    }
+
+    /**
+     * 告警状态 → 中文描述
+     */
+    private String resolveAlertStatusLabel(String status) {
+        if (status == null) return "未知";
+        switch (status.toUpperCase()) {
+            case "PENDING":       return "待处理";
+            case "ACKNOWLEDGED":  return "已知晓";
+            case "PROCESSING":    return "处理中";
+            case "RESOLVED":      return "已解决";
+            case "APPROVED":      return "已通过";
+            case "REJECTED":      return "已驳回";
+            default:              return status;
         }
     }
 

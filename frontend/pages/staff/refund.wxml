@@ -15,10 +15,10 @@
 
   <!-- 筛选 -->
   <view wx:if="{{!loading}}" class="refund-filter">
+    <view class="rf-item {{refundFilter === 'all' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="all">全部</view>
     <view class="rf-item {{refundFilter === 'pending' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="pending">待审核</view>
     <view class="rf-item {{refundFilter === 'approved' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="approved">已通过</view>
     <view class="rf-item {{refundFilter === 'rejected' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="rejected">已拒绝</view>
-    <view class="rf-item {{refundFilter === 'all' ? 'rf-active' : ''}}" bindtap="onFilterRefund" data-filter="all">全部</view>
   </view>
 
   <!-- 列表 -->
@@ -33,6 +33,10 @@
         <view class="refund-status-tag rst-{{item.status}}">{{item.statusLabel}}</view>
       </view>
       <view class="refund-card-body">
+        <view class="refund-row">
+          <text class="refund-label">退款类型</text>
+          <text class="refund-value refund-type">{{item.status === 'REQUEST_CANCEL' ? '🔄 取消重下单' : item.status === 'REQUEST_REFUND' ? '🚪 全单退款' : '—'}}</text>
+        </view>
         <view class="refund-row">
           <text class="refund-label">退款金额</text>
           <text class="refund-amount">¥{{item.refundAmount}}</text>
@@ -54,7 +58,7 @@
           <text class="refund-value">{{item.createdAt || '—'}}</text>
         </view>
       </view>
-      <view wx:if="{{item.status === 'PENDING' || item.status === 'pending'}}" class="refund-actions">
+      <view wx:if="{{item.status === 'REQUEST_CANCEL' || item.status === 'REQUEST_REFUND'}}" class="refund-actions">
         <view class="btn btn-danger-outline" bindtap="onRejectRefund" data-refund="{{item}}">拒绝</view>
         <view class="btn btn-primary" bindtap="onApproveRefund" data-refund="{{item}}">通过退款</view>
       </view>
@@ -64,7 +68,8 @@
   <!-- 拒绝弹层 -->
   <view wx:if="{{showRejectModal}}" class="modal-mask" bindtap="onCloseRejectModal">
     <view class="modal-panel" catchtap="">
-      <text class="modal-title">拒绝退款原因</text>
+      <text class="modal-title">⚠️ 拒绝退款 ¥{{rejectRefund.refundAmount}}</text>
+      <text class="modal-sub">请填写拒绝原因（必填），此操作不可撤销</text>
       <textarea class="reject-textarea" placeholder="请输入拒绝原因..." value="{{rejectReason}}" bindinput="onInputReason" maxlength="200" />
       <view class="modal-btns">
         <view class="btn btn-block btn-outline" bindtap="onCloseRejectModal">取消</view>

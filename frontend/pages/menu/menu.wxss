@@ -360,3 +360,187 @@
   flex: 1;
   min-height: 0;
 }
+
+/* ── 菜单页预约状态栏 ── */
+.reserve-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 28rpx;
+  background: linear-gradient(135deg, #FFF8F5, #FDF2EB);
+  border-bottom: 1rpx solid var(--color-border);
+  flex-shrink: 0;
+}
+.reserve-status-bar:active {
+  background: #FDF0E8;
+}
+.rsb-left {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  flex: 1;
+  overflow: hidden;
+}
+.rsb-icon {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+.rsb-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  overflow: hidden;
+}
+.rsb-table {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rsb-meta {
+  font-size: 22rpx;
+  color: var(--color-text-sub);
+}
+.rsb-right {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+.rsb-count {
+  font-size: 22rpx;
+  color: var(--color-primary);
+  padding: 6rpx 16rpx;
+  background: #FFF0E8;
+  border-radius: 16rpx;
+  font-weight: 500;
+}
+.rsb-check {
+  font-size: 22rpx;
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+/* ── 无预约引导条 ── */
+.no-reserve-bar {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 20rpx 28rpx;
+  background: #FFFBF5;
+  border-bottom: 1rpx solid #F5E6D0;
+  flex-shrink: 0;
+}
+.no-reserve-bar:active {
+  background: #FFF8ED;
+}
+.nr-b-icon {
+  font-size: 32rpx;
+}
+.nr-b-text {
+  flex: 1;
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+}
+.nr-b-btn {
+  font-size: 24rpx;
+  color: #fff;
+  background: var(--color-primary);
+  padding: 10rpx 28rpx;
+  border-radius: 24rpx;
+  font-weight: 500;
+}
+
+/* ── 菜单页预约选择弹层 ── */
+.reserve-picker-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 28rpx 28rpx 0 0;
+  z-index: 300;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.rpp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 32rpx 16rpx;
+  border-bottom: 1rpx solid var(--color-border);
+  flex-shrink: 0;
+}
+.rpp-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.rpp-close {
+  font-size: 36rpx;
+  color: var(--color-text-sub);
+  padding: 8rpx;
+}
+.rpp-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.rpp-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #f9f4f0;
+}
+.rpp-item-on {
+  background: #FDF6F2;
+}
+.rpp-item-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  overflow: hidden;
+}
+.rpp-store {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.rpp-table {
+  font-size: 24rpx;
+  color: var(--color-primary);
+}
+.rpp-time {
+  font-size: 22rpx;
+  color: var(--color-text-sub);
+}
+.rpp-radio {
+  width: 46rpx;
+  height: 46rpx;
+  border-radius: 50%;
+  border: 3rpx solid #ddd;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #fff;
+  transition: all 0.15s;
+}
+.radio-on {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.rpp-footer {
+  padding: 16rpx 32rpx;
+  border-top: 1rpx solid var(--color-border);
+  flex-shrink: 0;
+}
+.rpp-footer-hint {
+  font-size: 22rpx;
+  color: var(--color-text-sub);
+}

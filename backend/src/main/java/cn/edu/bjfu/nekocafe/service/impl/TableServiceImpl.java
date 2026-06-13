@@ -92,6 +92,12 @@ public class TableServiceImpl implements TableService {
             vo.setType(t.getTableType());
             vo.setCapacity(t.getCapacity());
 
+            // 实景平面图布局字段
+            vo.setTop(t.getTop());
+            vo.setLeft(t.getLeft());
+            vo.setWidth(t.getWidth());
+            vo.setHeight(t.getHeight());
+
             // 纯基于时段冲突判断状态
             if (reserveDate != null && reserveTime != null && duration != null && duration > 0) {
                 vo.setStatus(conflictTableIds.contains(t.getTableId()) ? "booked" : "available");

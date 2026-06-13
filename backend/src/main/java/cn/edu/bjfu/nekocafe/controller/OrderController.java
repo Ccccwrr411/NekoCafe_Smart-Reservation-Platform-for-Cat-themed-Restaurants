@@ -5,6 +5,7 @@ import cn.edu.bjfu.nekocafe.dto.OrderSubmitDTO;
 import cn.edu.bjfu.nekocafe.dto.ReservationCreateDTO;
 import cn.edu.bjfu.nekocafe.dto.RescheduleDTO;
 import cn.edu.bjfu.nekocafe.service.OrderService;
+import cn.edu.bjfu.nekocafe.service.ReservationService;
 import cn.edu.bjfu.nekocafe.vo.CurrentReservationVO;
 import cn.edu.bjfu.nekocafe.vo.OrderVO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,9 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private ReservationService reservationService;
 
     /** E-1 订单列表（支持状态筛选 + 搜索） */
     @GetMapping("/orders")
@@ -67,7 +71,7 @@ public class OrderController {
                                                    HttpServletRequest request,
                                                    @RequestParam(required = false) Long userId) {
         Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.reschedule(uid, dto));
+        return Result.success(reservationService.reschedule(uid, dto));
     }
 
     /** E-6 申请退款 */
@@ -85,7 +89,7 @@ public class OrderController {
                                                           HttpServletRequest request,
                                                           @RequestParam(required = false) Long userId) {
         Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.createReservation(uid, dto));
+        return Result.success(reservationService.createReservation(uid, dto));
     }
 
     /** 获取用户当前 BOOKED 状态的预约列表（供点单页面选择） */
@@ -93,7 +97,7 @@ public class OrderController {
     public Result<List<CurrentReservationVO>> getCurrentReservations(HttpServletRequest request,
                                                                       @RequestParam(required = false) Long userId) {
         Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        List<CurrentReservationVO> list = orderService.getCurrentReservations(uid);
+        List<CurrentReservationVO> list = reservationService.getCurrentReservations(uid);
         return Result.success(list);
     }
 
@@ -103,6 +107,6 @@ public class OrderController {
                                                               HttpServletRequest request,
                                                               @RequestParam(required = false) Long userId) {
         Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.reactivateReservation(uid, body.get("orderId")));
+        return Result.success(reservationService.reactivateReservation(uid, body.get("orderId")));
     }
 }

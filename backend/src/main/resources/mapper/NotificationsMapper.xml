@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.bjfu.nekocafe.mapper.NotificationsMapper">
+
+  <resultMap id="BaseResultMap" type="cn.edu.bjfu.nekocafe.entity.Notifications">
+    <id column="notification_id" jdbcType="BIGINT" property="notificationId" />
+    <result column="store_id" jdbcType="INTEGER" property="storeId" />
+    <result column="user_id" jdbcType="BIGINT" property="userId" />
+    <result column="target_role" jdbcType="VARCHAR" property="targetRole" />
+    <result column="type" jdbcType="VARCHAR" property="type" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="related_type" jdbcType="VARCHAR" property="relatedType" />
+    <result column="related_id" jdbcType="BIGINT" property="relatedId" />
+    <result column="is_read" jdbcType="BOOLEAN" property="isRead" />
+    <result column="created_at" jdbcType="TIMESTAMP" property="createdAt" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    notification_id, store_id, user_id, target_role, type, title, content,
+    related_type, related_id, is_read, created_at
+  </sql>
+
+  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Notifications"
+          useGeneratedKeys="true" keyProperty="notificationId" keyColumn="notification_id">
+    insert into public.notifications
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="storeId != null">store_id,</if>
+      <if test="userId != null">user_id,</if>
+      <if test="targetRole != null">target_role,</if>
+      <if test="type != null">type,</if>
+      <if test="title != null">title,</if>
+      <if test="content != null">content,</if>
+      <if test="relatedType != null">related_type,</if>
+      <if test="relatedId != null">related_id,</if>
+      <if test="isRead != null">is_read,</if>
+      created_at,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="storeId != null">#{storeId,jdbcType=INTEGER},</if>
+      <if test="userId != null">#{userId,jdbcType=BIGINT},</if>
+      <if test="targetRole != null">#{targetRole,jdbcType=VARCHAR},</if>
+      <if test="type != null">#{type,jdbcType=VARCHAR},</if>
+      <if test="title != null">#{title,jdbcType=VARCHAR},</if>
+      <if test="content != null">#{content,jdbcType=VARCHAR},</if>
+      <if test="relatedType != null">#{relatedType,jdbcType=VARCHAR},</if>
+      <if test="relatedId != null">#{relatedId,jdbcType=BIGINT},</if>
+      <if test="isRead != null">#{isRead,jdbcType=BOOLEAN},</if>
+      now(),
+    </trim>
+  </insert>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from public.notifications
+    where notification_id = #{notificationId,jdbcType=BIGINT}
+  </select>
+
+  <!-- 店员端：查门店通知（含角色广播+精准推送） -->
+  <select id="selectByStore" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from public.notifications
+    where store_id = #{storeId,jdbcType=INTEGER}
+      and (user_id IS NULL)
+    order by created_at DESC
+    limit #{limit,jdbcType=INTEGER} offset #{offset,jdbcType=INTEGER}
+  </select>
+
+  <!-- 顾客端：查个人通知 -->
+  <select id="selectByUser" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from public.notifications
+    where user_id = #{userId,jdbcType=BIGINT}
+    order by created_at DESC
+    limit #{limit,jdbcType=INTEGER} offset #{offset,jdbcType=INTEGER}
+  </select>
+
+  <select id="countUnreadByStore" resultType="int">
+    select count(*) from public.notifications
+    where store_id = #{storeId,jdbcType=INTEGER}
+      and is_read = false
+      and user_id IS NULL
+  </select>
+
+  <select id="countUnreadByUser" resultType="int">
+    select count(*) from public.notifications
+    where user_id = #{userId,jdbcType=BIGINT}
+      and is_read = false
+  </select>
+
+  <update id="markAsRead">
+    update public.notifications
+    set is_read = true
+    where notification_id = #{notificationId,jdbcType=BIGINT}
+  </update>
+
+  <update id="markAllAsReadByStore">
+    update public.notifications
+    set is_read = true
+    where store_id = #{storeId,jdbcType=INTEGER}
+      and is_read = false
+      and user_id IS NULL
+  </update>
+
+  <update id="markAllAsReadByUser">
+    update public.notifications
+    set is_read = true
+    where user_id = #{userId,jdbcType=BIGINT}
+      and is_read = false
+  </update>
+
+</mapper>

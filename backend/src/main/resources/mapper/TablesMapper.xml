@@ -9,6 +9,10 @@
     <result column="table_type" jdbcType="VARCHAR" property="tableType" />
     <result column="cat_theme" jdbcType="VARCHAR" property="catTheme" />
     <result column="is_active" jdbcType="BIT" property="isActive" />
+    <result column="top" jdbcType="DOUBLE" property="top" />
+    <result column="left" jdbcType="DOUBLE" property="left" />
+    <result column="width" jdbcType="DOUBLE" property="width" />
+    <result column="height" jdbcType="DOUBLE" property="height" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -69,7 +73,7 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    table_id, store_id, table_no, capacity, table_type, cat_theme, is_active
+    table_id, store_id, table_no, capacity, table_type, cat_theme, is_active, top, "left", width, height
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.TablesExample" resultMap="BaseResultMap">
     select
@@ -104,10 +108,11 @@
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Tables">
     insert into public.tables (table_id, store_id, table_no,
       capacity, table_type, cat_theme,
-      is_active)
+      is_active, top, "left", width, height)
     values (#{tableId,jdbcType=INTEGER}, #{storeId,jdbcType=INTEGER}, #{tableNo,jdbcType=VARCHAR},
       #{capacity,jdbcType=INTEGER}, #{tableType,jdbcType=VARCHAR}, #{catTheme,jdbcType=VARCHAR},
-      #{isActive,jdbcType=BIT})
+      #{isActive,jdbcType=BIT},
+      #{top,jdbcType=DOUBLE}, #{left,jdbcType=DOUBLE}, #{width,jdbcType=DOUBLE}, #{height,jdbcType=DOUBLE})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Tables">
     insert into public.tables
@@ -133,6 +138,18 @@
       <if test="isActive != null">
         is_active,
       </if>
+      <if test="top != null">
+        top,
+      </if>
+      <if test="left != null">
+        "left",
+      </if>
+      <if test="width != null">
+        width,
+      </if>
+      <if test="height != null">
+        height,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="tableId != null">
@@ -155,6 +172,18 @@
       </if>
       <if test="isActive != null">
         #{isActive,jdbcType=BIT},
+      </if>
+      <if test="top != null">
+        #{top,jdbcType=DOUBLE},
+      </if>
+      <if test="left != null">
+        #{left,jdbcType=DOUBLE},
+      </if>
+      <if test="width != null">
+        #{width,jdbcType=DOUBLE},
+      </if>
+      <if test="height != null">
+        #{height,jdbcType=DOUBLE},
       </if>
     </trim>
   </insert>
@@ -188,6 +217,18 @@
       <if test="row.isActive != null">
         is_active = #{row.isActive,jdbcType=BIT},
       </if>
+      <if test="row.top != null">
+        top = #{row.top,jdbcType=DOUBLE},
+      </if>
+      <if test="row.left != null">
+        "left" = #{row.left,jdbcType=DOUBLE},
+      </if>
+      <if test="row.width != null">
+        width = #{row.width,jdbcType=DOUBLE},
+      </if>
+      <if test="row.height != null">
+        height = #{row.height,jdbcType=DOUBLE},
+      </if>
     </set>
     <if test="example != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -201,7 +242,11 @@
       capacity = #{row.capacity,jdbcType=INTEGER},
       table_type = #{row.tableType,jdbcType=VARCHAR},
       cat_theme = #{row.catTheme,jdbcType=VARCHAR},
-      is_active = #{row.isActive,jdbcType=BIT}
+      is_active = #{row.isActive,jdbcType=BIT},
+      top = #{row.top,jdbcType=DOUBLE},
+      "left" = #{row.left,jdbcType=DOUBLE},
+      width = #{row.width,jdbcType=DOUBLE},
+      height = #{row.height,jdbcType=DOUBLE}
     <if test="example != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -227,6 +272,18 @@
       <if test="isActive != null">
         is_active = #{isActive,jdbcType=BIT},
       </if>
+      <if test="top != null">
+        top = #{top,jdbcType=DOUBLE},
+      </if>
+      <if test="left != null">
+        "left" = #{left,jdbcType=DOUBLE},
+      </if>
+      <if test="width != null">
+        width = #{width,jdbcType=DOUBLE},
+      </if>
+      <if test="height != null">
+        height = #{height,jdbcType=DOUBLE},
+      </if>
     </set>
     where table_id = #{tableId,jdbcType=INTEGER}
   </update>
@@ -237,7 +294,11 @@
       capacity = #{capacity,jdbcType=INTEGER},
       table_type = #{tableType,jdbcType=VARCHAR},
       cat_theme = #{catTheme,jdbcType=VARCHAR},
-      is_active = #{isActive,jdbcType=BIT}
+      is_active = #{isActive,jdbcType=BIT},
+      top = #{top,jdbcType=DOUBLE},
+      "left" = #{left,jdbcType=DOUBLE},
+      width = #{width,jdbcType=DOUBLE},
+      height = #{height,jdbcType=DOUBLE}
     where table_id = #{tableId,jdbcType=INTEGER}
   </update>
 

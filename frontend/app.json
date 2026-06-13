@@ -24,10 +24,10 @@
     "backgroundColor": "#ffffff",
     "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/index/index", "text": "首页" },
-      { "pagePath": "pages/reservation/reservation", "text": "预约" },
-      { "pagePath": "pages/menu/menu", "text": "点单" },
-      { "pagePath": "pages/profile/profile", "text": "我的" }
+      { "pagePath": "pages/index/index",            "text": "首页", "iconPath": "assets/icons/home.png",        "selectedIconPath": "assets/icons/home_active.png" },
+      { "pagePath": "pages/reservation/reservation",  "text": "预约", "iconPath": "assets/icons/reserve.png",     "selectedIconPath": "assets/icons/reserve_active.png" },
+      { "pagePath": "pages/menu/menu",              "text": "点单", "iconPath": "assets/icons/menu.png",        "selectedIconPath": "assets/icons/menu_active.png" },
+      { "pagePath": "pages/profile/profile",         "text": "我的", "iconPath": "assets/icons/profile.png",     "selectedIconPath": "assets/icons/profile_active.png" }
     ]
   },
   "window": {

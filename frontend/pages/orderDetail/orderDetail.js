@@ -17,6 +17,13 @@ Page({
     if (orderId) this.loadDetail()
   },
 
+  onShow() {
+    // 每次显示时刷新订单详情（从点单、评价等页面返回时能看到最新状态）
+    if (this.data.orderId) {
+      this.loadDetail()
+    }
+  },
+
   onPullDownRefresh() {
     this.loadDetail()
   },

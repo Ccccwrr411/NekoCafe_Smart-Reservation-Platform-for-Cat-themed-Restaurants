@@ -9,13 +9,7 @@ Page({
     storeName: '',
     stores: [],           // 所有门店列表（已按距离排序）
     showStorePicker: false, // 门店选择弹层
-
-    // 门店选择器地图
-    pickerMapLat: 39.9042,
-    pickerMapLng: 116.4074,
-    pickerMarkers: [],
-    activePickerStoreId: null,
-    userLocation: null,
+    showTablePopup: false,  // 桌位详情弹窗
 
     tables: [],
     loading: true,
@@ -96,22 +90,8 @@ Page({
       return
     }
 
-    // 每次显示时同步全局门店（可能在其他页面切换了）
-    const app = getApp()
-    if (app.globalData.currentStore && (!this.data.storeId || app.globalData.currentStore.id !== this.data.storeId)) {
-      this.setData({
-        storeId: app.globalData.currentStore.id,
-        storeName: app.globalData.currentStore.name
-      })
-    }
-    // 如果仍然没有门店，自动弹出选择器
-    if (!this.data.storeId && this.data.stores.length > 0) {
-      this.setData({ showStorePicker: true })
-    }
-    // 每次显示都刷新桌位（取消预约回来、切换时段等场景需要）
-    if (this.data.storeId) {
-      this.loadTables()
-    }
+    // 每次显示都重新加载门店列表和桌位，确保数据最新
+    this.loadStores()
   },
 
   // 加载所有门店 → 自动定位 → 按距离排序
@@ -128,7 +108,6 @@ Page({
   // 自动定位 + 距离排序
   autoSortByLocation(rawStores) {
     getUserLocation().then(userLoc => {
-      this.setData({ userLocation: userLoc })
       const sorted = applyDistanceAndSort(rawStores, userLoc)
       this.applySortedStores(sorted)
     }).catch(() => {
@@ -157,67 +136,14 @@ Page({
     }
   },
 
-  // 点击门店头部 → 构建标记并弹出切换面板
+  // 点击门店头部 → 弹出切换面板
   onStoreHeaderTap() {
-    this.buildPickerMarkers()
-    this.setData({ showStorePicker: true, activePickerStoreId: null })
+    this.setData({ showStorePicker: true })
   },
 
   // 隐藏门店选择器
   hideStorePicker() {
     this.setData({ showStorePicker: false })
-  },
-
-  // 构建门店选择器地图标记
-  buildPickerMarkers() {
-    const { stores, userLocation } = this.data
-    if (!stores || stores.length === 0) return
-
-    const markers = stores.map((s, index) => ({
-      id: s.id,
-      latitude: s.lat,
-      longitude: s.lng,
-      title: s.name,
-      // 不设 callout（门店选择器地图不需要导航；避免 qqmap:// scheme 报错）
-      label: {
-        content: String(index + 1),
-        color: '#ffffff',
-        fontSize: 12,
-        x: 12,
-        y: -24,
-        bgColor: '#C97E5A',
-        borderRadius: 16,
-        padding: 4
-      },
-      width: 26,
-      height: 26
-    }))
-
-    // 地图居中：用户定位优先 → 所有门店中心
-    const loc = userLocation
-    let centerLat, centerLng
-    if (loc && loc.lat) {
-      centerLat = loc.lat
-      centerLng = loc.lng
-    } else {
-      const lats = stores.map(s => s.lat)
-      const lngs = stores.map(s => s.lng)
-      centerLat = (Math.min(...lats) + Math.max(...lats)) / 2
-      centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2
-    }
-
-    this.setData({
-      pickerMarkers: markers,
-      pickerMapLat: centerLat,
-      pickerMapLng: centerLng
-    })
-  },
-
-  // 地图标记点击 → 滚动列表到对应门店
-  onPickerMarkerTap(e) {
-    const id = e.detail && e.detail.markerId
-    if (!id) return
-    this.setData({ activePickerStoreId: id })
   },
 
   // 切换门店
@@ -259,14 +185,24 @@ Page({
     this.setData({ filterType: e.currentTarget.dataset.type, selectedTable: null })
   },
 
-  // 选择桌位
+  // 选择桌位 - 弹出详情弹窗
   onTableSelect(e) {
     const table = e.currentTarget.dataset.table
+    // 添加物理震动反馈，提升不可点击状态的体验
     if (table.status !== 'available') {
-      wx.showToast({ title: table.status === 'booked' ? '该桌已被预约' : '该桌暂停使用', icon: 'none' })
+      wx.vibrateShort({ type: 'medium' })
+      wx.showToast({ title: table.status === 'booked' ? '该桌已被预约' : '该桌维护中', icon: 'none' })
       return
     }
-    this.setData({ selectedTable: table })
+    this.setData({ 
+      selectedTable: table,
+      showTablePopup: true 
+    })
+  },
+
+  // 隐藏桌位详情弹窗
+  hideTablePopup() {
+    this.setData({ showTablePopup: false })
   },
 
   // 日期选择
@@ -306,45 +242,42 @@ Page({
     this.setData({ duration, selectedTable: null }, () => { this.loadTables() })
   },
 
-  // 提交预约
+  // 提交预约（从弹窗内点击）
   onSubmit() {
     const { selectedTable, reserveDate, reserveTime, persons, storeId } = this.data
-    if (!selectedTable) { wx.showToast({ title: '请先选择桌位', icon: 'none' }); return }
+    if (!selectedTable) return
 
-    wx.showModal({
-      title: '确认预约',
-      content: `${reserveDate} ${reserveTime}\n${selectedTable.name}（${selectedTable.type}）\n${persons}人`,
-      success: (res) => {
-        if (!res.confirm) return
-        wx.showLoading({ title: '提交中...' })
-        post('/api/reservation/create', {
-          storeId,
-          tableId: selectedTable.id,
-          reserveDate,
-          reserveTime,
-          persons,
-          duration: this.data.duration
-        }).then(result => {
-          wx.hideLoading()
-          if (result.code === 0) {
-            const app = getApp()
-            app.globalData.selectedTable = selectedTable
-            // 将 orderId 和状态也存入 globalData，供后续页面使用
-            app.globalData.currentOrderId = result.data.orderId
-            app.globalData.currentOrderStatus = result.data.status
-            wx.showToast({ title: '预约成功！', icon: 'success', duration: 1500 })
-            // 跳转到订单详情页
-            setTimeout(() => {
-              wx.navigateTo({ url: `/pages/orderDetail/orderDetail?orderId=${result.data.orderId}` })
-            }, 1500)
-          } else {
-            wx.showToast({ title: result.message || '预约失败', icon: 'none' })
-          }
-        }).catch(() => {
-          wx.hideLoading()
-          wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+    wx.showLoading({ title: '提交中...' })
+    
+    post('/api/reservation/create', {
+      storeId,
+      tableId: selectedTable.id,
+      reserveDate,
+      reserveTime,
+      persons,
+      duration: this.data.duration
+    }).then(result => {
+      wx.hideLoading()
+      if (result.code === 0) {
+        // 预约成功，关闭弹窗，刷新桌位
+        this.setData({ showTablePopup: false, selectedTable: null }, () => {
+          this.loadTables()
         })
+
+        const app = getApp()
+        app.globalData.selectedTable = selectedTable
+        wx.showToast({ title: '预约成功！', icon: 'success' })
+
+        const orderId = result.data.orderId
+        setTimeout(() => {
+          wx.navigateTo({ url: `/pages/orderDetail/orderDetail?orderId=${orderId}` })
+        }, 800)
+      } else {
+        wx.showToast({ title: result.msg || '预约失败', icon: 'none' })
       }
+    }).catch(() => {
+      wx.hideLoading()
+      wx.showToast({ title: '网络开小差啦', icon: 'none' })
     })
   }
 })

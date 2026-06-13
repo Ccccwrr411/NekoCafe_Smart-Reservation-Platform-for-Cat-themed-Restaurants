@@ -35,6 +35,7 @@
 .ov-item { display: flex; flex-direction: column; align-items: center; min-width: 120rpx; }
 .ov-val { font-size: 40rpx; font-weight: 700; color: #333; }
 .ov-pending { color: #E74C3C; }
+.ov-refund { color: #FF9800; }
 .ov-label { font-size: 22rpx; color: #999; margin-top: 4rpx; }
 .ov-divider { width: 1rpx; height: 48rpx; background: #eee; }
 
@@ -178,6 +179,7 @@
 .tag-completed { background: #F5F5F5; color: #757575; }
 .tag-cancelled { background: #FAFAFA; color: #9E9E9E; }
 .tag-refunding { background: #FFF8E1; color: #F57F17; }
+.tag-refunded  { background: #F3E5F5; color: #7B1FA2; }
 
 .order-card-body { margin-bottom: 16rpx; }
 .order-info-row {
@@ -196,6 +198,7 @@
 }
 .order-amount { font-size: 34rpx; font-weight: 700; color: #C97E5A; }
 .order-actions { display: flex; gap: 12rpx; }
+.waiting-label { font-size: 24rpx; color: #aaa; padding: 8rpx 0; }
 
 /* ── 按钮 ── */
 .btn {
@@ -211,6 +214,7 @@
 .btn-danger { background: #E74C3C; color: #fff; }
 .btn-danger-outline { background: #FDEDEC; color: #E74C3C; border: 1rpx solid #E74C3C; }
 .btn-warn { background: #FF9800; color: #fff; }
+.btn-success { background: #4CAF50; color: #fff; }
 .btn-block { width: 100%; margin-bottom: 12rpx; }
 .btn:active { opacity: 0.75; }
 
@@ -361,7 +365,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8rpx;
+  margin-bottom: 10rpx;
 }
 .alert-level-badge {
   font-size: 20rpx;
@@ -372,7 +376,61 @@
 .level-high { background: #FFEBEE; color: #C62828; }
 .level-medium { background: #FFF8E1; color: #F57F17; }
 .level-low { background: #E3F2FD; color: #1565C0; }
-.alert-time { font-size: 22rpx; color: #999; }
+
+/* 告警状态标签 */
+.alert-status-badge {
+  font-size: 18rpx;
+  padding: 3rpx 12rpx;
+  border-radius: 8rpx;
+  font-weight: 600;
+}
+.status-PENDING     { background: #FFF3E0; color: #E67E22; }
+.status-ACKNOWLEDGED { background: #E3F2FD; color: #1976D2; }
+.status-PROCESSING  { background: #F3E5F5; color: #7B1FA2; }
+.status-RESOLVED    { background: #E8F5E9; color: #388E3C; }
+.status-APPROVED    { background: #E8F5E9; color: #388E3C; }
+.status-REJECTED    { background: #FFEBEE; color: #C62828; }
+
+/* 告警卡片内容 */
+.alert-card-body {
+  margin-bottom: 12rpx;
+}
+.alert-type-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 4rpx;
+}
+.alert-type-icon { font-size: 24rpx; }
+.alert-type-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #333;
+}
+.alert-reason {
+  font-size: 24rpx;
+  color: #666;
+  display: block;
+  line-height: 1.5;
+  margin-bottom: 8rpx;
+}
+.alert-meta-row {
+  display: flex;
+  gap: 20rpx;
+  font-size: 20rpx;
+  color: #aaa;
+}
+.alert-date, .alert-time-created { display: inline; }
+
+/* 已处理标签 */
+.resolved-tag {
+  font-size: 22rpx;
+  color: #388E3C;
+  font-weight: 600;
+  padding: 6rpx 16rpx;
+  background: #E8F5E9;
+  border-radius: 10rpx;
+}
 .alert-title { font-size: 28rpx; font-weight: 600; color: #333; display: block; margin-bottom: 6rpx; }
 .alert-desc { font-size: 24rpx; color: #666; display: block; margin-bottom: 12rpx; }
 .alert-actions { display: flex; gap: 12rpx; }
@@ -473,6 +531,20 @@
 .dispatch-occupied { background: #FFEBEE; color: #C62828; }
 .dispatch-cleaning { background: #FFF8E1; color: #F57F17; }
 .dispatch-maintenance { background: #EEEEEE; color: #424242; }
+
+/* ── 退款审核弹层 ── */
+.refund-detail { margin-bottom: 24rpx; }
+.rd-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12rpx 0; border-bottom: 1rpx solid #f5f5f5;
+}
+.rd-label { font-size: 24rpx; color: #999; }
+.rd-value { font-size: 26rpx; color: #333; }
+.rd-type { font-weight: 600; color: #C97E5A; }
+.rd-amount { font-size: 34rpx; font-weight: 700; color: #E74C3C; }
+.rd-actions { display: flex; gap: 16rpx; margin-bottom: 16rpx; }
+.rd-actions .btn { flex: 1; }
+
 .modal-cancel {
   text-align: center;
   padding: 16rpx;
@@ -550,3 +622,115 @@
   padding: 0 6rpx;
 }
 .nav-badge-red { background: #E74C3C; }
+
+/* ── 底部导航-消息中心按钮（凸起）── */
+.nav-item-center {
+  flex: 0 0 120rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-top: -20rpx;
+}
+.nav-center-btn {
+  width: 96rpx;
+  height: 96rpx;
+  background: linear-gradient(135deg, #C97E5A, #8B5A3C);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 16rpx rgba(201,126,90,0.4);
+  position: relative;
+}
+.nav-center-icon { font-size: 44rpx; }
+.nav-center-badge {
+  position: absolute;
+  top: -4rpx;
+  right: -4rpx;
+  background: #E74C3C;
+  color: #fff;
+  font-size: 18rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  text-align: center;
+  border-radius: 16rpx;
+  padding: 0 8rpx;
+  border: 2rpx solid #fff;
+}
+
+/* ── 通知中心 ── */
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 24rpx 12rpx;
+}
+.notif-header-title { font-size: 32rpx; font-weight: 700; color: #333; }
+.notif-read-all-btn {
+  font-size: 24rpx;
+  color: #3498DB;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  border: 1rpx solid #3498DB;
+}
+.notif-read-all-btn:active { opacity: 0.6; }
+
+.notif-list { padding: 0 20rpx 16rpx; }
+.notif-card {
+  display: flex;
+  gap: 12rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 12rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.04);
+}
+.notif-card-unread { border-left: 6rpx solid #C97E5A; }
+.notif-card-read { border-left: 6rpx solid transparent; opacity: 0.7; }
+
+.notif-card-left {
+  width: 20rpx;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 6rpx;
+}
+.notif-dot {
+  width: 12rpx; height: 12rpx;
+  border-radius: 50%;
+}
+.notif-unread-dot { background: #C97E5A; }
+
+.notif-card-body { flex: 1; min-width: 0; }
+.notif-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6rpx;
+}
+.notif-type-badge {
+  font-size: 18rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  background: #F5F0EB;
+  color: #8B5A3C;
+  font-weight: 600;
+}
+.notif-time { font-size: 20rpx; color: #aaa; }
+.notif-title-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 4rpx;
+}
+.notif-card-unread .notif-title-text { font-weight: 700; }
+.notif-content {
+  font-size: 24rpx;
+  color: #666;
+  display: block;
+  line-height: 1.4;
+  margin-bottom: 8rpx;
+}
+.notif-actions { display: flex; gap: 8rpx; }

@@ -88,4 +88,23 @@ public class StaffController {
                 ? Long.valueOf(body.get("operatorId").toString()) : null;
         return Result.success(staffService.reviewRefund(refundId, action, operatorId));
     }
+
+    /** L-9 告警已知晓 */
+    @PostMapping("/staff/alert/acknowledge")
+    public Result<Map<String, Object>> acknowledgeAlert(@RequestBody Map<String, Object> body) {
+        Long exceptionId = Long.valueOf(body.get("exceptionId").toString());
+        Long operatorId = body.get("operatorId") != null
+                ? Long.valueOf(body.get("operatorId").toString()) : null;
+        return Result.success(staffService.acknowledgeAlert(exceptionId, operatorId));
+    }
+
+    /** L-10 解决告警 */
+    @PostMapping("/staff/alert/resolve")
+    public Result<Map<String, Object>> resolveAlert(@RequestBody Map<String, Object> body) {
+        Long exceptionId = Long.valueOf(body.get("exceptionId").toString());
+        String resolution = (String) body.get("resolution");
+        Long operatorId = body.get("operatorId") != null
+                ? Long.valueOf(body.get("operatorId").toString()) : null;
+        return Result.success(staffService.resolveAlert(exceptionId, resolution, operatorId));
+    }
 }
