@@ -73,8 +73,8 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    store_id, name, city, address, longitude, latitude, contact_phone, business_hours, 
-    status, created_at
+    store_id, name, city, address, longitude, latitude, contact_phone, business_hours,
+    status, image_url, created_at
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.StoresExample" resultMap="BaseResultMap">
     select
@@ -91,7 +91,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select 
+    select
     <include refid="Base_Column_List" />
     from public.stores
     where store_id = #{storeId,jdbcType=INTEGER}
@@ -107,14 +107,14 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Stores">
-    insert into public.stores (store_id, name, city, 
-      address, longitude, latitude, 
-      contact_phone, business_hours, status, 
-      created_at)
-    values (#{storeId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR}, 
-      #{address,jdbcType=VARCHAR}, #{longitude,jdbcType=NUMERIC}, #{latitude,jdbcType=NUMERIC}, 
-      #{contactPhone,jdbcType=VARCHAR}, #{businessHours,jdbcType=VARCHAR}, #{status,jdbcType=SMALLINT}, 
-      #{createdAt,jdbcType=TIMESTAMP})
+    insert into public.stores (store_id, name, city,
+      address, longitude, latitude,
+      contact_phone, business_hours, status,
+      image_url, created_at)
+    values (#{storeId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{city,jdbcType=VARCHAR},
+      #{address,jdbcType=VARCHAR}, #{longitude,jdbcType=NUMERIC}, #{latitude,jdbcType=NUMERIC},
+      #{contactPhone,jdbcType=VARCHAR}, #{businessHours,jdbcType=VARCHAR}, #{status,jdbcType=SMALLINT},
+      #{imageUrl,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Stores">
     insert into public.stores

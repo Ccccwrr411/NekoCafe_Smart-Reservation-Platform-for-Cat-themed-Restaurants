@@ -802,11 +802,10 @@ module.exports = {
     code: 0,
     message: 'success',
     data: [
-      { alertId: 1, storeId: 1, staffId: 2, type: 'OVERTIME', level: 'high', status: 'PENDING', statusLabel: '待处理', reason: '客人超时占座 | 桌号 102 | 预约 1001', exceptionDate: '2026-06-12', createdAt: '2026-06-12 14:20' },
-      { alertId: 2, storeId: 1, staffId: 3, type: 'NO_SHOW', level: 'high', status: 'PENDING', statusLabel: '待处理', reason: '客人预约未到店 | 预约 1005 | 时间 2026-06-12 13:00', exceptionDate: '2026-06-12', createdAt: '2026-06-12 13:20' },
-      { alertId: 3, storeId: 1, staffId: 3, type: 'LEAVE', level: 'medium', status: 'ACKNOWLEDGED', statusLabel: '已知晓', reason: '病假', exceptionDate: '2026-06-11', createdAt: '2026-06-10 09:00' },
-      { alertId: 4, storeId: 1, staffId: 2, type: 'SWAP', level: 'medium', status: 'PENDING', statusLabel: '待处理', reason: '与同事换班', exceptionDate: '2026-06-15', createdAt: '2026-06-12 10:30' },
-      { alertId: 5, storeId: 2, staffId: 5, type: 'LEAVE', level: 'medium', status: 'REJECTED', statusLabel: '已驳回', reason: '事假', exceptionDate: '2026-06-16', createdAt: '2026-06-11 15:00' }
+      { id: 'ALT001', level: 'warning', type: 'overstay', title: 'B2 超时未离店', desc: '橘猫爱好者已超预约时长30分钟', time: '16:00' },
+      { id: 'ALT002', level: 'critical', type: 'no_show', title: 'A2 顾客未到店', desc: '豆腐粉丝预约15:00，已超时15分钟', time: '15:15' },
+      { id: 'ALT003', level: 'info', type: 'equipment', title: 'C2 空调故障', desc: '包间空调温度异常，请安排维修', time: '14:30' },
+      { id: 'ALT004', level: 'warning', type: 'low_stock', title: '猫爪拿铁库存不足', desc: '今日原料剩余不足10杯', time: '13:00' }
     ]
   },
 

@@ -1,12 +1,14 @@
 package cn.edu.bjfu.nekocafe.service;
 
 import cn.edu.bjfu.nekocafe.dto.OrderSubmitDTO;
+import cn.edu.bjfu.nekocafe.dto.ReservationCreateDTO;
+import cn.edu.bjfu.nekocafe.dto.RescheduleDTO;
 import cn.edu.bjfu.nekocafe.vo.OrderVO;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 点单服务接口
+ * 订单 & 预约服务接口
  * 实现类：OrderServiceImpl
  */
 public interface OrderService {

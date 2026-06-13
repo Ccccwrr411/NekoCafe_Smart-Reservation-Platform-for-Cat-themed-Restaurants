@@ -1,8 +1,10 @@
 package cn.edu.bjfu.nekocafe.service.impl;
-
+import cn.edu.bjfu.nekocafe.entity.TableStatus;
+import cn.edu.bjfu.nekocafe.entity.TableStatusExample;
 import cn.edu.bjfu.nekocafe.entity.Reservations;
 import cn.edu.bjfu.nekocafe.entity.Tables;
 import cn.edu.bjfu.nekocafe.entity.TablesExample;
+import cn.edu.bjfu.nekocafe.mapper.TableStatusMapper;
 import cn.edu.bjfu.nekocafe.mapper.ReservationsMapper;
 import cn.edu.bjfu.nekocafe.mapper.TablesMapper;
 import cn.edu.bjfu.nekocafe.service.TableService;
@@ -18,6 +20,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 桌位服务实现
@@ -25,6 +29,8 @@ import java.util.Set;
  *
  * 实现接口 C-1：GET /api/tables?storeId={storeId}&reserveDate=...&reserveTime=...&duration=...
  * 查询指定门店的桌位列表，基于时段冲突判断预约状态
+ *  * 实现接口 C-1：GET /api/tables?storeId={storeId}
+ *  * 查询指定门店的桌位列表，合并实时状态信息
  */
 @Service
 public class TableServiceImpl implements TableService {
@@ -32,6 +38,8 @@ public class TableServiceImpl implements TableService {
     @Autowired
     private TablesMapper tablesMapper;
 
+    @Autowired
+    private TableStatusMapper tableStatusMapper;
     @Autowired
     private ReservationsMapper reservationsMapper;
 

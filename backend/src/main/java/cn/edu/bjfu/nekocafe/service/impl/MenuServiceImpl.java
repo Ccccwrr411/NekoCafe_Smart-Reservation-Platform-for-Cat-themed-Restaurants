@@ -25,13 +25,12 @@ import java.util.stream.Collectors;
  * 负责人：B同学
  *
  * 实现接口 D-1：GET /api/menu?storeId={storeId}
- * 使用 Redis 缓存菜品列表，缓存 key 为 nekocafe:menu:store:{storeId}，过期时间 12 小时
+ * 使用 Redis 缓存菜品列表，缓存 key 为 nekocafe:menu:store:v2:{storeId}，过期时间 12 小时
  */
 @Service
 public class MenuServiceImpl implements MenuService {
 
-    private static final String IMAGE_BASE_URL = "http://172.20.10.3:8081";
-    private static final String CACHE_KEY_PREFIX = "nekocafe:menu:store:";
+    private static final String CACHE_KEY_PREFIX = "nekocafe:menu:store:v2:";
     private static final long CACHE_TTL_HOURS = 12;
 
     /** 分类名 → emoji 图标映射 */
@@ -148,7 +147,8 @@ public class MenuServiceImpl implements MenuService {
             item.setName(d.getName());
             item.setCategoryId(getCategoryId(categoryNames, d.getCategory()));
             item.setDesc(d.getDescription());
-            item.setImageUrl(IMAGE_BASE_URL + "/uploads/menu/item_" + d.getDishId() + ".jpg");
+            // 直接使用数据库中的完整图片URL，不再拼接
+            item.setImageUrl(d.getImageUrl());
 
             // 价格：优先使用门店覆盖价，否则用菜品原价
             StoreDishes sd = storeDishesList.stream()

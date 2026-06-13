@@ -9,6 +9,10 @@
     <result column="table_type" jdbcType="VARCHAR" property="tableType" />
     <result column="cat_theme" jdbcType="VARCHAR" property="catTheme" />
     <result column="is_active" jdbcType="BIT" property="isActive" />
+    <result column="top" property="top" jdbcType="VARCHAR" />
+    <result column="left" property="left" jdbcType="VARCHAR" />
+    <result column="width" property="width" jdbcType="VARCHAR" />
+    <result column="height" property="height" jdbcType="VARCHAR" />
     <result column="top" jdbcType="DOUBLE" property="top" />
     <result column="left" jdbcType="DOUBLE" property="left" />
     <result column="width" jdbcType="DOUBLE" property="width" />

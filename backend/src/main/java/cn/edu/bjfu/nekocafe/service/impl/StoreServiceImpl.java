@@ -69,8 +69,8 @@ public class StoreServiceImpl implements StoreService {
             // 营业时间：直接使用 businessHours
             vo.setOpenTime(s.getBusinessHours());
 
-            // 图片：拼接完整 URL
-            vo.setImageUrl(IMAGE_BASE_URL + "/uploads/stores/store_" + s.getStoreId() + ".jpg");
+            // 图片：直接使用数据库中的完整 URL
+            vo.setImageUrl(s.getImageUrl());
 
             // 以下字段在 stores 表中无直接对应，暂设默认值
             // avgPrice / rating / catCount / tags 可通过联查 reviews / cat_profiles / dishes 计算
