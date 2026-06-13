@@ -1,0 +1,52 @@
+<!--pages/contact/contact.wxml-->
+<view class="container">
+  <view class="contact-header">
+    <view class="header-icon">💬</view>
+    <text class="header-title">客服中心</text>
+    <text class="header-desc">有问题随时找我们</text>
+  </view>
+
+  <view class="contact-card card">
+    <view class="contact-item" bindtap="makePhoneCall">
+      <view class="contact-icon">📞</view>
+      <view class="contact-content">
+        <text class="contact-label">客服热线</text>
+        <text class="contact-value">{{contactInfo.phone}}</text>
+      </view>
+      <text class="contact-arrow">›</text>
+    </view>
+
+    <view class="contact-item" bindtap="copyWechat">
+      <view class="contact-icon">💚</view>
+      <view class="contact-content">
+        <text class="contact-label">微信客服</text>
+        <text class="contact-value">{{contactInfo.wechat}}</text>
+      </view>
+      <text class="contact-arrow">›</text>
+    </view>
+
+    <view class="contact-item" bindtap="sendEmail">
+      <view class="contact-icon">✉️</view>
+      <view class="contact-content">
+        <text class="contact-label">邮箱地址</text>
+        <text class="contact-value">{{contactInfo.email}}</text>
+      </view>
+      <text class="contact-arrow">›</text>
+    </view>
+
+    <view class="contact-item">
+      <view class="contact-icon">⏰</view>
+      <view class="contact-content">
+        <text class="contact-label">服务时间</text>
+        <text class="contact-value">{{contactInfo.workTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="tips-card card">
+    <text class="tips-title">温馨提示</text>
+    <text class="tips-content">• 在线客服工作时间：10:00 - 22:00</text>
+    <text class="tips-content">• 紧急问题请拨打客服热线</text>
+    <text class="tips-content">• 邮件回复时间：1-2个工作日</text>
+  </view>
+</view>
