@@ -1,14 +1,10 @@
 // pages/profile/profile.js
 const { get } = require('../../utils/request')
-const { ORDER_STATUS_MAP } = require('../../utils/util')
 const app = getApp()
 
 Page({
   data: {
     userInfo: null,
-    orders: [],
-    loading: true,
-    ORDER_STATUS_MAP,
     menuItems: []
   },
 
@@ -21,7 +17,6 @@ Page({
 
     this.buildMenuItems()
     this.loadUserInfo()
-    this.loadOrders()
   },
 
   // 根据角色动态构建菜单
@@ -64,21 +59,8 @@ Page({
     })
   },
 
-  loadOrders() {
-    get('/api/orders?userId=1001').then(res => {
-      if (res.code === 0) {
-        this.setData({ orders: res.data.slice(0, 3), loading: false })
-      }
-    })
-  },
-
   goAllOrders() {
     wx.navigateTo({ url: '/pages/orderList/orderList' })
-  },
-
-  goOrderDetail(e) {
-    const orderId = e.currentTarget.dataset.orderid
-    wx.navigateTo({ url: `/pages/orderDetail/orderDetail?orderId=${orderId}` })
   },
 
   onMenuItemClick(e) {

@@ -15,6 +15,8 @@ public class LoginVO {
         private String email;
         private String memberLevel;
         private Integer points;
+        private String role;
+        private String roleLabel;
 
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -30,6 +32,10 @@ public class LoginVO {
         public void setMemberLevel(String memberLevel) { this.memberLevel = memberLevel; }
         public Integer getPoints() { return points; }
         public void setPoints(Integer points) { this.points = points; }
+        public String getRole() { return role; }
+        public void setRole(String role) { this.role = role; }
+        public String getRoleLabel() { return roleLabel; }
+        public void setRoleLabel(String roleLabel) { this.roleLabel = roleLabel; }
     }
 
     public String getToken() { return token; }
