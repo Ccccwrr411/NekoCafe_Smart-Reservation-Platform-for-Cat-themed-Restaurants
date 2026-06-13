@@ -16,8 +16,8 @@
     </view>
   </view>
 
-  <!-- ═══════ 今日概览 ═══════ -->
-  <view class="overview-bar">
+  <!-- ═══════ 今日概览（仅订单/桌位页显示）═══════ -->
+  <view wx:if="{{activeTab === 'orders' || activeTab === 'tables'}}" class="overview-bar">
     <view class="ov-item">
       <text class="ov-val">{{todayOrderCount}}</text>
       <text class="ov-label">订单数</text>
@@ -26,6 +26,11 @@
     <view class="ov-item" bindtap="onFilterPending">
       <text class="ov-val ov-pending">{{pendingCount}}</text>
       <text class="ov-label">待处理</text>
+    </view>
+    <view class="ov-divider"></view>
+    <view class="ov-item" bindtap="onViewRefund">
+      <text class="ov-val ov-refund">{{refundCount}}</text>
+      <text class="ov-label">退款审核</text>
     </view>
     <view class="ov-divider"></view>
     <view class="ov-item">
@@ -52,7 +57,7 @@
             全部<text class="arrow-down">{{showAllDropdown ? '▲' : '▼'}}</text>
           </view>
           <view class="filter-item {{orderFilter === 'booked' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="booked">
-            待接单<text wx:if="{{countByStatus.booked}}" class="filter-badge">{{countByStatus.booked}}</text>
+            待下单<text wx:if="{{countByStatus.booked}}" class="filter-badge">{{countByStatus.booked}}</text>
           </view>
           <view class="filter-item {{orderFilter === 'confirmed' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="confirmed">已确认</view>
           <view class="filter-item {{orderFilter === 'making' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="making">制作中</view>
@@ -102,10 +107,9 @@
           <view class="order-card-bottom">
             <text class="order-amount">¥{{item.totalAmount}}</text>
             <view class="order-actions">
-              <!-- 待接单 -->
+              <!-- 待下单（顾客已预约但未点菜 → 自动变 CONFIRMED） -->
               <block wx:if="{{item.status === 'booked'}}">
-                <view class="btn btn-danger-outline" bindtap="onRejectOrder" data-order="{{item}}">拒单</view>
-                <view class="btn btn-primary" bindtap="onAcceptOrder" data-order="{{item}}">接单</view>
+                <text class="waiting-label">等待顾客下单</text>
               </block>
               <!-- 已确认 → 开始制作 -->
               <block wx:elif="{{item.status === 'confirmed'}}">
@@ -121,7 +125,11 @@
               </block>
               <!-- 退款中 -->
               <block wx:elif="{{item.status === 'refunding'}}">
-                <view class="btn btn-warn" bindtap="onViewRefund">审核退款</view>
+                <view class="btn btn-warn" bindtap="onViewRefundDetail" data-order="{{item}}">审核退款</view>
+              </block>
+              <!-- 已退款（审核通过的退款）— 无操作 -->
+              <block wx:elif="{{item.status === 'refunded'}}">
+                <text class="waiting-label">已退款</text>
               </block>
               <!-- 已完成/已取消 — 无操作 -->
             </view>
@@ -174,24 +182,42 @@
     <!-- ────── Tab: 告警中心 ────── -->
     <block wx:if="{{!loading && activeTab === 'alerts'}}">
       <view class="alert-filter">
-        <view class="af-item {{alertFilter === 'pending' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="pending">未处理</view>
-        <view class="af-item {{alertFilter === 'resolved' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="resolved">已处理</view>
         <view class="af-item {{alertFilter === 'all' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="all">全部</view>
+        <view class="af-item {{alertFilter === 'pending' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="pending">待处理</view>
+        <view class="af-item {{alertFilter === 'acknowledged' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="acknowledged">已知晓</view>
+        <view class="af-item {{alertFilter === 'resolved' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="resolved">已处理</view>
       </view>
       <view wx:if="{{filteredAlerts.length === 0}}" class="empty-state">
         <text class="empty-icon">✅</text>
         <text class="empty-text">暂无异常告警</text>
       </view>
       <view class="alert-list">
-        <view wx:for="{{filteredAlerts}}" wx:key="alertId" class="alert-card alert-{{item.level}}">
+        <view wx:for="{{filteredAlerts}}" wx:key="alertId" class="alert-card alert-{{item.level}}" catchtap="">
           <view class="alert-card-top">
             <view class="alert-level-badge level-{{item.level}}">{{item.levelLabel}}</view>
-            <text class="alert-time">{{item.createdAt}}</text>
+            <view class="alert-status-badge status-{{item.status}}">{{item.statusLabel || item.status}}</view>
           </view>
-          <text class="alert-title">{{item.reason || item.type}}</text>
-          <text class="alert-desc">类型: {{item.type}} | 日期: {{item.exceptionDate}}</text>
-          <view wx:if="{{item.status === 'pending'}}" class="alert-actions">
-            <view class="btn btn-sm btn-outline" bindtap="onAcknowledgeAlert" data-alert="{{item}}">已知晓</view>
+          <view class="alert-card-body">
+            <view class="alert-type-row">
+              <text class="alert-type-icon">{{item.level === 'high' ? '🔴' : item.level === 'medium' ? '🟡' : '🔵'}}</text>
+              <text class="alert-type-text">{{item.type}}</text>
+            </view>
+            <text class="alert-reason">{{item.reason}}</text>
+            <view class="alert-meta-row">
+              <text class="alert-date">📅 {{item.exceptionDate}}</text>
+              <text class="alert-time-created">⏰ {{item.createdAt}}</text>
+            </view>
+          </view>
+          <view class="alert-actions">
+            <block wx:if="{{item.status === 'PENDING' || item.status === 'pending'}}">
+              <view class="btn btn-sm btn-outline" bindtap="onAcknowledgeAlert" data-alert="{{item}}">已知晓</view>
+            </block>
+            <block wx:elif="{{item.status === 'ACKNOWLEDGED' || item.status === 'acknowledged' || item.status === 'PROCESSING'}}">
+              <view class="btn btn-sm btn-success" bindtap="onResolveAlert" data-alert="{{item}}">✅ 解决</view>
+            </block>
+            <block wx:elif="{{item.status === 'RESOLVED' || item.status === 'resolved' || item.status === 'APPROVED' || item.status === 'approved'}}">
+              <text class="resolved-tag">✓ 已处理</text>
+            </block>
           </view>
         </view>
       </view>
@@ -242,7 +268,71 @@
       </view>
     </block>
 
+    <!-- ────── Tab: 通知中心 ────── -->
+    <block wx:if="{{!loading && activeTab === 'notification'}}">
+      <view class="notif-header">
+        <text class="notif-header-title">消息中心</text>
+        <view wx:if="{{notifications.length > 0}}" class="notif-read-all-btn" bindtap="onMarkAllRead">全部已读</view>
+      </view>
+      <view wx:if="{{notifications.length === 0}}" class="empty-state">
+        <text class="empty-icon">🔔</text>
+        <text class="empty-text">暂无消息通知</text>
+      </view>
+      <view class="notif-list">
+        <view wx:for="{{notifications}}" wx:key="notificationId" class="notif-card {{item.isRead ? 'notif-card-read' : 'notif-card-unread'}}">
+          <view class="notif-card-left">
+            <view class="notif-dot {{item.isRead ? '' : 'notif-unread-dot'}}"></view>
+          </view>
+          <view class="notif-card-body">
+            <view class="notif-top">
+              <text class="notif-type-badge">{{item.type === 'order_new' ? '新订单' : item.type === 'order_progress' ? '订单进度' : item.type === 'refund_result' ? '退款结果' : item.type === 'alert_created' ? '系统告警' : item.type}}</text>
+              <text class="notif-time">{{item.createdAt}}</text>
+            </view>
+            <text class="notif-title-text">{{item.title}}</text>
+            <text class="notif-content">{{item.content}}</text>
+            <view wx:if="{{!item.isRead}}" class="notif-actions">
+              <view class="btn btn-sm btn-outline" bindtap="onMarkNotificationRead" data-notif="{{item}}">标记已读</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
   </view><!-- /main-content -->
+
+  <!-- ═══════ 退款审核弹层（订单页内直接操作）═══════ -->
+  <view wx:if="{{showRefundModal}}" class="modal-mask" bindtap="onCloseRefundModal">
+    <view class="modal-panel" catchtap="">
+      <text class="modal-title">💰 审核退款</text>
+      <view class="refund-detail">
+        <view class="rd-row">
+          <text class="rd-label">退款类型</text>
+          <text class="rd-value rd-type">{{refundModalData.status === 'REQUEST_CANCEL' ? '🔄 取消重下单' : '🚪 全单退款'}}</text>
+        </view>
+        <view class="rd-row">
+          <text class="rd-label">退款金额</text>
+          <text class="rd-value rd-amount">¥{{refundModalData.refundAmount}}</text>
+        </view>
+        <view class="rd-row">
+          <text class="rd-label">退款原因</text>
+          <text class="rd-value">{{refundModalData.refundReason || '—'}}</text>
+        </view>
+        <view class="rd-row">
+          <text class="rd-label">关联订单</text>
+          <text class="rd-value">#{{refundModalData.reservationId}} · {{refundModalOrder.tableNo || '桌' + refundModalOrder.tableId}}</text>
+        </view>
+        <view class="rd-row">
+          <text class="rd-label">申请时间</text>
+          <text class="rd-value">{{refundModalData.createdAt || '—'}}</text>
+        </view>
+      </view>
+      <view class="rd-actions">
+        <view class="btn btn-block btn-danger-outline" bindtap="onRejectRefund">拒绝退款</view>
+        <view class="btn btn-block btn-primary" bindtap="onApproveRefund">通过退款</view>
+      </view>
+      <view class="modal-cancel" bindtap="onCloseRefundModal">取消</view>
+    </view>
+  </view>
 
   <!-- ═══════ 调度弹层 ═══════ -->
   <view wx:if="{{showDispatchModal}}" class="modal-mask" bindtap="onCloseDispatch">
@@ -272,7 +362,7 @@
     </view>
   </view>
 
-  <!-- ═══════ 底部导航栏 ═══════ -->
+  <!-- ═══════ 底部导航栏（5Tab，消息居中突出）═══════ -->
   <view class="bottom-nav">
     <view class="nav-item {{activeTab === 'orders' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="orders">
       <text class="nav-icon">📋</text>
@@ -282,6 +372,12 @@
     <view class="nav-item {{activeTab === 'tables' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="tables">
       <text class="nav-icon">🪑</text>
       <text class="nav-label">桌位</text>
+    </view>
+    <view class="nav-item-center {{activeTab === 'notification' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="notification">
+      <view class="nav-center-btn">
+        <text class="nav-center-icon">🔔</text>
+        <text wx:if="{{unreadCount > 0}}" class="nav-center-badge">{{unreadCount > 99 ? '99+' : unreadCount}}</text>
+      </view>
     </view>
     <view class="nav-item {{activeTab === 'alerts' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="alerts">
       <text class="nav-icon">⚠️</text>
