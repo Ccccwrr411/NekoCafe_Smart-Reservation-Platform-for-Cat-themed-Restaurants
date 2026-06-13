@@ -204,7 +204,8 @@ public class OrderServiceImpl implements OrderService {
       }
       vo.setPersons(r.getPartySize());                           // party_size → persons
       // 数据库状态转换为前端可识别状态（退款完成看 refund_records.status）
-      vo.setStatus(mapStatusToFrontend(r.getStatus(), refundMap.get(r.getReservationId())));
+      String frontendStatus = mapStatusToFrontend(r.getStatus(), refundMap.get(r.getReservationId()));
+      vo.setStatus(frontendStatus);
       vo.setRemark(r.getSpecialRequest() != null ? r.getSpecialRequest() : ""); // special_request → remark
 
       // 金额（BigDecimal → Integer 分）
@@ -370,6 +371,17 @@ public class OrderServiceImpl implements OrderService {
               (vo.getTableName() != null && vo.getTableName().toLowerCase().contains(kw)) ||
               (vo.getId() != null && vo.getId().toLowerCase().contains(kw))
           )
+          .collect(Collectors.toList());
+    }
+
+    // 8. 二次状态过滤（解决 SQL 无法联合退单表判断的问题）
+    //    SQL 按 reservations.status 筛选后，再按实际前端状态（mapStatusToFrontend）二次过滤
+    //    例：reservations=REFUNDING + refund_records=REQUEST_CANCEL → 前端=cancel_order
+    //        用户选"售后"tab 时应排除此类订单（归入"已取消"）
+    if (status != null && !status.isEmpty() && !"all".equals(status)) {
+      final List<String> allowedFrontendStatuses = getAllowedFrontendStatuses(status);
+      result = result.stream()
+          .filter(vo -> allowedFrontendStatuses.contains(vo.getStatus()))
           .collect(Collectors.toList());
     }
 
@@ -807,7 +819,7 @@ public class OrderServiceImpl implements OrderService {
         timeline.add(t3);
       }
       // 历史取消记录：存在 refund_records 说明曾被取消（即使 reactivate 后状态已恢复）
-      // 仅在当前状态非 CANCEL 时才补充显示（CANCEL 状态已有独立的"预约取消"条目）
+      // 仅在当前状态非 CANCEL 时才补充显示（CANCEL 状态已有独立的取消条目）
       String currentStatus = reservation.getStatus();
       if (!"CANCEL_BOOKING".equals(currentStatus) && !"CANCEL_ORDER".equals(currentStatus)) {
         OrderVO.TimelineVO tc = new OrderVO.TimelineVO();
@@ -893,14 +905,18 @@ public class OrderServiceImpl implements OrderService {
       updateRes.setUpdatedAt(now);
       reservationsMapper.updateByPrimaryKeySelective(updateRes);
 
-      // 2. 乐观锁释放 table_status: RESERVED → IDLE, current_reservation_id → NULL
+      // 2. 仅在该桌无其他活跃预约时才释放 table_status
       if (reservation.getTableId() != null) {
-        TableStatus currentStatus2 = tableStatusMapper.selectByPrimaryKey(reservation.getTableId());
-        if (currentStatus2 != null) {
-          int affected = tableStatusMapper.releaseTableOptimistic(
-            reservation.getTableId(), reservationId, currentStatus2.getVersion());
-          if (affected == 0) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态已变更，请重试");
+        int otherCount = reservationsMapper.countActiveByTableIdExcluding(
+            reservation.getTableId(), ACTIVE_STATUSES, reservationId);
+        if (otherCount == 0) {
+          TableStatus currentStatus2 = tableStatusMapper.selectByPrimaryKey(reservation.getTableId());
+          if (currentStatus2 != null) {
+            int affected = tableStatusMapper.releaseTableOptimistic(
+              reservation.getTableId(), reservationId, currentStatus2.getVersion());
+            if (affected == 0) {
+              throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态已变更，请重试");
+            }
           }
         }
       }
@@ -911,7 +927,7 @@ public class OrderServiceImpl implements OrderService {
       return result;
     }
 
-    // ==================== 完整取消（CONFIRMED，含支付回滚） ====================
+    // ==================== 完整取消（CONFIRMED，含直接退款） ====================
 
     // 查询关联支付记录
     PaymentsExample payExample = new PaymentsExample();
@@ -949,11 +965,11 @@ public class OrderServiceImpl implements OrderService {
     updateRes.setUpdatedAt(now);
     reservationsMapper.updateByPrimaryKeySelective(updateRes);
 
-    // 2. UPDATE payments: PAID → REFUNDING（如已支付）
+    // 2. UPDATE payments: PAID → REFUNDED（取消订单直接退款，不走售后审核）
     if (hasPaid) {
       Payments updatePay = new Payments();
       updatePay.setPaymentId(payment.getPaymentId());
-      updatePay.setStatus("REFUNDING");
+      updatePay.setStatus("REFUNDED");
       paymentsMapper.updateByPrimaryKeySelective(updatePay);
     }
 
@@ -991,15 +1007,16 @@ public class OrderServiceImpl implements OrderService {
 
     // ==================== INSERT 操作 ====================
 
-    // 5. INSERT refund_records（如已支付）
+    // 5. INSERT refund_records: 取消订单直接退款完成（不走售后审核）
     if (hasPaid) {
       RefundRecords refund = new RefundRecords();
       refund.setPaymentId(payment.getPaymentId());
       refund.setReservationId(reservationId);
       refund.setRefundAmount(refundAmount);
       refund.setRefundReason("用户取消订单");
-      refund.setStatus("REQUEST_CANCEL");
+      refund.setStatus("COMPLETED");
       refund.setCreatedAt(now);
+      refund.setCompletedAt(now);
       refundRecordsMapper.insertSelective(refund);
     }
 
@@ -1142,16 +1159,22 @@ public class OrderServiceImpl implements OrderService {
     updateRes.setUpdatedAt(new Date());
     reservationsMapper.updateByPrimaryKeySelective(updateRes);
 
-    // 2. 乐观锁释放 table_status: RESERVED → IDLE, current_reservation_id → NULL
-    TableStatus currentStatus = tableStatusMapper.selectByPrimaryKey(reservation.getTableId());
-    if (currentStatus == null) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态记录不存在");
-    }
+    // 2. 仅在该桌无其他活跃预约时才释放 table_status
+    if (reservation.getTableId() != null) {
+      int otherCount = reservationsMapper.countActiveByTableIdExcluding(
+          reservation.getTableId(), ACTIVE_STATUSES, reservationId);
+      if (otherCount == 0) {
+        TableStatus currentStatus = tableStatusMapper.selectByPrimaryKey(reservation.getTableId());
+        if (currentStatus == null) {
+          throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态记录不存在");
+        }
 
-    int affected = tableStatusMapper.releaseTableOptimistic(
-      reservation.getTableId(), reservationId, currentStatus.getVersion());
-    if (affected == 0) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态已变更，请重试");
+        int affected = tableStatusMapper.releaseTableOptimistic(
+          reservation.getTableId(), reservationId, currentStatus.getVersion());
+        if (affected == 0) {
+          throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态已变更，请重试");
+        }
+      }
     }
 
     // 3. 返回（前端只校验 code===0，然后 loadDetail）
@@ -1287,6 +1310,8 @@ public class OrderServiceImpl implements OrderService {
     return result;
   }
 
+  private static final List<String> ACTIVE_STATUSES = Arrays.asList("BOOKED", "CONFIRMED");
+
   // ==================== E-7: 纯预约（创建预约，无点单） ====================
 
   @Override
@@ -1306,9 +1331,34 @@ public class OrderServiceImpl implements OrderService {
       throw new BusinessException(ErrorCode.BAD_REQUEST, "预约时间格式错误");
     }
 
+    int durationMin = dto.getDuration() != null ? dto.getDuration() * 60 : 120; // 小时转分钟
+
+    // 2.5. 时段冲突检查：查询该桌位在目标时段是否已有活跃预约
+    Calendar requestCal = Calendar.getInstance();
+    requestCal.setTime(reserveTime);
+    requestCal.add(Calendar.MINUTE, durationMin);
+    Date requestEnd = requestCal.getTime();
+
+    List<Reservations> tableReservations = reservationsMapper.selectByTableIdAndStatuses(
+        dto.getTableId(), ACTIVE_STATUSES);
+    if (tableReservations != null) {
+      for (Reservations r : tableReservations) {
+        if (r.getReservationTime() == null) continue;
+        Date rStart = r.getReservationTime();
+        Calendar rCal = Calendar.getInstance();
+        rCal.setTime(rStart);
+        rCal.add(Calendar.MINUTE, r.getDurationMin() != null ? r.getDurationMin() : 120);
+        Date rEnd = rCal.getTime();
+
+        // 时段重叠：已有开始 < 请求结束 AND 已有结束 > 请求开始
+        if (rStart.before(requestEnd) && rEnd.after(reserveTime)) {
+          throw new BusinessException(ErrorCode.BAD_REQUEST, "该桌位在所选时段已被预约，请选择其他桌位或时段");
+        }
+      }
+    }
+
     // 3. INSERT Reservations 记录（无点单，items 为空）
     Date now = new Date();
-    int durationMin = dto.getDuration() != null ? dto.getDuration() * 60 : 120; // 小时转分钟
     int partySize = dto.getPersons() != null ? dto.getPersons() : 1;
 
     Reservations reservation = new Reservations();
@@ -1327,20 +1377,16 @@ public class OrderServiceImpl implements OrderService {
     reservationsMapper.insertSelective(reservation);
     Long reservationId = reservation.getReservationId();
 
-    // 4. 乐观锁更新 table_status：前提 status='IDLE'，改为 'RESERVED'，version+1
+    // 4. 乐观锁更新 table_status：不要求 IDLE（支持不同时段多预约），仅用 version 防并发
     TableStatus currentStatus = tableStatusMapper.selectByPrimaryKey(dto.getTableId());
     if (currentStatus == null) {
       throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态记录不存在");
     }
-    if (!"IDLE".equals(currentStatus.getStatus())) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, "桌位当前不可预约");
-    }
 
-    // 使用自定义 SQL 绕过 MyBatis Example 的 PostgreSQL 枚举类型转换问题
     int affected = tableStatusMapper.reserveTableOptimistic(
         dto.getTableId(), reservationId, currentStatus.getVersion());
     if (affected == 0) {
-      throw new BusinessException(ErrorCode.NOT_FOUND, "桌位已被其他人预约，请重试");
+      throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态已变更，请重试");
     }
 
     // 5. 返回 orderId + status（前端只校验 code===0，然后用自身 state 跳转）
@@ -1368,7 +1414,22 @@ public class OrderServiceImpl implements OrderService {
       || !reservation.getUserId().toString().equals(userId.toString())) {
       throw new BusinessException(ErrorCode.FORBIDDEN, "无权操作此订单");
     }
-    if (!"CANCEL_ORDER".equals(reservation.getStatus())) {
+    // 判断是否为"已取消订单"（联合预约表+退单表判断）
+    // 支持两种情况：
+    //   1. reservations.status = CANCEL_ORDER（新数据）
+    //   2. reservations.status = REFUNDING + refund_records 含 CANCEL（旧数据兼容）
+    String dbStatus = reservation.getStatus();
+    boolean isCancelOrder = "CANCEL_ORDER".equals(dbStatus);
+    if (!isCancelOrder && ("REFUNDING".equals(dbStatus) || "REFUNDED".equals(dbStatus))) {
+      RefundRecordsExample rrEx = new RefundRecordsExample();
+      rrEx.createCriteria().andReservationIdEqualTo(reservationId);
+      List<RefundRecords> rrList = refundRecordsMapper.selectByExample(rrEx);
+      if (rrList != null && !rrList.isEmpty()) {
+        String effectiveStatus = mapStatusToFrontend(dbStatus, rrList.get(0));
+        isCancelOrder = "cancel_order".equals(effectiveStatus);
+      }
+    }
+    if (!isCancelOrder) {
       throw new BusinessException(ErrorCode.BAD_REQUEST, "当前订单状态不允许重新激活，仅已取消订单可激活");
     }
 
@@ -1583,6 +1644,21 @@ public class OrderServiceImpl implements OrderService {
    */
   private String mapStatusToFrontend(String dbStatus, RefundRecords refund) {
     if (dbStatus == null) return "booked";
+
+    // ═══ 预先判断：退单表显示这是"取消订单自动退款"还是"售后申请" ═══
+    // 核心规则：联系预约表 + 退单表一起看
+    //   - 退单表 status 含 CANCEL / reason 含"取消" → 取消订单（不是售后）
+    //   - 退单表 status = REQUEST_REFUND / REJECTED     → 售后流程
+    boolean isCancelRefund = false;
+    if (refund != null) {
+      String rrStatus = refund.getStatus();
+      String rrReason = refund.getRefundReason();
+      isCancelRefund = rrStatus != null && (
+        rrStatus.toUpperCase().contains("CANCEL") ||
+        (rrStatus.equalsIgnoreCase("COMPLETED") && rrReason != null && rrReason.contains("取消"))
+      );
+    }
+
     switch (dbStatus) {
       case "BOOKED":
         return "booked";
@@ -1597,7 +1673,11 @@ public class OrderServiceImpl implements OrderService {
       case "CANCEL_ORDER":
         return "cancel_order";     // 取消订单
       case "REFUNDING":
-        // 售后 → 同时看预约表和退单表状态
+        // 联合退单表判断：是"取消订单退款"还是"售后审核"
+        if (isCancelRefund) {
+          return "cancel_order";   // 取消订单导致的退款（含旧数据 REQUEST_CANCEL）
+        }
+        // 真正的售后流程
         if (refund != null) {
           String refundStatus = refund.getStatus();
           if ("COMPLETED".equalsIgnoreCase(refundStatus)) {
@@ -1611,6 +1691,9 @@ public class OrderServiceImpl implements OrderService {
         return "after_sales_pending";        // 默认视为售后中
       case "REFUNDED":
         // 兼容旧数据：reservations.status=REFUNDED
+        if (isCancelRefund) {
+          return "cancel_order";   // 取消订单退款（旧数据兼容）
+        }
         if (refund != null && "COMPLETED".equalsIgnoreCase(refund.getStatus())) {
           return "after_sales_completed";
         }
@@ -1648,6 +1731,38 @@ public class OrderServiceImpl implements OrderService {
         return java.util.Arrays.asList("COMPLETED");
       default:
         return java.util.Arrays.asList(frontendStatus.toUpperCase());
+    }
+  }
+
+  /**
+   * 前端 tab 状态值 → 允许的前端状态列表（用于二次过滤）
+   * 与 mapFrontendStatusToDb 不同：这里返回的是前端展示状态（mapStatusToFrontend 的输出）
+   *
+   * 映射关系：
+   *   booked    → [booked]
+   *   confirmed → [confirmed, occupied]
+   *   cancelled → [cancel_booking, cancel_order]        （包含 REFUNDING+取消类退款的订单）
+   *   afterSales → [after_sales_pending, after_sales_rejected, after_sales_completed] （仅真正的售后）
+   *   completed → [completed]
+   */
+  private List<String> getAllowedFrontendStatuses(String frontendTabStatus) {
+    if (frontendTabStatus == null) return null;
+    switch (frontendTabStatus) {
+      case "booked":
+        return java.util.Arrays.asList("booked");
+      case "confirmed":
+        // 用餐中 tab 包含 occupied
+        return java.util.Arrays.asList("confirmed", "occupied");
+      case "cancelled":
+        // 已取消：cancel_booking + cancel_order（含旧数据 REFUNDING+REQUEST_CANCEL 重映射后的结果）
+        return java.util.Arrays.asList("cancel_booking", "cancel_order");
+      case "afterSales":
+        // 售后：仅真正的售后流程（排除取消订单退款）
+        return java.util.Arrays.asList("after_sales_pending", "after_sales_rejected", "after_sales_completed");
+      case "completed":
+        return java.util.Arrays.asList("completed");
+      default:
+        return java.util.Arrays.asList(frontendTabStatus.toLowerCase());
     }
   }
 

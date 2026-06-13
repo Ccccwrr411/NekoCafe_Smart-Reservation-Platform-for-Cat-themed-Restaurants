@@ -64,4 +64,19 @@ public interface ReservationsMapper {
      * 按用户ID查询全部预约记录（用于"全部"标签）。
      */
     List<Reservations> selectByUserId(@Param("userId") Long userId);
+
+    /**
+     * 按 tableId + status 列表查询活跃预约（用于时间段冲突判断）。
+     */
+    List<Reservations> selectByTableIdAndStatuses(
+            @Param("tableId") Integer tableId,
+            @Param("statuses") List<String> statuses);
+
+    /**
+     * 统计某桌位除指定预约外的活跃预约数量（用于判断取消/改约时是否应释放桌位）。
+     */
+    int countActiveByTableIdExcluding(
+            @Param("tableId") Integer tableId,
+            @Param("statuses") List<String> statuses,
+            @Param("excludeId") Long excludeId);
 }

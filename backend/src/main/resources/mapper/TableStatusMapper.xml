@@ -194,14 +194,13 @@
     where table_id = #{tableId,jdbcType=INTEGER}
   </update>
 
-  <!-- 乐观锁更新：将桌位从 IDLE 改为 RESERVED，version 自增 -->
+  <!-- 乐观锁更新：将桌位设为 RESERVED，version 自增（不要求 IDLE，支持不同时段多预约） -->
   <update id="reserveTableOptimistic">
     update public.table_status
     set status = 'RESERVED'::status_enum,
         current_reservation_id = #{reservationId,jdbcType=BIGINT},
         version = version + 1
     where table_id = #{tableId,jdbcType=INTEGER}
-      and status = 'IDLE'::status_enum
       and version = #{expectedVersion,jdbcType=INTEGER}
   </update>
 

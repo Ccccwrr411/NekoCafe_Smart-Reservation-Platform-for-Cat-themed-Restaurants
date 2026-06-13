@@ -125,7 +125,7 @@
         </view>
         <view class="info-row">
           <text class="info-label">交易状态</text>
-          <text class="info-val" style="color:#4CAF50;">✓ 已支付</text>
+          <text class="info-val" style="color:{{order.status==='cancel_order' || order.status==='cancel_booking' ? '#FF9800' : '#4CAF50'}};">{{order.status==='cancel_order' || order.status==='cancel_booking' ? '✗ 已退款' : '✓ 已支付'}}</text>
         </view>
       </view>
     </block>

@@ -453,4 +453,34 @@
     order by reservation_time DESC
   </select>
 
+  <!--
+    专用查询：按 tableId + status 列表查活跃预约（用于时间段冲突判断）。
+  -->
+  <select id="selectByTableIdAndStatuses" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+    order by reservation_time
+  </select>
+
+  <!--
+    专用查询：统计某桌位除指定预约外的活跃预约数量。
+    用于判断取消/改约后是否还有其他活跃预约，决定是否释放 table_status。
+  -->
+  <select id="countActiveByTableIdExcluding" resultType="java.lang.Integer">
+    select count(*)
+    from public.reservations
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+      and reservation_id != #{excludeId,jdbcType=BIGINT}
+  </select>
+
 </mapper>

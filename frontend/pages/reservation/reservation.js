@@ -103,11 +103,14 @@ Page({
         storeId: app.globalData.currentStore.id,
         storeName: app.globalData.currentStore.name
       })
-      this.loadTables()
     }
     // 如果仍然没有门店，自动弹出选择器
     if (!this.data.storeId && this.data.stores.length > 0) {
       this.setData({ showStorePicker: true })
+    }
+    // 每次显示都刷新桌位（取消预约回来、切换时段等场景需要）
+    if (this.data.storeId) {
+      this.loadTables()
     }
   },
 
@@ -239,7 +242,12 @@ Page({
   loadTables() {
     if (!this.data.storeId) return
     this.setData({ loading: true })
-    get(`/api/tables?storeId=${this.data.storeId}`).then(res => {
+    const { storeId, reserveDate, reserveTime, duration } = this.data
+    let url = `/api/tables?storeId=${storeId}`
+    if (reserveDate) url += `&reserveDate=${reserveDate}`
+    if (reserveTime) url += `&reserveTime=${encodeURIComponent(reserveTime)}`
+    if (duration) url += `&duration=${duration}`
+    get(url).then(res => {
       if (res.code === 0) {
         this.setData({ tables: res.data, loading: false })
       }
@@ -263,13 +271,14 @@ Page({
 
   // 日期选择
   onDateSelect(e) {
-    this.setData({ reserveDate: e.currentTarget.dataset.date })
+    const reserveDate = e.currentTarget.dataset.date
+    this.setData({ reserveDate, selectedTable: null }, () => { this.loadTables() })
   },
 
   // 时间选择
   onTimeChange(e) {
-    const timeSlots = this.data.timeSlots
-    this.setData({ reserveTime: timeSlots[e.detail.value] })
+    const reserveTime = this.data.timeSlots[e.detail.value]
+    this.setData({ reserveTime, selectedTable: null }, () => { this.loadTables() })
   },
 
   // 人数调整
@@ -288,11 +297,13 @@ Page({
   // 时长调整
   onDurationMinus() {
     if (this.data.duration <= 1) return
-    this.setData({ duration: this.data.duration - 1 })
+    const duration = this.data.duration - 1
+    this.setData({ duration, selectedTable: null }, () => { this.loadTables() })
   },
   onDurationPlus() {
     if (this.data.duration >= 4) { wx.showToast({ title: '最长预约4小时', icon: 'none' }); return }
-    this.setData({ duration: this.data.duration + 1 })
+    const duration = this.data.duration + 1
+    this.setData({ duration, selectedTable: null }, () => { this.loadTables() })
   },
 
   // 提交预约
