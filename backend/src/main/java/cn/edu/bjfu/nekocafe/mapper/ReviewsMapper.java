@@ -27,4 +27,9 @@ public interface ReviewsMapper {
     int updateByPrimaryKeySelective(Reviews row);
 
     int updateByPrimaryKey(Reviews row);
+
+    /**
+     * 总部运营：按门店查询平均评分（overall_rating 均值）。
+     */
+    Double avgRatingByStoreId(@Param("storeId") Integer storeId);
 }

@@ -27,4 +27,10 @@ public interface UsersMapper {
     int updateByPrimaryKeySelective(Users row);
 
     int updateByPrimaryKey(Users row);
+
+    /**
+     * 总部运营：按门店查询店长信息（real_name + phone）。
+     * JOIN user_roles ON user_id，筛选 role_id=3 且 store_id=?。
+     */
+    java.util.Map<String, Object> selectManagerByStoreId(@Param("storeId") Integer storeId);
 }

@@ -87,6 +87,7 @@ function mockRequest(url, data) {
 function realRequest(url, method, data) {
   const app = getApp()
   const baseUrl = app.globalData.baseUrl || 'http://127.0.0.1:8081'
+  console.log('[Request]', method, baseUrl + url, data)
   const isLoginRequest = (url === '/api/auth/login' || url === '/api/auth/login/phone'
     || url === '/api/auth/send-code' || url === '/api/auth/register')
   const token = wx.getStorageSync('token') || ''
@@ -112,6 +113,7 @@ function realRequest(url, method, data) {
       method,
       data,
       header,
+      timeout: 15000,
       success(res) {
         if (res.statusCode === 200) {
           resolve(res.data)
@@ -148,6 +150,7 @@ function realRequest(url, method, data) {
 const get  = (url, data) => request(url, 'GET', data)
 const post = (url, data) => request(url, 'POST', data)
 const put  = (url, data) => request(url, 'PUT', data)
-const del  = (url, data) => request(url, 'DELETE', data)
+const del   = (url, data) => request(url, 'DELETE', data)
+const patch = (url, data) => request(url, 'PATCH', data)
 
-module.exports = { request, get, post, put, del, isUseMock }
+module.exports = { request, get, post, put, del, patch, isUseMock }

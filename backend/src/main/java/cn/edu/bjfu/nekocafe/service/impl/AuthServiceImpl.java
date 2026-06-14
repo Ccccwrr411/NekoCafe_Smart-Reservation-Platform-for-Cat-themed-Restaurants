@@ -351,7 +351,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 签发 JWT（token 仅返回给前端，不再写入数据库 openid 字段）
-        String token = JwtUtil.generateToken(user.getUserId());
+        String token = JwtUtil.generateToken(user.getUserId(), roleId, storeId);
 
         // 组装响应
         LoginVO result = new LoginVO();

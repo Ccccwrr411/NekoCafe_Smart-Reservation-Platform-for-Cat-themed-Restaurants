@@ -36,7 +36,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/queue/status",     // 排队状态（允许未登录查看，myNumber 为空）
                         "/api/dashboard/**",   // ⚠️ 测试用临时放行，上线前移除
                         "/api/staff/**",        // ⚠️ 测试用临时放行，上线前移除
-                        "/api/recommend/**"     // ⚠️ 测试用临时放行，上线前移除
+                        "/api/recommend/**",      // ⚠️ 测试用临时放行，上线前移除
+                        "/api/promotions/active"  // 首页活跃活动（公开浏览）
                 );
     }
 

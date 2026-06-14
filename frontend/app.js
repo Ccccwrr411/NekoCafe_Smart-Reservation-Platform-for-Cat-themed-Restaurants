@@ -109,7 +109,7 @@ App({
   globalData: {
     userInfo: null,
     userRole: null,            // 'customer' | 'staff' | 'manager' | 'hq_ops' | 'cat_keeper'
-    baseUrl: 'http://127.0.0.1:8081', // 后端地址（上线后替换）172.20.10.2     127.0.0.1:8081
+    baseUrl: 'http://172.20.10.3:8081', // 后端地址（上线后替换）本机IP，微信小程序不能用127.0.0.1
     useMock: false,              // true = 纯前端 mock 开发；false = 对接真实后端
     cartItems: [],
     currentStore: null,

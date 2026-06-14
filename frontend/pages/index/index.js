@@ -151,14 +151,6 @@ Page({
   goMap()         { wx.navigateTo({ url: '/pages/map/map' }) },
 
   // ── AI 推荐 ──
-  // loadRecommend() {
-  //   get('/api/recommend').then(res => {
-  //     if (res.code === 0) {
-  //       this.setData({ recommend: res.data })
-  //     }
-  //   }).catch(() => {})
-  // },
-
   loadRecommend() {
     const userInfo = wx.getStorageSync('userInfo')
     const userId = userInfo?.id || userInfo?.userId
