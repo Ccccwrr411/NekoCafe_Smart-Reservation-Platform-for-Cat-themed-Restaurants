@@ -17,6 +17,8 @@ public class UserProfileVO {
     private Integer points;        // totalPoints
     private Integer pointsToNext;  // 距下一级所需积分
     private String nextLevel;
+    private Integer levelStartPoints;   // 当前等级起始积分（进度条起点）
+    private Integer nextLevelThreshold; // 下一级积分阈值（进度条终点）
     private Integer totalOrders;
     private Integer totalSpent;    // cumulativeAmount 取整
     private Integer couponCount;
@@ -47,6 +49,10 @@ public class UserProfileVO {
     public void setPointsToNext(Integer pointsToNext) { this.pointsToNext = pointsToNext; }
     public String getNextLevel() { return nextLevel; }
     public void setNextLevel(String nextLevel) { this.nextLevel = nextLevel; }
+    public Integer getLevelStartPoints() { return levelStartPoints; }
+    public void setLevelStartPoints(Integer levelStartPoints) { this.levelStartPoints = levelStartPoints; }
+    public Integer getNextLevelThreshold() { return nextLevelThreshold; }
+    public void setNextLevelThreshold(Integer nextLevelThreshold) { this.nextLevelThreshold = nextLevelThreshold; }
     public Integer getTotalOrders() { return totalOrders; }
     public void setTotalOrders(Integer totalOrders) { this.totalOrders = totalOrders; }
     public Integer getTotalSpent() { return totalSpent; }

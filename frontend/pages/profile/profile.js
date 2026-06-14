@@ -24,11 +24,10 @@ Page({
     const role = app.globalData.userRole || 'customer'
     const baseMenu = [
       { icon: '🎫', label: '我的优惠券', path: '/pages/coupons/coupons' },
-      { icon: '⭐', label: '我的收藏', path: '' },
       { icon: '🐾', label: '猫咪档案', path: '/pages/cats/cats' },
       { icon: '🪪', label: '实名认证', path: '/pages/realname/realname' },
-      { icon: '📞', label: '联系客服', path: '' },
-      { icon: '⚙️', label: '设置', path: '' }
+      { icon: '📞', label: '联系客服', path: '/pages/contact/contact' },
+      { icon: '⚙️', label: '设置', path: '/pages/settings/settings' }
     ]
     // 店员/店长/总部运营：在菜单顶部插入后台入口
     if (role === 'staff' || role === 'manager') {
