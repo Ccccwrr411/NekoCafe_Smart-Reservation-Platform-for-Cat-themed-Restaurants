@@ -16,7 +16,8 @@
     "pages/cats/cats",
     "pages/dashboard/dashboard",
     "pages/orderList/orderList",
-    "pages/map/map"
+    "pages/map/map",
+    "pages/staffDashboard/staffDashboard"
   ],
   "tabBar": {
     "color": "#999999",

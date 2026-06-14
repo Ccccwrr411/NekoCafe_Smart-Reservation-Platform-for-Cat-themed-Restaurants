@@ -125,9 +125,13 @@ public class StaffServiceImpl implements StaffService {
         DashboardMetricsVO vo = new DashboardMetricsVO();
         vo.setStoreId(storeId);
         vo.setRange(range);
-        vo.setSpaceEfficiency(buildTrend(labels, spaceEffValues));
-        vo.setTurnoverRate(buildTrend(labels, turnoverValues));
-        vo.setRepurchaseRate(buildTrend(labels, repurchaseValues));
+
+        DashboardMetricsVO.ChartDataVO chartData = new DashboardMetricsVO.ChartDataVO();
+        chartData.setLabels(labels);
+        chartData.setRevenuePerSeat(spaceEffValues);
+        chartData.setTableTurnoverRate(turnoverValues);
+        chartData.setRepurchaseRate(repurchaseValues);
+        vo.setChartData(chartData);
         vo.setTodayOverview(todayOverview);
         return vo;
     }
@@ -881,15 +885,7 @@ public class StaffServiceImpl implements StaffService {
         }
     }
 
-    /** 构造 TrendVO */
-    private DashboardMetricsVO.TrendVO buildTrend(List<String> labels, List<Double> values) {
-        DashboardMetricsVO.TrendVO trend = new DashboardMetricsVO.TrendVO();
-        trend.setLabels(labels);
-        trend.setValues(values);
-        return trend;
-    }
-
-    /** 当桌位无占用预约时填充空值 */
+    /** range 字符串 → 天数，默认 7 */
     private void fillNullOccupancy(Map<String, Object> row) {
         row.put("customer", null);
         row.put("partySize", null);

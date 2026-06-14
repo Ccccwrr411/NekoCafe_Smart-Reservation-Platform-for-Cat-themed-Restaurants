@@ -153,8 +153,8 @@ Page({
     const routeMap = {
       customer:   '/pages/index/index',
       staff:      '/pages/staff/staff',
-      manager:    '/pages/dashboard/dashboard',
-      hq_ops:     '/pages/dashboard/dashboard',
+      manager:    '/pages/staffDashboard/staffDashboard',
+      hq_ops:     '/pages/staffDashboard/staffDashboard',
       cat_keeper: '/pages/cats/cats'
     }
     const targetUrl = routeMap[role]
