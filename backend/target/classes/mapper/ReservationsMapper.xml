@@ -426,4 +426,43 @@
     order by reservation_time DESC
   </select>
 
+<<<<<<< Updated upstream
+=======
+  <!--
+    专用查询：按 tableId + status 列表查活跃预约（用于时间段冲突判断）。
+  -->
+  <select id="selectByTableIdAndStatuses" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+    order by reservation_time
+  </select>
+
+  <!--
+    总部运营：统计某门店今日 COMPLETED 订单数
+  -->
+  <select id="countTodayCompletedByStoreId" parameterType="java.lang.Integer" resultType="java.lang.Long">
+    select count(*)
+    from public.reservations
+    where store_id = #{storeId,jdbcType=INTEGER}
+      and status = 'COMPLETED'::reservation_status
+      and DATE(updated_at) = CURRENT_DATE
+  </select>
+
+  <!--
+    总部运营：统计某门店累计会员数（有过预约记录的去重用户数）
+    用于 hqOverview.totalMembers
+  -->
+  <select id="countDistinctUsersByStoreId" parameterType="java.lang.Integer" resultType="java.lang.Long">
+    select count(distinct user_id)
+    from public.reservations
+    where store_id = #{storeId,jdbcType=INTEGER}
+  </select>
+
+>>>>>>> Stashed changes
 </mapper>

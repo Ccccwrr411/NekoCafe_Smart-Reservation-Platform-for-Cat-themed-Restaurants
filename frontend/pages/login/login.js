@@ -161,10 +161,18 @@ Page({
     const tabBarPages = ['/pages/index/index', '/pages/reservation/reservation', '/pages/menu/menu', '/pages/profile/profile']
 
     this.setData({ loading: false })
+<<<<<<< Updated upstream
     if (tabBarPages.includes(targetUrl)) {
       wx.switchTab({ url: targetUrl })
     } else {
       wx.reLaunch({ url: targetUrl })
+=======
+    // 总部运营跳转到运营工作台，其他角色跳转到首页
+    if (role === 'hq_ops') {
+      wx.navigateTo({ url: '/pages/hq/workspace' })
+    } else {
+      wx.switchTab({ url: '/pages/index/index' })
+>>>>>>> Stashed changes
     }
   }
 })

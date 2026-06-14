@@ -62,6 +62,7 @@ public class AuthServiceImpl implements AuthService {
             user.setUpdatedAt(new Date());
             usersMapper.insertSelective(user);
 
+<<<<<<< Updated upstream
             // 同时创建 member_ext 记录
             MemberExt memberExt = new MemberExt();
             memberExt.setUserId(user.getUserId());
@@ -69,19 +70,299 @@ public class AuthServiceImpl implements AuthService {
             memberExt.setTotalPoints(0);
             memberExt.setCreatedAt(new Date());
             memberExtMapper.insertSelective(memberExt);
+=======
+        Users user = list.get(0);
+
+        // 检查用户状态
+        if (user.getStatus() != null && user.getStatus() != 1) {
+            throw new IllegalArgumentException("账号已被禁用，请联系客服");
+        }
+
+        return buildLoginVO(user, null);
+    }
+
+    // ==================== 微信登录 ====================
+
+    @Override
+    public LoginVO wxLogin(LoginDTO dto) {
+        String phone = dto.getPhone();
+        String smsCode = dto.getSmsCode();
+
+        // 1. 参数校验
+        if (phone == null || !phone.matches("^1\\d{10}$")) {
+            throw new IllegalArgumentException("手机号格式不正确");
+        }
+        if (smsCode == null || smsCode.isEmpty()) {
+            throw new IllegalArgumentException("验证码不能为空");
+        }
+
+        // 2. 校验验证码（从 Redis 取）
+        String redisKey = SMS_CODE_PREFIX + phone;
+        Object cachedCode = redisTemplate.opsForValue().get(redisKey);
+        if (cachedCode == null) {
+            throw new IllegalArgumentException("验证码已过期，请重新获取");
+        }
+        if (!smsCode.equals(cachedCode.toString())) {
+            throw new IllegalArgumentException("验证码错误");
+        }
+
+        // 3. 用手机号查用户
+        UsersExample example = new UsersExample();
+        example.createCriteria().andPhoneEqualTo(phone);
+        List<Users> list = usersMapper.selectByExample(example);
+
+        if (list.isEmpty()) {
+            // 手机号未注册 → 提示用户先注册
+            throw new IllegalArgumentException("该手机号未注册，请先注册账号");
+        }
+
+        Users user = list.get(0);
+
+        // 4. 检查用户状态
+        if (user.getStatus() != null && user.getStatus() != 1) {
+            throw new IllegalArgumentException("账号已被禁用，请联系客服");
+        }
+
+        // 5. 记录微信 code 到 openid 字段（仅作记录，不影响登录逻辑）
+        String wxCode = dto.getCode();
+        if (wxCode != null && !wxCode.isEmpty()) {
+            Users updateObj = new Users();
+            updateObj.setUserId(user.getUserId());
+            updateObj.setOpenid(wxCode);
+            usersMapper.updateByPrimaryKeySelective(updateObj);
+        }
+
+        // 6. 删除已使用的验证码
+        redisTemplate.delete(redisKey);
+
+        // 7. 确保有 user_roles 记录（老用户可能缺少关联记录）
+        ensureUserRole(user.getUserId(), dto.getRoleId(), dto.getStoreId());
+
+        return buildLoginVO(user, null);
+    }
+
+    // ==================== 发送验证码 ====================
+
+    @Override
+    public Map<String, Object> sendCode(String phone) {
+        // 生成 6 位随机验证码
+        String code = String.valueOf((int) ((Math.random() * 9 + 1) * 100000));
+
+        // 存入 Redis，5 分钟过期
+        String redisKey = SMS_CODE_PREFIX + phone;
+        redisTemplate.opsForValue().set(redisKey, code, CODE_EXPIRE_MINUTES, TimeUnit.MINUTES);
+
+        // 课设沙箱模式：验证码直接返回给前端弹窗显示
+        // 正式环境应调用短信 API 发送，不再返回 code
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", code);
+        result.put("expireMinutes", CODE_EXPIRE_MINUTES);
+        return result;
+    }
+
+    // ==================== 手机号注册 ====================
+
+    @Override
+    public LoginVO register(RegisterDTO dto) {
+        String phone = dto.getPhone();
+        String password = dto.getPassword();
+        String code = dto.getCode();
+        String nickname = dto.getNickname();
+        String email = dto.getEmail();
+
+        // 1. 参数校验
+        if (phone == null || !phone.matches("^1\\d{10}$")) {
+            throw new IllegalArgumentException("手机号格式不正确");
+        }
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("密码长度至少6位");
+        }
+        if (code == null || code.isEmpty()) {
+            throw new IllegalArgumentException("验证码不能为空");
+        }
+        if (nickname == null || nickname.trim().isEmpty()) {
+            throw new IllegalArgumentException("昵称不能为空");
+        }
+
+        // 2. 校验验证码（从 Redis 取）
+        String redisKey = SMS_CODE_PREFIX + phone;
+        Object cachedCode = redisTemplate.opsForValue().get(redisKey);
+        if (cachedCode == null) {
+            throw new IllegalArgumentException("验证码已过期，请重新获取");
+        }
+        if (!code.equals(cachedCode.toString())) {
+            throw new IllegalArgumentException("验证码错误");
+        }
+
+        // 3. 查手机号是否已注册
+        UsersExample example = new UsersExample();
+        example.createCriteria().andPhoneEqualTo(phone);
+        if (!usersMapper.selectByExample(example).isEmpty()) {
+            throw new IllegalArgumentException("该手机号已注册，请直接登录");
+        }
+
+        // 4. 创建用户
+        Users user = new Users();
+        user.setPhone(phone);
+        user.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));    // BCrypt 加密
+        user.setNickname(nickname.trim());                                   // 用户自定义昵称
+        user.setEmail(email != null && !email.trim().isEmpty() ? email.trim() : null);
+        user.setAvatarUrl("/uploads/avatars/default.png");
+        user.setStatus((short) 1);
+        user.setCreatedAt(new Date());
+        user.setUpdatedAt(new Date());
+        usersMapper.insertSelective(user);
+
+        // 5. 创建会员积分记录
+        MemberExt memberExt = new MemberExt();
+        memberExt.setUserId(user.getUserId());
+        memberExt.setLevel(1);
+        memberExt.setTotalPoints(0);
+        memberExt.setCreatedAt(new Date());
+        memberExtMapper.insertSelective(memberExt);
+
+        // 6. 写入 user_roles 表
+        Integer roleId = dto.getRoleId();
+        if (roleId == null) roleId = DEFAULT_ROLE_ID;
+        insertUserRole(user.getUserId(), roleId, dto.getStoreId());
+
+        // 7. 删除已使用的验证码
+        redisTemplate.delete(redisKey);
+
+        // 8. 签发 JWT，返回
+        return buildLoginVO(user, null);
+    }
+
+    // ==================== 手机号密码登录 ====================
+
+    @Override
+    public LoginVO phoneLogin(PhoneLoginDTO dto) {
+        String phone = dto.getPhone();
+        String password = dto.getPassword();
+
+        // 1. 参数校验
+        if (phone == null || phone.isEmpty()) {
+            throw new IllegalArgumentException("手机号不能为空");
+        }
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("密码不能为空");
+        }
+
+        // 2. 查手机号
+        UsersExample example = new UsersExample();
+        example.createCriteria().andPhoneEqualTo(phone);
+        List<Users> list = usersMapper.selectByExample(example);
+        if (list.isEmpty()) {
+            throw new IllegalArgumentException("手机号未注册");
+        }
+
+        Users user = list.get(0);
+
+        // 3. 校验密码
+        if (user.getPasswordHash() == null || !BCrypt.checkpw(password, user.getPasswordHash())) {
+            throw new IllegalArgumentException("密码错误");
+        }
+
+        // 4. 检查用户状态
+        if (user.getStatus() != null && user.getStatus() != 1) {
+            throw new IllegalArgumentException("账号已被禁用，请联系客服");
+        }
+
+        // 5. 签发 JWT（传入前端选择的角色）
+        return buildLoginVO(user, dto.getRoleId());
+    }
+
+    // ==================== 私有辅助方法 ====================
+
+    /**
+     * 写入 user_roles 关联表
+     * @param userId 用户 ID
+     * @param roleId 角色 ID（必填）
+     * @param storeId 门店 ID（顾客可为 null）
+     */
+    private void insertUserRole(Long userId, Integer roleId, Integer storeId) {
+        UserRoles ur = new UserRoles();
+        ur.setUserId(userId);
+        ur.setRoleId(roleId);
+
+        // 总部运营（roleId=4）：storeId 为 null，表示全门店权限
+        // 顾客（roleId=1）：storeId 可为 null
+        // 其他非顾客角色：优先用传入的 storeId，没传则默认门店 1
+        if (roleId != null && roleId == 4) {
+            ur.setStoreId(null);  // 全门店权限
+        } else if (roleId != null && roleId > 1 && storeId == null) {
+            ur.setStoreId(1);  // 课设兜底
+>>>>>>> Stashed changes
         } else {
             user = list.get(0);
         }
 
+<<<<<<< Updated upstream
         // ========== 2. 查积分和等级 ==========
+=======
+        userRolesMapper.insertSelective(ur);
+    }
+
+    /**
+     * 确保用户有 user_roles 记录；若无则补写入一条
+     * 已存在记录时不覆盖，保留原有角色/门店分配
+     */
+    private void ensureUserRole(Long userId, Integer roleId, Integer storeId) {
+        UserRolesExample ure = new UserRolesExample();
+        ure.createCriteria().andUserIdEqualTo(userId);
+        if (userRolesMapper.countByExample(ure) > 0) {
+            return; // 已有记录，保留原分配
+        }
+        // 无记录，补写入
+        Integer rid = roleId != null ? roleId : DEFAULT_ROLE_ID;
+        insertUserRole(userId, rid, storeId);
+    }
+
+    // ==================== 工具方法 ====================
+
+    /** 构建登录响应 VO（微信登录、手机号注册、手机号登录共用）
+     * @param selectedRoleId 前端选择的角色 ID，非登录场景传 null 则取第一条
+     */
+    private LoginVO buildLoginVO(Users user, Integer selectedRoleId) {
+        // 查积分和等级
+>>>>>>> Stashed changes
         MemberExt memberExt = memberExtMapper.selectByPrimaryKey(user.getUserId());
         int points = (memberExt != null && memberExt.getTotalPoints() != null)
                 ? memberExt.getTotalPoints() : 0;
         int level = (memberExt != null && memberExt.getLevel() != null)
                 ? memberExt.getLevel() : 1;
 
+<<<<<<< Updated upstream
         // ========== 3. 签发 JWT ==========
         String token = JwtUtil.generateToken(user.getUserId());
+=======
+        // 查角色和门店：如果前端指定了角色，优先匹配该角色行；否则取第一条
+        UserRolesExample ure = new UserRolesExample();
+        ure.createCriteria().andUserIdEqualTo(user.getUserId());
+        List<UserRoles> userRoles = userRolesMapper.selectByExample(ure);
+        Integer roleId = null;
+        Integer storeId = null;
+        if (!userRoles.isEmpty()) {
+            UserRoles ur = null;
+            if (selectedRoleId != null) {
+                // 按前端选的角色匹配
+                for (UserRoles r : userRoles) {
+                    if (selectedRoleId.equals(r.getRoleId())) {
+                        ur = r;
+                        break;
+                    }
+                }
+            }
+            if (ur == null) {
+                ur = userRoles.get(0); // 兜底：取第一条
+            }
+            roleId = ur.getRoleId();
+            storeId = ur.getStoreId();
+        }
+
+        // 签发 JWT（携带 roleId + storeId，用于拦截器角色校验）
+        String token = JwtUtil.generateToken(user.getUserId(), roleId, storeId);
+>>>>>>> Stashed changes
 
         // ========== 4. 组装响应 ==========
         LoginVO result = new LoginVO();

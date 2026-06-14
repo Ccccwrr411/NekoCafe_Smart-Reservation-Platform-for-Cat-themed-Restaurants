@@ -130,33 +130,15 @@ Page({
   goMap()         { wx.navigateTo({ url: '/pages/map/map' }) },
 
   // ── AI 推荐 ──
-  // loadRecommend() {
-  //   get('/api/recommend').then(res => {
-  //     if (res.code === 0) {
-  //       this.setData({ recommend: res.data })
-  //     }
-  //   }).catch(() => {})
-  // },
-
   loadRecommend() {
     const userInfo = wx.getStorageSync('userInfo')
-    console.log('完整 userInfo:', userInfo)  // 打印完整的 userInfo
-    console.log('userInfo 的所有 key:', Object.keys(userInfo || {}))  // 打印所有字段名
-    
     const userId = userInfo?.id || userInfo?.userId
-    console.log('解析出的 userId:', userId)
-    
-    if (!userId) {
-      console.log('userId 为空，无法请求推荐')
-      return
-    }
-    
+    if (!userId) return
+
     get(`/api/recommend?userId=${userId}`).then(res => {
-      // if (res.code === 0) {
-      //   this.setData({ recommend: res.data })
-      // }
-      this.setData({ recommend: res.data })
-      console.log("1111111",res.data)
+      if (res.code === 0) {
+        this.setData({ recommend: res.data })
+      }
     }).catch(() => {})
   },
 

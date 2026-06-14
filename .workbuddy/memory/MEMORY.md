@@ -25,11 +25,32 @@
 - 开发时序：修复代码错误 → 编译 → 按顺序测试 API
 
 ## 编译环境
+<<<<<<< Updated upstream
 - JDK 17 路径：`/c/Users/lsf36/.jdks/ms-17.0.19`
 - 编译命令：`export JAVA_HOME="/c/Users/lsf36/.jdks/ms-17.0.19" && cd backend && mvn compile -q`
+=======
+- JDK 17 路径：`C:\Users\lsf36\.jdks\ms-17.0.19`
+- Maven 路径：`D:\apache-maven-3.9.12\bin\mvn`
+- 编译命令：`JAVA_HOME="/c/Users/lsf36/.jdks/ms-17.0.19" /d/apache-maven-3.9.12/bin/mvn compile`（在 backend 目录下，Git Bash 执行）
+
+## M1 用户与会员模块状态
+- 微信一键登录：已完成（含 user_roles 写入）
+- 手机号+密码注册：已完成（验证码存 Redis，沙箱模式直接返回给前端；注册页有角色选择 UI，写 user_roles 表）
+- 手机号密码登录：已完成（BCrypt 校验）
+- 实名认证：后端+前端均已完成
+- 会员等级/积分：已完成
+- 密码加密：jBCrypt 0.4（pom.xml 已添加）
+
+## 角色与权限体系（user_roles 表）
+- `roles` 表：1=顾客, 2=店员, 3=店长, 4=总部运营, 5=猫咪管家
+- `user_roles` 表结构：(user_id, role_id) 复合主键 + store_id 可选字段
+- 注册时必须写 user_roles 表（之前遗漏已修复）
+- 非顾客角色默认分配 storeId=1（课设兜底），顾客 storeId 为 null
+- 前端注册页和登录页都有 5 角色选择 UI
+>>>>>>> Stashed changes
 
 ## 店员工作台开发状态
 - **P0 已完成**：枚举 Bug 修复、GET/POST 接口补齐（orders/accept/dispatch）、前端 API 对接、全量枚举 CAST 修复
 - **P1 已完成**：POST /api/staff/order/progress（状态推进 CONFIRMED→MAKING→SERVING→COMPLETED）、GET /api/staff/refunds、POST /api/staff/refund/review、前端退款审核 Tab、V003 迁移（CLEANING 枚举）
 - **P2 已完成**：通知中心系统（M-1~M-7 接口 + 底部导航改造 + 前端通知 Tab）
-- **P3 待完成**：恢复 /api/staff/** 认证与角色校验、FR23 操作日志 AOP
+- **P3 已完成**：恢复 /api/staff/** 认证与角色校验、FR23 操作日志 AOP

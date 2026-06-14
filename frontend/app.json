@@ -16,7 +16,10 @@
     "pages/cats/cats",
     "pages/dashboard/dashboard",
     "pages/orderList/orderList",
-    "pages/map/map"
+    "pages/map/map",
+    "pages/hq/marketing",
+    "pages/hq/workspace",
+    "pages/hq/promo-form/promo-form"
   ],
   "tabBar": {
     "color": "#999999",
