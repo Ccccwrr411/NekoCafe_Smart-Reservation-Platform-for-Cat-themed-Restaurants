@@ -25,10 +25,15 @@ Page({
     timeSlots: [],
     dateList: [],
 
-    // 筛选
+    // 筛选（不同分类使用不同筛选字段）
     filterType: 'all',
     tableTypes: ['all', '双人桌', '四人桌', '包间', '吧台位'],
     tableTypeLabels: { all: '全部', '双人桌': '双人', '四人桌': '四人', '包间': '包间', '吧台位': '吧台' },
+    filteredTables: [],
+    filteredTablesCount: 0,
+
+    // 视图模式
+    viewMode: 'map',
 
     TABLE_STATUS_MAP
   },
@@ -176,13 +181,44 @@ Page({
     get(url).then(res => {
       if (res.code === 0) {
         this.setData({ tables: res.data, loading: false })
+        this.applyTableFilter()
       }
     })
   },
 
-  // 筛选桌型
+  // 筛选桌型（基于容量判断）
   onFilterChange(e) {
     this.setData({ filterType: e.currentTarget.dataset.type, selectedTable: null })
+    this.applyTableFilter()
+  },
+
+  // 根据 filterType 计算 filteredTables（不同分类使用不同筛选字段）
+  applyTableFilter() {
+    const { tables, filterType } = this.data
+    let filtered
+    if (filterType === 'all') {
+      filtered = tables
+    } else if (filterType === '双人桌') {
+      // 双人桌：按 capacity 精确匹配
+      filtered = tables.filter(t => t.capacity === 2)
+    } else if (filterType === '四人桌') {
+      // 四人桌：按 capacity 精确匹配
+      filtered = tables.filter(t => t.capacity === 4)
+    } else if (filterType === '包间') {
+      // 包间：按 type 字段模糊匹配（包含"包"字，如 包厢/包间 等）
+      filtered = tables.filter(t => t.type && t.type.includes('包'))
+    } else if (filterType === '吧台位') {
+      // 吧台位：按 type 字段模糊匹配（包含"吧台"字）
+      filtered = tables.filter(t => t.type && t.type.includes('吧台'))
+    } else {
+      filtered = tables
+    }
+    this.setData({ filteredTables: filtered, filteredTablesCount: filtered.length })
+  },
+
+  // 切换视图模式（地图 / 列表）
+  onViewModeSwitch(e) {
+    this.setData({ viewMode: e.currentTarget.dataset.mode, selectedTable: null })
   },
 
   // 选择桌位 - 弹出详情弹窗

@@ -205,7 +205,7 @@ class OrderServiceImplTest {
         when(paymentsMapper.selectByExample(any())).thenReturn(Collections.emptyList());
         when(refundRecordsMapper.insertSelective(any())).thenReturn(1);
 
-        Map<String, Object> result = orderService.applyRefund(USER_ID, ORDER_ID);
+        Map<String, Object> result = orderService.applyRefund(USER_ID, ORDER_ID, null);
 
         // 验证 reservations status 改为 REFUNDING
         ArgumentCaptor<Reservations> resCaptor = ArgumentCaptor.forClass(Reservations.class);
@@ -233,7 +233,7 @@ class OrderServiceImplTest {
         when(reservationsMapper.selectByPrimaryKey(RESERVATION_ID)).thenReturn(reservation);
 
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> orderService.applyRefund(USER_ID, ORDER_ID));
+                () -> orderService.applyRefund(USER_ID, ORDER_ID, null));
         assertTrue(ex.getMessage().contains("不允许退款"));
     }
 

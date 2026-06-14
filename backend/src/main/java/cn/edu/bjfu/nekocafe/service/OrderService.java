@@ -40,7 +40,8 @@ public interface OrderService {
 
     /**
      * 申请退款（E-6）
+     * @param refundReason 退款理由（用户填写）
      * 返回 refundId + refundAmount + status
      */
-    Map<String, Object> applyRefund(Long userId, String orderId);
+    Map<String, Object> applyRefund(Long userId, String orderId, String refundReason);
 }

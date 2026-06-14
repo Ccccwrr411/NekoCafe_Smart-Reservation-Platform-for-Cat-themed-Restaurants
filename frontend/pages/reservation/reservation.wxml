@@ -49,9 +49,16 @@
     </view>
   </view>
 </view>
+<!-- ══ 视图切换：地图 / 列表（顶层控件，不混入实景图容器） ══ -->
+<view class="view-switch" style="margin: 12rpx 24rpx;">
+  <view class="vs-item {{viewMode === 'map' ? 'vs-active' : ''}}" bindtap="onViewModeSwitch" data-mode="map">地图</view>
+  <view class="vs-item {{viewMode === 'list' ? 'vs-active' : ''}}" bindtap="onViewModeSwitch" data-mode="list">列表</view>
+</view>
+
 <view class="floor-plan-box">
-  <view class="floor-title">🐾实景平面图</view>
-  
+  <view class="floor-title">🐾{{viewMode === 'map' ? '实景平面图' : '桌位列表'}}</view>
+
+  <!-- 筛选 + 图例（地图/列表共用） -->
   <scroll-view scroll-x class="filter-scroll">
     <view class="filter-list">
       <view
@@ -63,20 +70,20 @@
       >{{tableTypeLabels[item] || item}}</view>
     </view>
   </scroll-view>
-  
+
   <view class="legend" style="margin-bottom: 20rpx; justify-content: center;">
     <view class="legend-item"><view class="legend-dot dot-available"></view><text>可预约</text></view>
     <view class="legend-item"><view class="legend-dot dot-booked"></view><text>已预约</text></view>
     <view class="legend-item"><view class="legend-dot dot-maintenance"></view><text>维护中</text></view>
   </view>
-  
-  <view class="map-container">
+
+  <!-- ══════════════ 地图视图（实景平面图） ══════════════ -->
+  <view wx:if="{{viewMode === 'map'}}" class="map-container">
     <view wx:if="{{loading}}" class="map-loading"><text>正在构建店铺布局...</text></view>
-    
+
     <block wx:else>
-      <block wx:for="{{tables}}" wx:key="id">
+      <block wx:for="{{filteredTables}}" wx:key="id">
         <view
-          wx:if="{{filterType === 'all' || item.type === filterType}}"
           class="floor-table status-{{item.status}} {{selectedTable && selectedTable.id === item.id ? 'table-selected' : ''}}"
           style="top: {{item.top}}rpx; left: {{item.left}}rpx; width: {{item.width}}rpx; height: {{item.height}}rpx;"
           bindtap="onTableSelect"
@@ -90,6 +97,34 @@
         </view>
       </block>
     </block>
+  </view>
+
+  <!-- ══════════════ 列表视图 ══════════════ -->
+  <view wx:if="{{viewMode === 'list'}}" class="table-list">
+    <view wx:if="{{loading}}" class="list-loading"><text>加载中...</text></view>
+    <block wx:else>
+      <view
+        wx:for="{{filteredTables}}"
+        wx:key="id"
+        class="table-card {{selectedTable && selectedTable.id === item.id ? 'card-selected' : ''}}"
+        bindtap="onTableSelect"
+        data-table="{{item}}"
+      >
+        <view class="card-left">
+          <view class="card-status-dot dot-{{item.status}}"></view>
+          <view class="card-info">
+            <text class="card-name">{{item.name}}</text>
+            <text class="card-desc">{{item.type}}·{{item.capacity}}人</text>
+          </view>
+        </view>
+        <text class="card-status-text status-text-{{item.status}}">
+          {{item.status === 'available' ? '空闲' : item.status === 'booked' ? '已预约' : '维护中'}}
+        </text>
+      </view>
+    </block>
+    <view wx:if="{{!loading && (!tables || filteredTablesCount === 0)}}" class="list-empty">
+      <text>当前筛选条件下暂无桌位</text>
+    </view>
   </view>
 </view>
 

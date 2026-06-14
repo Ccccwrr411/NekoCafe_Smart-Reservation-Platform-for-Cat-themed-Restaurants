@@ -80,7 +80,7 @@ public class OrderController {
                                                     HttpServletRequest request,
                                                     @RequestParam(required = false) Long userId) {
         Long uid = userId != null ? userId : (Long) request.getAttribute("userId");
-        return Result.success(orderService.applyRefund(uid, body.get("orderId")));
+        return Result.success(orderService.applyRefund(uid, body.get("orderId"), body.get("refundReason")));
     }
 
     /** E-7 纯预约（无点单） */

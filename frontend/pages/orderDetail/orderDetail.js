@@ -8,7 +8,9 @@ Page({
     order: null,
     loading: true,
     ORDER_STATUS_MAP,
-    formatPrice
+    formatPrice,
+    showRefundModal: false,
+    refundReason: ''
   },
 
   onLoad(options) {
@@ -89,28 +91,41 @@ Page({
     })
   },
 
-  // 申请退款
+  // 申请退款 - 弹出退款理由输入框
   onRefund() {
-    wx.showModal({
-      title: '申请退款',
-      content: '退款将在1-3个工作日原路退回，确定申请吗？',
-      confirmColor: '#F44336',
-      success: (res) => {
-        if (!res.confirm) return
-        wx.showLoading({ title: '处理中...' })
-        post('/api/order/refund', { orderId: this.data.orderId }).then(r => {
-          wx.hideLoading()
-          if (r.code === 0) {
-            wx.showToast({ title: '退款申请已提交', icon: 'success' })
-            this.loadDetail()
-          } else {
-            wx.showToast({ title: r.message || '申请失败', icon: 'none' })
-          }
-        }).catch(() => {
-          wx.hideLoading()
-          wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
-        })
+    this.setData({ showRefundModal: true, refundReason: '' })
+  },
+
+  // 空事件拦截（防止弹窗内容点击穿透到遮罩）
+  noop() {},
+
+  // 输入退款理由
+  onInputRefundReason(e) {
+    this.setData({ refundReason: e.detail.value })
+  },
+
+  // 关闭退款弹窗
+  onCancelRefund() {
+    this.setData({ showRefundModal: false, refundReason: '' })
+  },
+
+  // 确认退款
+  onConfirmRefund() {
+    const refundReason = this.data.refundReason.trim()
+    this.setData({ showRefundModal: false })
+    wx.showLoading({ title: '处理中...' })
+    post('/api/order/refund', { orderId: this.data.orderId, refundReason: refundReason }).then(r => {
+      wx.hideLoading()
+      if (r.code === 0) {
+        wx.showToast({ title: '退款申请已提交', icon: 'success' })
+        this.setData({ refundReason: '' })
+        this.loadDetail()
+      } else {
+        wx.showToast({ title: r.message || '申请失败', icon: 'none' })
       }
+    }).catch(() => {
+      wx.hideLoading()
+      wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
     })
   },
 

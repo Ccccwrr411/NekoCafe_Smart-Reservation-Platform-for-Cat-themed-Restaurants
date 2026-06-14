@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="eeefe161-0365-4e96-9462-1d352d9cf588" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/controller/OrderController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/controller/OrderController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/controller/StaffController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/controller/StaffController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/service/OrderService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/service/OrderService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/service/StaffService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/service/StaffService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/OrderServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/OrderServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/StaffServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/StaffServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/src/test/java/cn/edu/bjfu/nekocafe/service/impl/OrderServiceImplTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/test/java/cn/edu/bjfu/nekocafe/service/impl/OrderServiceImplTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/order/order.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/order/order.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/order/order.wxml" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/order/order.wxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/order/order.wxss" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/order/order.wxss" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/orderDetail/orderDetail.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/orderDetail/orderDetail.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/orderDetail/orderDetail.wxml" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/orderDetail/orderDetail.wxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/orderDetail/orderDetail.wxss" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/orderDetail/orderDetail.wxss" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/reservation/reservation.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/reservation/reservation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/reservation/reservation.wxml" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/reservation/reservation.wxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/reservation/reservation.wxss" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/reservation/reservation.wxss" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/staff/staff.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/staff/staff.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/staff/staff.wxml" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/staff/staff.wxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/pages/staff/staff.wxss" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/pages/staff/staff.wxss" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 4
+}]]></component>
+  <component name="ProjectId" id="3F7MHh5M0UnamynJcKsaSsKSSN9" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "feature/wmy",
+    "last_opened_file_path": "C:/cs/cs_data/kesheruangong/NekoCafe_Smart-Reservation-Platform-for-Cat-themed-Restaurants/NekoCafe_Smart-Reservation-Platform-for-Cat-themed-Restaurants/db",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.26094.121" />
+        <option value="bundled-js-predefined-d6986cc7102b-b26f3e71634d-JavaScript-IU-251.26094.121" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="eeefe161-0365-4e96-9462-1d352d9cf588" name="更改" comment="" />
+      <created>1781421567550</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1781421567550</updated>
+      <workItem from="1781421568689" duration="17000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

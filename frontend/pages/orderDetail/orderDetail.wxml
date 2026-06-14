@@ -137,10 +137,21 @@
         <text>售后信息</text>
       </view>
       <view class="card">
-        <view class="info-row" wx:if="{{order.refundReason}}"><text class="info-label">退款原因</text><text class="info-val">{{order.refundReason}}</text></view>
-        <view class="info-row" wx:if="{{order.refundStatus}}"><text class="info-label">退款状态</text><text class="info-val">{{order.refundStatus}}</text></view>
+        <view class="info-row" wx:if="{{order.refundReason}}">
+          <text class="info-label">退款原因</text>
+          <text class="info-val refund-reason-val">{{order.refundReason}}</text>
+        </view>
+        <view class="info-row" wx:if="{{order.refundStatus}}">
+          <text class="info-label">退款状态</text>
+          <text class="info-val {{order.refundStatus === '已拒绝' ? 'refund-rejected-tag' : ''}}">{{order.refundStatus}}</text>
+        </view>
         <view class="info-row" wx:if="{{order.refundCreatedAt}}"><text class="info-label">申请时间</text><text class="info-val">{{order.refundCreatedAt}}</text></view>
-        <view class="info-row" wx:if="{{order.refundCompletedAt}}"><text class="info-label">完成时间</text><text class="info-val">{{order.refundCompletedAt}}</text></view>
+        <view class="info-row" wx:if="{{order.refundCompletedAt}}"><text class="info-label">处理时间</text><text class="info-val">{{order.refundCompletedAt}}</text></view>
+      </view>
+      <!-- 拒绝时显示醒目提示 -->
+      <view wx:if="{{order.refundStatus === '已拒绝'}}" class="reject-notice">
+        <text class="reject-notice-icon">⚠️</text>
+        <text class="reject-notice-text">您的退款申请已被拒绝，如有疑问请联系店员</text>
       </view>
     </block>
 
@@ -174,6 +185,15 @@
         <text class="ab-icon">🍽️</text>
         <text>去点单</text>
       </view>
+      <!-- CONFIRMED / after_sales_rejected → 去点单（继续用餐） -->
+      <view wx:if="{{order.status==='confirmed' && order.tableId}}" class="action-btn action-primary" bindtap="goOrder">
+        <text class="ab-icon">🍽️</text>
+        <text>继续点单</text>
+      </view>
+      <view wx:if="{{order.status==='after_sales_rejected' && order.tableId}}" class="action-btn action-primary" bindtap="goOrder">
+        <text class="ab-icon">🍽️</text>
+        <text>继续点单</text>
+      </view>
       <!-- CANCEL_ORDER → 重新点单 -->
       <view wx:if="{{order.status==='cancel_order'}}" class="action-btn action-primary" bindtap="goReorder">
         <text class="ab-icon">🔄</text>
@@ -188,6 +208,12 @@
         <text class="ab-icon">✕</text>
         <text>取消订单</text>
       </view>
+      <!-- 售后被拒 → 仍可取消订单 -->
+      <view wx:if="{{order.canCancel && order.status==='after_sales_rejected'}}" class="action-btn action-outline" bindtap="onCancel">
+        <text class="ab-icon">✕</text>
+        <text>取消订单</text>
+      </view>
+      <!-- 可退款 → 申请退款 -->
       <view wx:if="{{order.canRefund}}" class="action-btn action-danger" bindtap="onRefund">
         <text class="ab-icon">↩</text>
         <text>申请退款</text>
@@ -203,6 +229,33 @@
   <view wx:if="{{!loading && !order}}" class="empty-state">
     <text class="empty-emoji">🐾</text>
     <text>订单不存在或已删除</text>
+  </view>
+
+  <!-- ══ 退款理由弹窗 ══ -->
+  <view wx:if="{{showRefundModal}}" class="refund-modal-mask" bindtap="onCancelRefund">
+    <view class="refund-modal" catchtap="noop" catch:touchmove="noop">
+      <view class="rm-header">
+        <text class="rm-title">申请退款</text>
+        <text class="rm-close" bindtap="onCancelRefund">✕</text>
+      </view>
+      <view class="rm-body">
+        <text class="rm-label">退款理由</text>
+        <textarea
+          class="rm-textarea"
+          placeholder="请填写退款理由（选填）"
+          placeholder-class="rm-placeholder"
+          value="{{refundReason}}"
+          bindinput="onInputRefundReason"
+          maxlength="200"
+          auto-height
+        />
+        <text class="rm-count">{{refundReason.length || 0}}/200</text>
+      </view>
+      <view class="rm-footer">
+        <view class="rm-btn rm-btn-cancel" bindtap="onCancelRefund">取消</view>
+        <view class="rm-btn rm-btn-confirm" bindtap="onConfirmRefund">确认退款</view>
+      </view>
+    </view>
   </view>
 
 </view>

@@ -409,8 +409,144 @@
 .info-label { color: var(--color-text-sub); }
 .info-val { color: var(--color-text); font-weight: 500; }
 
+/* ============ 退款理由弹窗 ============ */
+.refund-modal-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.refund-modal {
+  width: 600rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  z-index: 1001;
+  position: relative;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(40rpx); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.rm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 32rpx 16rpx;
+}
+.rm-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.rm-close {
+  font-size: 36rpx;
+  color: #bbb;
+  padding: 8rpx;
+}
+.rm-body {
+  padding: 16rpx 32rpx 8rpx;
+}
+.rm-label {
+  font-size: 26rpx;
+  color: var(--color-text-sub);
+  margin-bottom: 12rpx;
+  display: block;
+}
+.rm-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  border: 2rpx solid var(--color-border);
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  font-size: 28rpx;
+  color: var(--color-text);
+  box-sizing: border-box;
+  background: #fafafa;
+  position: relative;
+  z-index: 10;
+}
+.rm-placeholder {
+  color: #c5c5c5;
+  font-size: 26rpx;
+}
+.rm-count {
+  text-align: right;
+  font-size: 22rpx;
+  color: #bbb;
+  padding: 8rpx 4rpx 0;
+  display: block;
+}
+.rm-footer {
+  display: flex;
+  gap: 20rpx;
+  padding: 24rpx 32rpx 32rpx;
+}
+.rm-btn {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.rm-btn:active {
+  opacity: 0.8;
+}
+.rm-btn-cancel {
+  background: #f5f5f5;
+  color: #888;
+}
+.rm-btn-confirm {
+  background: linear-gradient(135deg, #E74C3C, #D63031);
+  color: #fff;
+}
+
 /* ============ 通用卡片微调 ============ */
 .card {
   padding: 20rpx 28rpx;
   margin: 12rpx 24rpx;
+}
+
+/* ============ 退款拒绝提示 ============ */
+.reject-notice {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 0 24rpx 12rpx;
+  padding: 20rpx 24rpx;
+  background: #FFF3E0;
+  border-radius: 16rpx;
+  border-left: 6rpx solid #FF9800;
+}
+.reject-notice-icon {
+  font-size: 36rpx;
+  flex-shrink: 0;
+}
+.reject-notice-text {
+  font-size: 26rpx;
+  color: #E65100;
+  line-height: 1.5;
+}
+
+/* 退款理由高亮 */
+.refund-reason-val {
+  color: #333;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+/* 拒绝状态标签 */
+.refund-rejected-tag {
+  color: #E74C3C !important;
+  font-weight: 600;
 }

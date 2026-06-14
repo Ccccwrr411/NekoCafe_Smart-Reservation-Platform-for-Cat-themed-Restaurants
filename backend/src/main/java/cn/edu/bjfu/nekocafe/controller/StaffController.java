@@ -86,7 +86,8 @@ public class StaffController {
         String action = (String) body.get("action");
         Long operatorId = body.get("operatorId") != null
                 ? Long.valueOf(body.get("operatorId").toString()) : null;
-        return Result.success(staffService.reviewRefund(refundId, action, operatorId));
+        String rejectReason = (String) body.get("rejectReason");
+        return Result.success(staffService.reviewRefund(refundId, action, operatorId, rejectReason));
     }
 
     /** L-9 告警已知晓 */

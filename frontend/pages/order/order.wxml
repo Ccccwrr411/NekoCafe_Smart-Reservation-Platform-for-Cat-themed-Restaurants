@@ -90,6 +90,61 @@
     </view>
   </view>
 
+  <!-- ══ 优惠券选择弹层 ══ -->
+  <view wx:if="{{showCouponPicker}}" class="picker-mask" bindtap="onCloseCouponPicker"></view>
+  <view wx:if="{{showCouponPicker}}" class="picker-panel coupon-picker-panel" catchtap="onPickerPanelTap">
+    <view class="picker-handle"></view>
+    <view class="picker-header">
+      <text class="picker-header-title">选择优惠券</text>
+      <text class="picker-header-close" bindtap="onCloseCouponPicker">✕</text>
+    </view>
+
+    <!-- 叠加规则提示 -->
+    <view wx:if="{{stackingRules && stackingRules.rules}}" class="stacking-rules">
+      <text class="stacking-title">{{stackingRules.title || '叠加规则'}}</text>
+      <text wx:for="{{stackingRules.rules}}" wx:key="idx" wx:for-item="rule" class="stacking-rule-item">{{rule.text}}</text>
+    </view>
+
+    <scroll-view scroll-y class="picker-list coupon-list">
+      <block wx:if="{{coupons.length > 0}}">
+        <view
+          wx:for="{{coupons}}"
+          wx:key="id"
+          wx:for-item="coupon"
+          data-coupon-id="{{coupon.id}}"
+          class="coupon-item {{coupon.itemClass}}"
+          bindtap="onToggleCoupon"
+        >
+          <view class="coupon-item-left">
+            <view class="coupon-amount-wrap">
+              <text class="coupon-amount">{{coupon.amountText}}</text>
+              <text class="coupon-condition">{{coupon.ruleText}}</text>
+            </view>
+            <view class="coupon-name-row">
+              <text class="coupon-name">{{coupon.name}}</text>
+              <text wx:if="{{!coupon.stackable}}" class="coupon-not-stackable">不可叠加</text>
+            </view>
+          </view>
+          <view class="coupon-checkbox {{coupon.checkboxClass}}">
+            <text>{{coupon.checkboxText}}</text>
+          </view>
+          <text wx:if="{{coupon.isDisabled}}" class="coupon-unavailable">{{coupon.unavailableHint}}</text>
+        </view>
+      </block>
+      <view wx:else class="empty-coupon">
+        <text>暂无可用优惠券</text>
+      </view>
+    </scroll-view>
+
+    <view class="coupon-picker-footer">
+      <view class="coupon-footer-info">
+        <text>已选 {{selectedCouponIds.length}} 张</text>
+        <text wx:if="{{totalDiscount > 0}}" class="coupon-footer-save">优惠 -¥{{totalDiscount}}</text>
+      </view>
+      <button class="btn-submit coupon-btn-confirm" bindtap="onCloseCouponPicker">确定</button>
+    </view>
+  </view>
+
   <!-- ══ 以下仅在有预约时展示 ══ -->
   <block wx:if="{{hasReservation}}">
   <!-- ══ 菜品清单 ══ -->

@@ -191,6 +191,7 @@ Page({
       const isSelected = selected.includes(coupon.id)
       const meetsMinAmount = amount >= (coupon.minAmount || 0)
       const isDisabled = !meetsMinAmount
+      const amountText = (type === 'discount') ? Math.round(coupon.value * 10) + '折' : '¥' + coupon.value
       return {
         ...coupon,
         isSelected,
@@ -198,7 +199,8 @@ Page({
         itemClass: isSelected ? 'coupon-checked' : (isDisabled ? 'coupon-disabled' : ''),
         checkboxClass: isSelected ? 'checkbox-on' : '',
         checkboxText: isSelected ? '✓' : '',
-        unavailableHint: isDisabled ? `未满¥${coupon.minAmount}，不可用` : ''
+        unavailableHint: isDisabled ? `未满¥${coupon.minAmount}，不可用` : '',
+        amountText
       }
     })
   },

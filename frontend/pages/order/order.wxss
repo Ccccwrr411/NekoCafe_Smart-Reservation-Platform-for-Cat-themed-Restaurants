@@ -502,6 +502,119 @@
 }
 
 /* ============ 优惠券子元素 ============ */
+.coupon-picker-panel {
+  max-height: 75vh;
+}
+.coupon-list {
+  padding: 0;
+}
+.coupon-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  border-bottom: 1rpx solid #f5f0eb;
+  position: relative;
+  transition: background 0.15s;
+}
+.coupon-item:active {
+  background: #fafafa;
+}
+.coupon-checked {
+  background: linear-gradient(135deg, #FFF9F0, #FFF3E0);
+}
+.coupon-item-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  min-width: 0;
+  overflow: hidden;
+}
+.coupon-amount-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, var(--color-primary), #E8A87C);
+  color: #fff;
+  border-radius: 12rpx;
+  padding: 12rpx 16rpx;
+  min-width: 120rpx;
+  flex-shrink: 0;
+}
+.coupon-amount {
+  font-size: 36rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.coupon-condition {
+  font-size: 18rpx;
+  opacity: 0.85;
+  margin-top: 2rpx;
+  white-space: nowrap;
+}
+.coupon-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  overflow: hidden;
+}
+.coupon-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.coupon-checkbox {
+  width: 44rpx; height: 44rpx;
+  border-radius: 50%;
+  border: 3rpx solid #ddd;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 16rpx;
+  transition: all 0.15s;
+}
+.checkbox-on {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.coupon-unavailable {
+  position: absolute;
+  bottom: 4rpx;
+  right: 70rpx;
+}
+.coupon-picker-footer {
+  padding: 20rpx 32rpx;
+  border-top: 1rpx solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.coupon-footer-info {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  font-size: 26rpx;
+  color: var(--color-text-sub);
+}
+.coupon-footer-save {
+  color: #4CAF50;
+  font-weight: 700;
+}
+.coupon-btn-confirm {
+  height: 72rpx;
+  line-height: 72rpx;
+  padding: 0 48rpx;
+  font-size: 28rpx;
+}
 .empty-coupon {
   padding: 64rpx;
   text-align: center;

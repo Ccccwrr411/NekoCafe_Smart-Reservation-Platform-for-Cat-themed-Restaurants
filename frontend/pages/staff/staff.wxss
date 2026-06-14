@@ -255,49 +255,66 @@
   font-weight: 600;
 }
 
-/* 桌位地图视图 */
-.table-grid {
+/* 桌型筛选栏 */
+.table-filter {
   display: flex;
-  flex-wrap: wrap;
-  padding: 8rpx 16rpx;
-  gap: 12rpx;
-}
-.table-card {
-  width: calc(33.33% - 8rpx);
+  white-space: nowrap;
   background: #fff;
-  border-radius: 16rpx;
-  padding: 20rpx 16rpx;
-  text-align: center;
-  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.04);
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
+  padding: 16rpx 20rpx;
 }
-.table-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4rpx;
-}
-.table-card-available::before { background: #4CAF50; }
-.table-card-booked::before { background: #9E9E9E; }
-.table-card-occupied::before { background: #E74C3C; }
-.table-card-cleaning::before { background: #FF9800; }
-.table-card-maintenance::before { background: #333; }
 
-.table-card-name { font-size: 30rpx; font-weight: 700; color: #333; display: block; }
-.table-card-type { font-size: 20rpx; color: #999; display: block; margin: 4rpx 0; }
-.table-card-status-dot {
-  width: 16rpx; height: 16rpx;
-  border-radius: 50%;
-  margin: 8rpx auto 0;
+/* 桌位地图视图（实景平面图 — 绝对定位布局） */
+.map-container-staff {
+  position: relative;
+  width: 100%;
+  min-height: 520rpx;
+  background-color: #FCFBF9;
+  border: 2rpx solid #F0EBE1;
+  border-radius: 12rpx;
+  box-sizing: border-box;
+  padding-bottom: 12rpx;
 }
-.dot-available { background: #4CAF50; }
-.dot-booked { background: #9E9E9E; }
-.dot-occupied { background: #E74C3C; }
-.dot-cleaning { background: #FF9800; }
-.dot-maintenance { background: #333; }
-.table-card-customer { font-size: 20rpx; color: #666; display: block; margin-top: 4rpx; }
+
+.floor-table-staff {
+  position: absolute;
+  border-radius: 14rpx;
+  box-sizing: border-box;
+  border: 3rpx solid transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4rpx;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 3rpx 10rpx rgba(0,0,0,0.05);
+  overflow: hidden;
+  z-index: 2;
+}
+.floor-table-staff:active {
+  transform: scale(1.05);
+  z-index: 10;
+}
+
+.fts-name { font-size: 26rpx; font-weight: bold; letter-spacing: 1rpx; color: inherit; }
+.fts-state { font-size: 18rpx; font-weight: 500; }
+.fts-customer { font-size: 18rpx; color: #666; margin-top: 2rpx; }
+
+/* 空闲 */
+.status-available { background: #E8F8EE; border-color: #2ECC71; color: #1E8449; }
+/* 已预约 */
+.status-booked { background: #F5F5F5; border-color: #9E9E9E; color: #616161; }
+.fts-booked { color: #757575; }
+/* 用餐中 */
+.status-occupied { background: #FCEBEB; border-color: #EF5350; color: #C62828; }
+.fts-occupied { color: #C62828; font-weight: 600; }
+/* 待清洁 */
+.status-cleaning { background: #FFF8E1; border-color: #FFA726; color: #E65100; }
+.fts-cleaning { color: #E65100; }
+/* 列表视图状态圆点（保留） */
+.tli-dot-available { background: #4CAF50; }
+.tli-dot-booked { background: #9E9E9E; }
+.tli-dot-occupied { background: #E74C3C; }
+.tli-dot-cleaning { background: #FF9800; }
 
 /* 桌位列表视图 */
 .table-list { padding: 8rpx 20rpx; }

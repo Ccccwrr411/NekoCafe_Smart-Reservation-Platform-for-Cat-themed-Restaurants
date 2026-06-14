@@ -725,7 +725,7 @@ public class OrderServiceImpl implements OrderService {
     if (refundList != null && !refundList.isEmpty()) {
       RefundRecords refund = refundList.get(0);
       vo.setRefundReason(refund.getRefundReason());
-      vo.setRefundStatus(refund.getStatus());
+      vo.setRefundStatus(mapRefundStatusToText(refund.getStatus()));
       if (refund.getCreatedAt() != null) {
         vo.setRefundCreatedAt(sdf.format(refund.getCreatedAt()));
       }
@@ -1133,7 +1133,7 @@ public class OrderServiceImpl implements OrderService {
 
   @Override
   @Transactional
-  public Map<String, Object> applyRefund(Long userId, String orderId) {
+  public Map<String, Object> applyRefund(Long userId, String orderId, String refundReason) {
     Long reservationId = parseOrderId(orderId);
     if (reservationId == null) {
       throw new BusinessException(ErrorCode.BAD_REQUEST, "订单号格式错误");
@@ -1155,17 +1155,12 @@ public class OrderServiceImpl implements OrderService {
     BigDecimal refundAmount = reservation.getOrderAmount() != null
       ? reservation.getOrderAmount()
       : BigDecimal.ZERO;
-    int pointsUsed = reservation.getPointsUsed() != null ? reservation.getPointsUsed() : 0;
-    int pointsEarned = reservation.getPointsEarned() != null ? reservation.getPointsEarned() : 0;
 
     // 查询关联支付记录
     PaymentsExample payExample = new PaymentsExample();
     payExample.createCriteria().andReservationIdEqualTo(reservationId);
     List<Payments> payList = paymentsMapper.selectByExample(payExample);
     Payments payment = (payList != null && !payList.isEmpty()) ? payList.get(0) : null;
-
-    // 查询会员扩展信息
-    MemberExt memberExt = memberExtMapper.selectByPrimaryKey(userId);
 
     // ==================== UPDATE 操作 ====================
 
@@ -1184,68 +1179,17 @@ public class OrderServiceImpl implements OrderService {
       paymentsMapper.updateByPrimaryKeySelective(updatePay);
     }
 
-    // 3. UPDATE member_ext: total_points = 原积分 - 获得积分 + 退还使用积分
-    //    cumulative_amount = 累计消费 - 退款金额
-    if (memberExt != null) {
-      int currentPoints = memberExt.getTotalPoints() != null ? memberExt.getTotalPoints() : 0;
-      int newPoints = currentPoints - pointsEarned + pointsUsed;
-      BigDecimal currentCumulative = memberExt.getCumulativeAmount() != null
-        ? memberExt.getCumulativeAmount() : BigDecimal.ZERO;
-      BigDecimal newCumulative = currentCumulative.subtract(refundAmount);
+    // ==================== INSERT 操作 ====================
 
-      MemberExt updateMe = new MemberExt();
-      updateMe.setUserId(userId);
-      updateMe.setTotalPoints(newPoints);
-      updateMe.setCumulativeAmount(newCumulative);
-      memberExtMapper.updateByPrimaryKeySelective(updateMe);
-
-      // ==================== INSERT 操作 ====================
-
-      // 4. INSERT refund_records
-      RefundRecords refund = new RefundRecords();
-      refund.setPaymentId(payment != null ? payment.getPaymentId() : null);
-      refund.setReservationId(reservationId);
-      refund.setRefundAmount(refundAmount);
-      refund.setRefundReason("用户申请退款");
-      refund.setStatus("REQUEST_REFUND");
-      refund.setCreatedAt(now);
-      refundRecordsMapper.insertSelective(refund);
-
-      // 5. INSERT points_log 记录1：扣除获得的积分（负数）
-      if (pointsEarned > 0) {
-        PointsLog deductLog = new PointsLog();
-        deductLog.setUserId(userId);
-        deductLog.setChangeAmount(-pointsEarned);
-        deductLog.setBalanceAfter(currentPoints - pointsEarned);
-        deductLog.setSource("REFUND_DEDUCT_EARN");
-        deductLog.setReservationId(reservationId);
-        deductLog.setCreatedAt(now);
-        pointsLogMapper.insertSelective(deductLog);
-      }
-
-      // 6. INSERT points_log 记录2：退还使用的积分（正数）
-      if (pointsUsed > 0) {
-        int afterDeduct = currentPoints - pointsEarned;
-        PointsLog returnLog = new PointsLog();
-        returnLog.setUserId(userId);
-        returnLog.setChangeAmount(pointsUsed);
-        returnLog.setBalanceAfter(afterDeduct + pointsUsed);
-        returnLog.setSource("REFUND_RETURN_USED");
-        returnLog.setReservationId(reservationId);
-        returnLog.setCreatedAt(now);
-        pointsLogMapper.insertSelective(returnLog);
-      }
-    } else {
-      // 无 member_ext 时仅插入退款记录
-      RefundRecords refund = new RefundRecords();
-      refund.setPaymentId(payment != null ? payment.getPaymentId() : null);
-      refund.setReservationId(reservationId);
-      refund.setRefundAmount(refundAmount);
-      refund.setRefundReason("用户申请退款");
-      refund.setStatus("REQUEST_REFUND");
-      refund.setCreatedAt(now);
-      refundRecordsMapper.insertSelective(refund);
-    }
+    // 3. INSERT refund_records — 只记录退款请求，不扣积分/金额（店员审核通过时才真正扣款）
+    RefundRecords refund = new RefundRecords();
+    refund.setPaymentId(payment != null ? payment.getPaymentId() : null);
+    refund.setReservationId(reservationId);
+    refund.setRefundAmount(refundAmount);
+    refund.setRefundReason(refundReason != null && !refundReason.isEmpty() ? refundReason : "用户申请退款");
+    refund.setStatus("REQUEST_REFUND");
+    refund.setCreatedAt(now);
+    refundRecordsMapper.insertSelective(refund);
 
     // 返回（前端检查 code===0 后 loadDetail）
     Map<String, Object> result = new HashMap<>();
@@ -1264,6 +1208,20 @@ public class OrderServiceImpl implements OrderService {
    */
   private String formatOrderId(Long reservationId) {
     return "ORD" + String.format("%010d", reservationId);
+  }
+
+  /**
+   * 将数据库退款状态映射为前端展示文本
+   */
+  private String mapRefundStatusToText(String status) {
+    if (status == null) return "";
+    switch (status.toUpperCase()) {
+      case "REQUEST_REFUND": return "审核中";
+      case "REQUEST_CANCEL": return "待审核（取消订单）";
+      case "REJECTED": return "已拒绝";
+      case "COMPLETED": return "退款完成";
+      default: return status;
+    }
   }
 
   /**
@@ -1298,11 +1256,12 @@ public class OrderServiceImpl implements OrderService {
    * 判断订单是否可取消
    * BOOKED（已预约未点单）→ 取消预约，释放桌位（5分钟内）
    * CONFIRMED（已下单/用餐中）→ 取消订单，退款处理（下单后5分钟内）
+   * REFUNDING（退款被拒后）→ 仍可取消订单
    */
   private boolean canCancelOrder(Reservations reservation) {
     if (reservation == null || reservation.getStatus() == null) return false;
     String status = reservation.getStatus();
-    if (!"BOOKED".equals(status) && !"CONFIRMED".equals(status)) {
+    if (!"BOOKED".equals(status) && !"CONFIRMED".equals(status) && !"REFUNDING".equals(status)) {
       return false;
     }
     // 下单后 5 分钟内可取消
@@ -1329,12 +1288,12 @@ public class OrderServiceImpl implements OrderService {
 
   /**
    * 判断订单是否可退款
-   * 规则：状态为 confirmed 或 completed 时可以退款
+   * 规则：状态为 confirmed / completed / refunding（被拒后重新申请）时可以退款
    */
   private boolean canRefundOrder(Reservations reservation) {
     if (reservation == null || reservation.getStatus() == null) return false;
     String status = reservation.getStatus();
-    return "CONFIRMED".equals(status) || "COMPLETED".equals(status);
+    return "CONFIRMED".equals(status) || "COMPLETED".equals(status) || "REFUNDING".equals(status);
   }
 
   /**
