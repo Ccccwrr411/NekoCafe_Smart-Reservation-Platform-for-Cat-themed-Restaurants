@@ -183,13 +183,16 @@ public class CouponServiceImpl implements CouponService {
             // 解析 ruleJson 字段，兼容多种字段命名风格
             Map<String, Object> rule = parseRuleJson(promo.getRuleJson());
             if (rule != null) {
-                // value / discount / reduction / rate / amount 都映射为 value
-                Number val = getNumber(rule, "value", "discount", "reduction", "rate", "amount", "money", "price");
+                // value / discount / reduction / rate / amount / money / price / discount_rate / special_price / reduce_amount 都映射为 value
+                Number val = getNumber(rule, "value", "discount", "reduction", "rate", "amount", "money", "price", "discount_rate", "special_price", "reduce_amount");
                 if (val != null) {
                     double d = val.doubleValue();
                     // 数据库中 DISCOUNT 可能存的是 8（表示8折）或 0.8（表示80%）
                     // 统一转为 <1 的小数（如 0.8）
-                    if ("discount".equalsIgnoreCase(normalizeType(promo.getType())) && d > 1) {
+                    // 注意：如果字段名是 discount_rate（如 0.88 表示88折），已经是小数形式，不需要除以10
+                    String typeLower = normalizeType(promo.getType());
+                    boolean isRateField = rule.containsKey("discount_rate");
+                    if ("discount".equals(typeLower) && d > 1 && !isRateField) {
                         d = d / 10.0;
                     }
                     vo.setValue(d);

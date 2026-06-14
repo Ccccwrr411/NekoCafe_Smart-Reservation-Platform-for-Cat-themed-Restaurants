@@ -26,14 +26,16 @@ Page({
 
   onLoad() {
     // 允许未登录用户浏览首页门店列表
-    const userInfo = wx.getStorageSync('userInfo') || null
+    let userInfo = wx.getStorageSync('userInfo') || null
+    userInfo = this.fixAvatarUrl(userInfo)
     this.setData({ userInfo })
     this.loadStores()
   },
 
   onShow() {
     // 允许未登录用户浏览首页
-    const userInfo = wx.getStorageSync('userInfo') || null
+    let userInfo = wx.getStorageSync('userInfo') || null
+    userInfo = this.fixAvatarUrl(userInfo)
     this.setData({ userInfo })
 
     // 刷新 AI 推荐（仅登录用户）
@@ -41,6 +43,17 @@ Page({
       this.loadRecommend()
       this._recommendLoaded = true
     }
+  },
+
+  // 补全头像 URL：相对路径 → 完整 URL
+  fixAvatarUrl(userInfo) {
+    if (!userInfo || !userInfo.avatarUrl) return userInfo
+    if (userInfo.avatarUrl.startsWith('http://') || userInfo.avatarUrl.startsWith('https://')) {
+      return userInfo
+    }
+    const app = getApp()
+    const baseUrl = app.globalData.baseUrl || 'http://127.0.0.1:8081'
+    return { ...userInfo, avatarUrl: baseUrl + userInfo.avatarUrl }
   },
 
   // 加载门店列表

@@ -15,8 +15,11 @@ public interface OrderService {
 
     /**
      * 获取用户订单列表（E-1）
+     * @param userId  用户ID
+     * @param status  状态筛选（前端值：booked/confirmed/completed/cancelled/refunding/refunded，null=全部）
+     * @param keyword 搜索关键词（匹配门店名/桌位名/订单号）
      */
-    List<OrderVO> listOrders(Long userId);
+    List<OrderVO> listOrders(Long userId, String status, String keyword);
 
     /**
      * 提交点单订单（E-2）
@@ -36,19 +39,9 @@ public interface OrderService {
     Map<String, Object> cancelOrder(Long userId, String orderId);
 
     /**
-     * 改约（E-5）
-     */
-    Map<String, Object> reschedule(Long userId, RescheduleDTO dto);
-
-    /**
      * 申请退款（E-6）
+     * @param refundReason 退款理由（用户填写）
      * 返回 refundId + refundAmount + status
      */
-    Map<String, Object> applyRefund(Long userId, String orderId);
-
-    /**
-     * 创建预约（E-7，纯预约无点单）
-     * 返回 orderId + status
-     */
-    Map<String, Object> createReservation(Long userId, ReservationCreateDTO dto);
+    Map<String, Object> applyRefund(Long userId, String orderId, String refundReason);
 }

@@ -126,7 +126,8 @@
       #{pointsUsed,jdbcType=INTEGER}, #{pointsEarned,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP}, 
       #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations">
+  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations"
+    useGeneratedKeys="true" keyProperty="reservationId" keyColumn="reservation_id">
     insert into public.reservations
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="reservationId != null">
@@ -397,6 +398,32 @@
       <foreach collection="statuses" item="s" open="(" separator="," close=")">
         #{s}::reservation_status
       </foreach>
+    order by reservation_time DESC
+  </select>
+
+  <!--
+    专用查询：按 userId 查全部预约（用于"全部"标签）。
+  -->
+  <select id="selectByUserId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+    order by reservation_time DESC
+  </select>
+
+  <!--
+    专用查询：按 userId + tableId + status 查询预约（用于确认订单等场景），
+    对 status 枚举字段显式 CAST。
+  -->
+  <select id="selectByUserIdAndTableIdAndStatus" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+      and table_id = #{tableId,jdbcType=INTEGER}
+      and status = #{status,jdbcType=VARCHAR}::reservation_status
+    order by created_at DESC
   </select>
 
   <!--
@@ -424,6 +451,36 @@
     from public.reservations
     where store_id = #{storeId,jdbcType=INTEGER}
     order by reservation_time DESC
+  </select>
+
+  <!--
+    专用查询：按 tableId + status 列表查活跃预约（用于时间段冲突判断）。
+  -->
+  <select id="selectByTableIdAndStatuses" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+    order by reservation_time
+  </select>
+
+  <!--
+    专用查询：统计某桌位除指定预约外的活跃预约数量。
+    用于判断取消/改约后是否还有其他活跃预约，决定是否释放 table_status。
+  -->
+  <select id="countActiveByTableIdExcluding" resultType="java.lang.Integer">
+    select count(*)
+    from public.reservations
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+      and reservation_id != #{excludeId,jdbcType=BIGINT}
   </select>
 
 </mapper>

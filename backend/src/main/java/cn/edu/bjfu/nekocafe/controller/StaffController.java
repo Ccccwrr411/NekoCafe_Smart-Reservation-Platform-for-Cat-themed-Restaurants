@@ -96,7 +96,8 @@ public class StaffController {
         String action = (String) body.get("action");
         Long operatorId = body.get("operatorId") != null
                 ? Long.valueOf(body.get("operatorId").toString()) : null;
-        return Result.success(staffService.reviewRefund(refundId, action, operatorId));
+        String rejectReason = (String) body.get("rejectReason");
+        return Result.success(staffService.reviewRefund(refundId, action, operatorId, rejectReason));
     }
 
     /** L-9 告警已知晓 */
@@ -117,6 +118,7 @@ public class StaffController {
                 ? Long.valueOf(body.get("operatorId").toString()) : null;
         return Result.success(staffService.resolveAlert(exceptionId, resolution, operatorId));
     }
+
 
     /** 猫咪健康打卡（猫咪管家 cat_keeper 专用） */
     @PostMapping("/staff/cat/health")

@@ -263,8 +263,23 @@ Page({
     return map[role] || 1
   },
 
+  // ── 补全头像 URL（相对路径 → 完整 URL）──
+  resolveAvatarUrl(avatarUrl) {
+    if (!avatarUrl) return avatarUrl
+    if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
+      return avatarUrl
+    }
+    const app = getApp()
+    const baseUrl = app.globalData.baseUrl || 'http://127.0.0.1:8081'
+    return baseUrl + avatarUrl
+  },
+
   // ── 登录完成：存储信息 + 跳转 ──
   finishLogin(userInfo, role, token) {
+    // 补全头像路径为完整 URL
+    if (userInfo.avatarUrl) {
+      userInfo.avatarUrl = this.resolveAvatarUrl(userInfo.avatarUrl)
+    }
     wx.setStorageSync('token', token)
     wx.setStorageSync('userInfo', userInfo)
     wx.setStorageSync('userRole', role)

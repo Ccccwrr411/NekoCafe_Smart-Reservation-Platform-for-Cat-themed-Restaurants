@@ -152,20 +152,39 @@
         <view class="toggle-btn {{tableViewMode === 'map' ? 'toggle-active' : ''}}" bindtap="onSwitchTableView" data-mode="map">地图</view>
         <view class="toggle-btn {{tableViewMode === 'list' ? 'toggle-active' : ''}}" bindtap="onSwitchTableView" data-mode="list">列表</view>
       </view>
-      <!-- 地图视图 -->
-      <view wx:if="{{tableViewMode === 'map'}}" class="table-grid">
-        <view wx:for="{{tables}}" wx:key="id" class="table-card table-card-{{item.status}}" bindtap="onDispatch" data-table="{{item}}">
-          <view class="table-card-name">{{item.name || item.tableNo}}</view>
-          <view class="table-card-type">{{item.tableType}} · {{item.capacity}}人</view>
-          <view class="table-card-status-dot dot-{{item.status}}"></view>
-          <text wx:if="{{item.customer}}" class="table-card-customer">👤 {{item.customer}}</text>
-        </view>
+      <!-- 桌型筛选 -->
+      <scroll-view class="table-filter" scroll-x enable-flex>
+        <view
+          wx:for="{{tableTypes}}"
+          wx:key="*this"
+          class="filter-item {{tableFilter === item ? 'filter-active' : ''}}"
+          bindtap="onTableFilterChange"
+          data-type="{{item}}"
+        >{{tableTypeLabels[item] || item}}</view>
+      </scroll-view>
+      <!-- 地图视图（实景平面图） -->
+      <view wx:if="{{tableViewMode === 'map'}}" class="map-container-staff">
+        <block wx:for="{{filteredTables}}" wx:key="id">
+          <view
+            class="floor-table-staff status-{{item.status}}"
+            style="top: {{item.top}}rpx; left: {{item.left}}rpx; width: {{item.width}}rpx; height: {{item.height}}rpx;"
+            bindtap="onDispatch"
+            data-table="{{item}}"
+          >
+            <text class="fts-name">{{item.name || item.tableNo}}</text>
+            <text class="fts-state" wx:if="{{item.status === 'available'}}">空闲</text>
+            <text class="fts-state fts-booked" wx:if="{{item.status === 'booked'}}">已预约</text>
+            <text class="fts-state fts-occupied" wx:if="{{item.status === 'occupied'}}">用餐中</text>
+            <text class="fts-state fts-cleaning" wx:if="{{item.status === 'cleaning'}}">待清洁</text>
+            <text wx:if="{{item.customer}}" class="fts-customer">👤 {{item.customer}}</text>
+          </view>
+        </block>
       </view>
       <!-- 列表视图 -->
       <view wx:if="{{tableViewMode === 'list'}}" class="table-list">
-        <view wx:for="{{tables}}" wx:key="id" class="table-list-item" bindtap="onDispatch" data-table="{{item}}">
+        <view wx:for="{{filteredTables}}" wx:key="id" class="table-list-item" bindtap="onDispatch" data-table="{{item}}">
           <view class="tli-left">
-            <view class="tli-dot dot-{{item.status}}"></view>
+            <view class="tli-dot tli-dot-{{item.status}}"></view>
             <view class="tli-info">
               <text class="tli-name">{{item.name || item.tableNo}}</text>
               <text class="tli-detail">{{item.tableType}} · {{item.capacity}}人</text>

@@ -27,4 +27,27 @@ public interface TableStatusMapper {
     int updateByPrimaryKeySelective(TableStatus row);
 
     int updateByPrimaryKey(TableStatus row);
+
+    /**
+     * 乐观锁预约桌位：IDLE → RESERVED，version + 1
+     * @return 受影响行数（0 表示并发冲突）
+     */
+    int reserveTableOptimistic(@Param("tableId") Integer tableId,
+                               @Param("reservationId") Long reservationId,
+                               @Param("expectedVersion") Integer expectedVersion);
+
+    /**
+     * 乐观锁释放桌位：RESERVED → IDLE，current_reservation_id → NULL，version + 1
+     * @return 受影响行数（0 表示并发冲突）
+     */
+    int releaseTableOptimistic(@Param("tableId") Integer tableId,
+                               @Param("reservationId") Long reservationId,
+                               @Param("expectedVersion") Integer expectedVersion);
+
+    /**
+     * 乐观锁占用桌位：RESERVED → OCCUPIED，version + 1（下单确认后占用桌位）
+     * @return 受影响行数（0 表示并发冲突）
+     */
+    int occupyTableOptimistic(@Param("tableId") Integer tableId,
+                              @Param("expectedVersion") Integer expectedVersion);
 }

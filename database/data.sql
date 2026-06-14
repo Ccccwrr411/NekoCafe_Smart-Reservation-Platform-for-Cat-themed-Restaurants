@@ -37,13 +37,13 @@ INSERT INTO stores (name, city, address, longitude, latitude, contact_phone, bus
 ('云端猫语(望京店)', '北京', '朝阳区望京SOHO', 116.4812, 39.9961, '010-44332211', '10:00-22:00'),
 ('暖爪时光(五道口店)', '北京', '海淀区五道口', 116.3312, 39.9922, '010-55667788', '10:00-23:00');
 
--- 6. 插入 tables (5条，均归属门店1和2)
-INSERT INTO tables (store_id, table_no, capacity, table_type, cat_theme) VALUES
-(1, 'A01', 2, '沙发座', '布偶猫专属区'),
-(1, 'A02', 4, '靠窗座', '橘猫专属区'),
-(1, 'B01', 6, '包厢', '英短专属区'),
-(2, 'C01', 2, '吧台', '美短专属区'),
-(2, 'C02', 4, '榻榻米', '缅因猫专属区');
+-- 6. 插入 tables (5条，均归属门店1和2，含实景平面图布局坐标)
+INSERT INTO tables (store_id, table_no, capacity, table_type, cat_theme, top, "left", width, height) VALUES
+(1, 'A01', 2, '沙发座', '布偶猫专属区', 30, 30, 200, 180),
+(1, 'A02', 4, '靠窗座', '橘猫专属区', 30, 270, 220, 180),
+(1, 'B01', 6, '包厢', '英短专属区', 240, 30, 280, 260),
+(2, 'C01', 2, '吧台', '美短专属区', 30, 30, 200, 180),
+(2, 'C02', 4, '榻榻米', '缅因猫专属区', 30, 270, 220, 180);
 
 -- 7. 插入 table_status (5条，对应上述桌位)
 INSERT INTO table_status (table_id, status, current_reservation_id) VALUES

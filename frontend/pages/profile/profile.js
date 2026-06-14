@@ -1,14 +1,10 @@
 // pages/profile/profile.js
 const { get } = require('../../utils/request')
-const { ORDER_STATUS_MAP } = require('../../utils/util')
 const app = getApp()
 
 Page({
   data: {
     userInfo: null,
-    orders: [],
-    loading: true,
-    ORDER_STATUS_MAP,
     menuItems: []
   },
 
@@ -21,7 +17,6 @@ Page({
 
     this.buildMenuItems()
     this.loadUserInfo()
-    this.loadOrders()
   },
 
   // 根据角色动态构建菜单
@@ -58,27 +53,25 @@ Page({
   loadUserInfo() {
     get('/api/user/profile').then(res => {
       if (res.code === 0) {
-        this.setData({ userInfo: res.data })
-        wx.setStorageSync('userInfo', res.data)
+        const userInfo = this.fixAvatarUrl(res.data)
+        this.setData({ userInfo })
+        wx.setStorageSync('userInfo', userInfo)
       }
     })
   },
 
-  loadOrders() {
-    get('/api/orders?userId=1001').then(res => {
-      if (res.code === 0) {
-        this.setData({ orders: res.data.slice(0, 3), loading: false })
-      }
-    })
+  // 补全头像 URL：相对路径 → 完整 URL
+  fixAvatarUrl(userInfo) {
+    if (!userInfo || !userInfo.avatarUrl) return userInfo
+    if (userInfo.avatarUrl.startsWith('http://') || userInfo.avatarUrl.startsWith('https://')) {
+      return userInfo
+    }
+    const baseUrl = app.globalData.baseUrl || 'http://127.0.0.1:8081'
+    return { ...userInfo, avatarUrl: baseUrl + userInfo.avatarUrl }
   },
 
   goAllOrders() {
     wx.navigateTo({ url: '/pages/orderList/orderList' })
-  },
-
-  goOrderDetail(e) {
-    const orderId = e.currentTarget.dataset.orderid
-    wx.navigateTo({ url: `/pages/orderDetail/orderDetail?orderId=${orderId}` })
   },
 
   onMenuItemClick(e) {
