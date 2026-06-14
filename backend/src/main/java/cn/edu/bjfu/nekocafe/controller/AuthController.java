@@ -32,6 +32,16 @@ public class AuthController {
         return Result.success(authService.wxLogin(dto));
     }
 
+    /** A-0 微信快捷登录（仅用 wx.login code 查 openid 登录） */
+    @PostMapping("/wx-login")
+    public Result<LoginVO> wxQuickLogin(@RequestBody Map<String, String> body) {
+        String code = body.get("code");
+        if (code == null || code.isEmpty()) {
+            return Result.error(400, "微信授权code不能为空");
+        }
+        return Result.success(authService.wxQuickLogin(code));
+    }
+
     /** A-2 发送验证码（沙箱模式，验证码直接返回前端） */
     @PostMapping("/send-code")
     public Result<?> sendCode(@RequestBody Map<String, String> body) {

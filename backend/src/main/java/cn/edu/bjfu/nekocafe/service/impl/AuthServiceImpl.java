@@ -29,9 +29,11 @@ import java.util.concurrent.TimeUnit;
  * 认证服务实现
  *
  * 登录方式：
- *   1. 微信登录：wx.login code → 查/创建用户 → 写 user_roles → JWT
+ *   1. 微信登录：手机号+验证码 → 查用户 → 找到则登录，找不到则提示注册
  *   2. 手机号注册：验证码校验 → 创建用户 → 写 user_roles → JWT
  *   3. 手机号登录：手机号+密码 → 校验 → JWT
+ *
+ * 核心设计：手机号作为用户唯一标识，所有登录方式最终都绑定到手机号。
  */
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -56,46 +58,84 @@ public class AuthServiceImpl implements AuthService {
     /** 默认角色 ID（顾客） */
     private static final int DEFAULT_ROLE_ID = 1;
 
-    // ==================== 微信登录 ====================
+    // ==================== 微信快捷登录 ====================
 
     @Override
-    public LoginVO wxLogin(LoginDTO dto) {
-        String code = dto.getCode();
-        if (code == null || code.isEmpty()) {
-            throw new IllegalArgumentException("code 不能为空");
-        }
-
-        // 课设版：用 code 当用户标识查 openid 字段
+    public LoginVO wxQuickLogin(String code) {
+        // 用 wx.login code 查 users.openid 字段
         UsersExample example = new UsersExample();
         example.createCriteria().andOpenidEqualTo(code);
         List<Users> list = usersMapper.selectByExample(example);
 
-        Users user;
-        boolean isNewUser = false;
         if (list.isEmpty()) {
-            isNewUser = true;
-            user = new Users();
-            user.setOpenid(code);
-            String nick = dto.getNickname();
-            user.setNickname(nick != null && !nick.trim().isEmpty() ? nick.trim() : "猫咖爱好者");
-            user.setAvatarUrl("/uploads/avatars/default.png");
-            user.setStatus((short) 1);
-            user.setCreatedAt(new Date());
-            user.setUpdatedAt(new Date());
-            usersMapper.insertSelective(user);
-
-            MemberExt memberExt = new MemberExt();
-            memberExt.setUserId(user.getUserId());
-            memberExt.setLevel(1);
-            memberExt.setTotalPoints(0);
-            memberExt.setCreatedAt(new Date());
-            memberExtMapper.insertSelective(memberExt);
-        } else {
-            user = list.get(0);
+            throw new IllegalArgumentException("该微信账号未绑定，请先注册或使用手机号登录后绑定");
         }
 
-        // 新用户：写入 user_roles（前端传来的 role）
-        // 老用户：若无 user_roles 记录，也补写入（防止旧账号无关联记录）
+        Users user = list.get(0);
+
+        // 检查用户状态
+        if (user.getStatus() != null && user.getStatus() != 1) {
+            throw new IllegalArgumentException("账号已被禁用，请联系客服");
+        }
+
+        return buildLoginVO(user);
+    }
+
+    // ==================== 微信登录 ====================
+
+    @Override
+    public LoginVO wxLogin(LoginDTO dto) {
+        String phone = dto.getPhone();
+        String smsCode = dto.getSmsCode();
+
+        // 1. 参数校验
+        if (phone == null || !phone.matches("^1\\d{10}$")) {
+            throw new IllegalArgumentException("手机号格式不正确");
+        }
+        if (smsCode == null || smsCode.isEmpty()) {
+            throw new IllegalArgumentException("验证码不能为空");
+        }
+
+        // 2. 校验验证码（从 Redis 取）
+        String redisKey = SMS_CODE_PREFIX + phone;
+        Object cachedCode = redisTemplate.opsForValue().get(redisKey);
+        if (cachedCode == null) {
+            throw new IllegalArgumentException("验证码已过期，请重新获取");
+        }
+        if (!smsCode.equals(cachedCode.toString())) {
+            throw new IllegalArgumentException("验证码错误");
+        }
+
+        // 3. 用手机号查用户
+        UsersExample example = new UsersExample();
+        example.createCriteria().andPhoneEqualTo(phone);
+        List<Users> list = usersMapper.selectByExample(example);
+
+        if (list.isEmpty()) {
+            // 手机号未注册 → 提示用户先注册
+            throw new IllegalArgumentException("该手机号未注册，请先注册账号");
+        }
+
+        Users user = list.get(0);
+
+        // 4. 检查用户状态
+        if (user.getStatus() != null && user.getStatus() != 1) {
+            throw new IllegalArgumentException("账号已被禁用，请联系客服");
+        }
+
+        // 5. 记录微信 code 到 openid 字段（仅作记录，不影响登录逻辑）
+        String wxCode = dto.getCode();
+        if (wxCode != null && !wxCode.isEmpty()) {
+            Users updateObj = new Users();
+            updateObj.setUserId(user.getUserId());
+            updateObj.setOpenid(wxCode);
+            usersMapper.updateByPrimaryKeySelective(updateObj);
+        }
+
+        // 6. 删除已使用的验证码
+        redisTemplate.delete(redisKey);
+
+        // 7. 确保有 user_roles 记录（老用户可能缺少关联记录）
         ensureUserRole(user.getUserId(), dto.getRoleId(), dto.getStoreId());
 
         return buildLoginVO(user);
@@ -297,14 +337,8 @@ public class AuthServiceImpl implements AuthService {
             storeId = ur.getStoreId();
         }
 
-        // 签发 JWT
+        // 签发 JWT（token 仅返回给前端，不再写入数据库 openid 字段）
         String token = JwtUtil.generateToken(user.getUserId());
-
-        // 将 JWT 存入 users.openid 字段（课设设计：openid 专门用于存 token）
-        Users updateObj = new Users();
-        updateObj.setUserId(user.getUserId());
-        updateObj.setOpenid(token);
-        usersMapper.updateByPrimaryKeySelective(updateObj);
 
         // 组装响应
         LoginVO result = new LoginVO();

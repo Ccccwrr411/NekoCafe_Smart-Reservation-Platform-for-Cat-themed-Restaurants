@@ -59,6 +59,7 @@ Page({
   data: {
     loginTab: 'wx',        // 当前 Tab: 'wx' | 'phone'
     loading: false,
+    wechatLoading: false,  // 微信快捷登录 loading
     selectedRole: '',
     roles: [
       { id: 'customer',   icon: '🧑‍💼', name: '顾客',     nameEn: 'Customer'   },
@@ -71,7 +72,10 @@ Page({
     phone: '',
     password: '',
     // 微信登录用
-    nickname: '',
+    wxPhone: '',
+    wxCode: '',
+    wxCountdown: 0,
+    wxSandboxCode: '',
     // 门店数据（微信登录用）
     stores: [],
     storeNames: [],
@@ -83,6 +87,10 @@ Page({
   // ── 页面加载：获取门店列表（微信登录用） ──
   onLoad() {
     this.getStores()
+  },
+
+  onUnload() {
+    if (this._wxTimer) clearInterval(this._wxTimer)
   },
 
   // ── 门店数据 ──
@@ -100,6 +108,117 @@ Page({
   // ── Tab 切换 ──
   switchTab(e) {
     this.setData({ loginTab: e.currentTarget.dataset.tab })
+  },
+
+  // ── 微信登录：手机号输入 ──
+  onWxPhoneInput(e) {
+    this.setData({ wxPhone: e.detail.value }, this.updateCanWxLogin)
+  },
+
+  // ── 微信登录：验证码输入 ──
+  onWxCodeInput(e) {
+    this.setData({ wxCode: e.detail.value }, this.updateCanWxLogin)
+  },
+
+  // ── 微信登录：发送验证码 ──
+  onWxSendCode() {
+    const { wxPhone, wxCountdown } = this.data
+    if (wxCountdown > 0) return
+    if (!/^1\d{10}$/.test(wxPhone)) {
+      wx.showToast({ title: '请输入正确的11位手机号', icon: 'none' })
+      return
+    }
+    post('/api/auth/send-code', { phone: wxPhone }).then(res => {
+      if (res.code === 0 && res.data) {
+        const code = res.data.code
+        this.setData({ wxSandboxCode: code })
+        wx.showModal({
+          title: '验证码（沙箱模式）',
+          content: '您的验证码是：' + code,
+          showCancel: false,
+          confirmText: '知道了'
+        })
+        this.startWxCountdown()
+      } else {
+        wx.showToast({ title: res.message || '发送失败', icon: 'none' })
+      }
+    }).catch(() => {
+      wx.showToast({ title: '网络异常', icon: 'none' })
+    })
+  },
+
+  startWxCountdown() {
+    this.setData({ wxCountdown: 60 })
+    this._wxTimer = setInterval(() => {
+      if (this.data.wxCountdown <= 1) {
+        clearInterval(this._wxTimer)
+        this.setData({ wxCountdown: 0 })
+      } else {
+        this.setData({ wxCountdown: this.data.wxCountdown - 1 })
+      }
+    }, 1000)
+  },
+
+  // ── 微信快捷登录 ──
+  onWechatQuickLogin() {
+    const that = this
+    this.setData({ wechatLoading: true })
+
+    // 先调用 wx.login 获取 code
+    wx.login({
+      success: (loginRes) => {
+        if (!loginRes.code) {
+          that.setData({ wechatLoading: false })
+          wx.showToast({ title: '获取微信授权失败', icon: 'none' })
+          return
+        }
+
+        // 用微信 code 尝试登录（后端用 code 查 openid）
+        post('/api/auth/wx-login', { code: loginRes.code }).then(res => {
+          that.setData({ wechatLoading: false })
+          if (res.code === 0 && res.data) {
+            // 登录成功
+            const roleMap = {
+              1: { role: 'customer', label: '顾客' },
+              2: { role: 'staff', label: '店员' },
+              3: { role: 'manager', label: '店长' },
+              4: { role: 'hq_ops', label: '总部运营' },
+              5: { role: 'cat_keeper', label: '猫咪管家' }
+            }
+            const roleId = res.data.userInfo.roleId || 1
+            const roleInfo = roleMap[roleId] || roleMap[1]
+            const userInfo = {
+              ...res.data.userInfo,
+              role: roleInfo.role,
+              roleLabel: roleInfo.label
+            }
+            that.finishLogin(userInfo, roleInfo.role, res.data.token)
+          } else if (res.code === 404 || (res.message && res.message.includes('未注册'))) {
+            // 未注册 → 跳转注册页
+            wx.showModal({
+              title: '提示',
+              content: '该微信账号尚未绑定，请先注册',
+              confirmText: '去注册',
+              cancelText: '取消',
+              success: (modalRes) => {
+                if (modalRes.confirm) {
+                  wx.navigateTo({ url: '/pages/register/register' })
+                }
+              }
+            })
+          } else {
+            wx.showToast({ title: res.message || '登录失败', icon: 'none' })
+          }
+        }).catch(() => {
+          that.setData({ wechatLoading: false })
+          wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+        })
+      },
+      fail: () => {
+        that.setData({ wechatLoading: false })
+        wx.showToast({ title: '微信登录失败，请使用手机号登录', icon: 'none' })
+      }
+    })
   },
 
   // ── 微信登录：角色选择 ──
@@ -123,54 +242,40 @@ Page({
     this.updateCanWxLogin()
   },
 
-  // ── 微信登录：昵称输入 ──
-  onNicknameInput(e) {
-    this.setData({ nickname: e.detail.value })
-  },
-
-  // ── 计算微信登录按钮是否可用 ──
+  // ── 计算快捷登录按钮是否可用 ──
   updateCanWxLogin() {
-    const { selectedRole, selectedStoreIndex } = this.data
-    let can = !!selectedRole
-    if (selectedRole && selectedRole !== 'customer' && selectedRole !== 'hq_ops') {
-      can = can && selectedStoreIndex >= 0
-    }
+    const { selectedRole, wxPhone, wxCode } = this.data
+    const can = !!selectedRole && wxPhone.length > 0 && wxCode.length > 0
     this.setData({ canWxLogin: can })
   },
 
-  // ── 微信登录 ──
-  onMockLogin() {
+  // ── 微信登录（手机号+验证码） ──
+  onWxLogin() {
     if (!this.data.canWxLogin) return
 
-    const { selectedRole, selectedStoreId, nickname } = this.data
+    const { selectedRole, selectedStoreId, wxPhone, wxCode } = this.data
     this.setData({ loading: true })
 
     try {
       if (isUseMock()) {
         const mockUser = { ...ROLE_USERS[selectedRole] }
-        // 用自定义昵称覆盖
-        if (nickname && nickname.trim()) {
-          mockUser.nickName = nickname.trim()
-        }
-        // 非顾客/非总部运营：用实际选择的门店覆盖
-        if (selectedRole !== 'customer' && selectedRole !== 'hq_ops' && selectedStoreId != null) {
-          mockUser.storeId = selectedStoreId
-        }
         this.finishLogin(mockUser, selectedRole, `mock_token_${selectedRole}_20260604`)
         return
       }
 
+      // 真实请求：手机号+验证码 → 后端用手机号查用户
       wx.login({
         success: (loginRes) => {
           try {
-            if (!loginRes.code) {
-              this.setData({ loading: false })
-              wx.showToast({ title: '微信登录失败', icon: 'none' })
-              return
+            const payload = {
+              phone: wxPhone,
+              smsCode: wxCode,
+              roleId: this.roleToId(selectedRole)
             }
-            const payload = { code: loginRes.code, roleId: this.roleToId(selectedRole) }
+            // 附带微信 code 仅作记录
+            if (loginRes.code) payload.code = loginRes.code
             if (selectedStoreId != null) payload.storeId = selectedStoreId
-            if (nickname && nickname.trim()) payload.nickname = nickname.trim()
+
             post('/api/auth/login', payload).then(res => {
               if (res.code === 0 && res.data) {
                 const roleLabelMap = {
@@ -186,6 +291,20 @@ Page({
                   roleLabel: roleLabelMap[selectedRole]
                 }
                 this.finishLogin(userInfo, selectedRole, res.data.token)
+              } else if (res.message && res.message.includes('未注册')) {
+                // 未注册 → 弹窗确认后跳转注册页，携带手机号
+                this.setData({ loading: false })
+                wx.showModal({
+                  title: '未注册',
+                  content: '该手机号尚未注册，是否前往注册？',
+                  confirmText: '去注册',
+                  cancelText: '取消',
+                  success: (modalRes) => {
+                    if (modalRes.confirm) {
+                      wx.navigateTo({ url: '/pages/register/register?phone=' + wxPhone })
+                    }
+                  }
+                })
               } else {
                 this.setData({ loading: false })
                 wx.showToast({ title: res.message || '登录失败', icon: 'none' })
@@ -201,12 +320,54 @@ Page({
           }
         },
         fail: () => {
-          this.setData({ loading: false })
-          wx.showToast({ title: '微信登录失败', icon: 'none' })
+          // wx.login 失败时，仍然可以用手机号+验证码登录（不传 code）
+          const payload = {
+            phone: wxPhone,
+            smsCode: wxCode,
+            roleId: this.roleToId(selectedRole)
+          }
+          if (selectedStoreId != null) payload.storeId = selectedStoreId
+
+          post('/api/auth/login', payload).then(res => {
+            if (res.code === 0 && res.data) {
+              const roleLabelMap = {
+                customer: '顾客',
+                staff: '店员',
+                manager: '店长',
+                hq_ops: '总部运营',
+                cat_keeper: '猫咪管家'
+              }
+              const userInfo = {
+                ...res.data.userInfo,
+                role: selectedRole,
+                roleLabel: roleLabelMap[selectedRole]
+              }
+              this.finishLogin(userInfo, selectedRole, res.data.token)
+            } else if (res.message && res.message.includes('未注册')) {
+              this.setData({ loading: false })
+              wx.showModal({
+                title: '未注册',
+                content: '该手机号尚未注册，是否前往注册？',
+                confirmText: '去注册',
+                cancelText: '取消',
+                success: (modalRes) => {
+                  if (modalRes.confirm) {
+                    wx.navigateTo({ url: '/pages/register/register?phone=' + wxPhone })
+                  }
+                }
+              })
+            } else {
+              this.setData({ loading: false })
+              wx.showToast({ title: res.message || '登录失败', icon: 'none' })
+            }
+          }).catch(() => {
+            this.setData({ loading: false })
+            wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+          })
         }
       })
     } catch (err) {
-      console.error('[onMockLogin] error:', err)
+      console.error('[onWxLogin] error:', err)
       this.setData({ loading: false })
       wx.showToast({ title: '登录异常，请重试', icon: 'none' })
     }
@@ -222,9 +383,13 @@ Page({
 
   // ── 手机号登录 ──
   onPhoneLogin() {
-    const { phone, password } = this.data
+    const { phone, password, selectedRole, selectedStoreId } = this.data
     if (!phone || !password) {
       wx.showToast({ title: '请输入手机号和密码', icon: 'none' })
+      return
+    }
+    if (!selectedRole) {
+      wx.showToast({ title: '请选择身份', icon: 'none' })
       return
     }
     if (!/^1\d{10}$/.test(phone)) {
@@ -234,14 +399,28 @@ Page({
 
     this.setData({ loading: true })
 
-    post('/api/auth/login/phone', { phone, password }).then(res => {
+    const payload = {
+      phone,
+      password,
+      roleId: this.roleToId(selectedRole)
+    }
+    if (selectedStoreId != null) payload.storeId = selectedStoreId
+
+    post('/api/auth/login/phone', payload).then(res => {
       if (res.code === 0 && res.data) {
+        const roleLabelMap = {
+          customer: '顾客',
+          staff: '店员',
+          manager: '店长',
+          hq_ops: '总部运营',
+          cat_keeper: '猫咪管家'
+        }
         const userInfo = {
           ...res.data.userInfo,
-          role: 'customer',
-          roleLabel: '顾客'
+          role: selectedRole,
+          roleLabel: roleLabelMap[selectedRole]
         }
-        this.finishLogin(userInfo, 'customer', res.data.token)
+        this.finishLogin(userInfo, selectedRole, res.data.token)
       } else {
         this.setData({ loading: false })
         wx.showToast({ title: res.message || '登录失败', icon: 'none' })
