@@ -1,0 +1,54 @@
+package cn.edu.bjfu.nekocafe.service.impl;
+
+import cn.edu.bjfu.nekocafe.entity.*;
+import cn.edu.bjfu.nekocafe.mapper.*;
+import cn.edu.bjfu.nekocafe.service.ManagerService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@Service
+public class ManagerServiceImpl implements ManagerService {
+
+    @Autowired
+    private StaffSchedulesMapper staffSchedulesMapper;
+    @Autowired
+    private StaffShiftsMapper staffShiftsMapper;
+    @Autowired
+    private ShiftExceptionsMapper shiftExceptionsMapper;
+    @Autowired
+    private UsersMapper usersMapper;
+    private String resolveStaffName(Long staffId) {
+        String name = "员工#" + staffId;
+        if (staffId != null) {
+            try {
+                Users u = usersMapper.selectByPrimaryKey(staffId);
+                if (u != null) name = (u.getRealName() != null && !u.getRealName().isEmpty()) ? u.getRealName() : u.getNickname();
+            } catch (Exception ignored) {}
+        }
+        return name;
+    }
+
+    // =========================================================
+    // 获取门店排班列表
+    // =========================================================
+    @Override
+    public List<Map<String, Object>> getSchedules(Integer storeId) {
+        StaffSchedulesExample example = new StaffSchedulesExample();
+        example.setOrderByClause("work_date ASC, start_time ASC");
+        example.createCriteria().andStoreIdEqualTo(storeId);
+        List<StaffSchedules> schedulesList = staffSchedulesMapper.selectByExample(example);
+
+        SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm");
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        if (schedulesList != null) {
+            for (StaffSchedules s : schedulesList) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("scheduleId", s.getScheduleId());
+                row.put("staffId", s.getStaffId());
+                row.put("staffName", resolveStaffName(s.getStaffId()));
+                row.put("workDate", s.getWorkDate() != null ? dateFmt.format(s.getWorkDate()) : null);

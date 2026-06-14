@@ -470,8 +470,17 @@ Page({
     app.globalData.currentStore = null
     app.globalData.selectedTable = null
 
-    this.setData({ loading: false })
-    // 所有角色统一跳转到首页
-    wx.switchTab({ url: '/pages/index/index' })
+
+    const routeMap = {
+      customer:   '/pages/index/index',
+      staff:      '/pages/staff/staff',
+      manager:    '/pages/staffDashboard/staffDashboard',
+      hq_ops:     '/pages/staffDashboard/staffDashboard',
+      cat_keeper: '/pages/cats/cats'
+    }
+    const targetUrl = routeMap[role]
+    const tabBarPages = ['/pages/index/index', '/pages/reservation/reservation', '/pages/menu/menu', '/pages/profile/profile']
+
+
   }
 })
