@@ -128,7 +128,7 @@ public class CouponServiceImpl implements CouponService {
         // 折扣券
         for (String cid : selectedIds) {
             CouponVO c = findCoupon(allCoupons, cid);
-            if (c != null && "discount".equals(c.getType()) && "unused".equals(c.getStatus())) {
+            if (c != null && "discount".equals(normalizeType(c.getType())) && "unused".equals(c.getStatus())) {
                 int saving = calcSaving(c, originalAmount - totalDiscount);
                 totalDiscount += saving;
                 breakdown.add(buildBreakdownItem(c, saving));
@@ -140,7 +140,7 @@ public class CouponServiceImpl implements CouponService {
         CouponVO bestCashbackCoupon = null;
         for (String cid : selectedIds) {
             CouponVO c = findCoupon(allCoupons, cid);
-            if (c != null && "cashback".equals(c.getType()) && "unused".equals(c.getStatus())) {
+            if (c != null && "cashback".equals(normalizeType(c.getType())) && "unused".equals(c.getStatus())) {
                 int saving = calcSaving(c, originalAmount - totalDiscount);
                 if (saving > bestCashback) {
                     bestCashback = saving;
@@ -177,34 +177,80 @@ public class CouponServiceImpl implements CouponService {
 
         if (promo != null) {
             vo.setName(promo.getName());
-            vo.setType(promo.getType());
+            vo.setType(normalizeType(promo.getType()));
             vo.setRuleId(String.valueOf(promo.getPromoId()));
 
-            // 解析 ruleJson 字段提取 value / maxDiscount / minAmount / stackable
+            // 解析 ruleJson 字段，兼容多种字段命名风格
             Map<String, Object> rule = parseRuleJson(promo.getRuleJson());
             if (rule != null) {
-                if (rule.get("value") instanceof Number) {
-                    vo.setValue(((Number) rule.get("value")).doubleValue());
+                // value / discount / reduction / rate / amount 都映射为 value
+                Number val = getNumber(rule, "value", "discount", "reduction", "rate", "amount", "money", "price");
+                if (val != null) {
+                    double d = val.doubleValue();
+                    // 数据库中 DISCOUNT 可能存的是 8（表示8折）或 0.8（表示80%）
+                    // 统一转为 <1 的小数（如 0.8）
+                    if ("discount".equalsIgnoreCase(normalizeType(promo.getType())) && d > 1) {
+                        d = d / 10.0;
+                    }
+                    vo.setValue(d);
                 }
-                if (rule.get("maxDiscount") instanceof Number) {
-                    vo.setMaxDiscount(((Number) rule.get("maxDiscount")).intValue());
+                // maxDiscount / max_discount / cap / limit
+                Number maxDis = getNumber(rule, "maxDiscount", "max_discount", "cap", "limit", "max");
+                if (maxDis != null) {
+                    vo.setMaxDiscount(maxDis.intValue());
                 }
-                if (rule.get("minAmount") instanceof Number) {
-                    vo.setMinAmount(((Number) rule.get("minAmount")).intValue());
+                // minAmount / min_spend / minSpend / threshold / min
+                Number minAmt = getNumber(rule, "minAmount", "min_spend", "minSpend", "threshold", "min");
+                if (minAmt != null) {
+                    vo.setMinAmount(minAmt.intValue());
                 }
-                if (rule.get("stackable") instanceof Boolean) {
-                    vo.setStackable((Boolean) rule.get("stackable"));
+                // stackable / isStackable / canStack
+                Boolean stack = getBoolean(rule, "stackable", "isStackable", "canStack");
+                if (stack != null) {
+                    vo.setStackable(stack);
                 }
             }
         }
         return vo;
     }
 
+    /** 按多个候选 key 依次取 Number 值，兼容字符串形式的数字 */
+    private Number getNumber(Map<String, Object> map, String... keys) {
+        for (String k : keys) {
+            Object v = map.get(k);
+            if (v instanceof Number) return (Number) v;
+            if (v instanceof String) {
+                String s = ((String) v).trim();
+                if (s.isEmpty()) continue;
+                try {
+                    if (s.contains(".")) return Double.parseDouble(s);
+                    return Integer.parseInt(s);
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return null;
+    }
+
+    /** 按多个候选 key 依次取 Boolean 值，兼容字符串形式 */
+    private Boolean getBoolean(Map<String, Object> map, String... keys) {
+        for (String k : keys) {
+            Object v = map.get(k);
+            if (v instanceof Boolean) return (Boolean) v;
+            if (v instanceof String) {
+                String s = ((String) v).trim().toLowerCase();
+                if ("true".equals(s) || "1".equals(s)) return true;
+                if ("false".equals(s) || "0".equals(s)) return false;
+            }
+        }
+        return null;
+    }
+
     /** 计算一张优惠券在给定订单金额下预计节省金额 */
     private int calcSaving(CouponVO vo, int orderAmount) {
         if (vo.getValue() == null) return 0;
 
-        switch (vo.getType()) {
+        String type = normalizeType(vo.getType());
+        switch (type) {
             case "discount":
                 // value 为折扣率，如 0.85 表示 85 折
                 int saving = (int) Math.round(orderAmount * (1 - vo.getValue()));
@@ -214,6 +260,7 @@ public class CouponServiceImpl implements CouponService {
                 return saving;
 
             case "cashback":
+            case "voucher":
                 // value 为固定减免金额
                 int cashback = vo.getValue().intValue();
                 return Math.min(cashback, orderAmount); // 不能超过订单金额
@@ -221,6 +268,14 @@ public class CouponServiceImpl implements CouponService {
             default:
                 return 0;
         }
+    }
+
+    /** 统一优惠券类型为小写，兼容数据库中的大写及别名 */
+    private String normalizeType(String raw) {
+        if (raw == null) return "";
+        String t = raw.toLowerCase(Locale.ROOT);
+        if ("voucher".equals(t)) return "cashback";
+        return t;
     }
 
     /** 在列表中按 id 查找优惠券 */

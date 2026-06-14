@@ -28,9 +28,10 @@ public class StoreServiceImpl implements StoreService {
 
     @Override
     public List<StoreVO> listStores() {
-        // 查询所有营业中的门店（status = 1）
+        // 查询所有营业中的门店（status = 1），按 store_id 升序排列
         StoresExample example = new StoresExample();
         example.createCriteria().andStatusEqualTo((short) 1);
+        example.setOrderByClause("store_id ASC");
         List<Stores> storesList = storesMapper.selectByExample(example);
 
         // 如果数据库中暂无数据，回退查询所有门店

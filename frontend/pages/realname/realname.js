@@ -1,5 +1,5 @@
 // pages/realname/realname.js
-const { post } = require('../../utils/request')
+const { get, post } = require('../../utils/request')
 
 Page({
   data: {
@@ -11,11 +11,22 @@ Page({
   },
 
   onLoad() {
-    // 检查是否已认证（可从缓存或接口读取）
-    const cached = wx.getStorageSync('realnameInfo')
-    if (cached) {
-      this.setData({ verified: true, verifiedInfo: cached })
-    }
+    this.loadRealnameStatus()
+  },
+
+  /** 从后端查询当前用户的实名认证状态（不依赖本地缓存，避免多用户混用） */
+  loadRealnameStatus() {
+    get('/api/user/profile').then(res => {
+      if (res.code === 0 && res.data && res.data.isVerified) {
+        this.setData({
+          verified: true,
+          verifiedInfo: {
+            realName: res.data.realName,
+            idCardMask: res.data.idCardMask
+          }
+        })
+      }
+    })
   },
 
   onRealNameInput(e) {
@@ -39,9 +50,16 @@ Page({
     post('/api/user/realname', { realName, idCard }).then(res => {
       this.setData({ submitting: false })
       if (res.code === 0) {
-        wx.setStorageSync('realnameInfo', res.data)
         wx.showToast({ title: '认证成功', icon: 'success' })
+        // 更新本地缓存的用户信息（profile 里的实名字段）
+        const profile = wx.getStorageSync('userInfo') || {}
+        profile.isVerified = true
+        profile.realName = realName
+        profile.idCardMask = res.data.idCardMask
+        wx.setStorageSync('userInfo', profile)
         setTimeout(() => wx.navigateBack(), 1200)
+      } else {
+        wx.showToast({ title: res.message || '认证失败', icon: 'none' })
       }
     }).catch(() => this.setData({ submitting: false }))
   }
