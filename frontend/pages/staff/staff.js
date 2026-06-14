@@ -1,4 +1,4 @@
-// pages/staff/staff.js — 店员工作台（4Tab底部导航）
+// pages/staff/staff.js — 店员工作台（4Tab底部导航：订单/桌位/通知/告警）
 const { get, post } = require('../../utils/request')
 const app = getApp()
 
@@ -48,7 +48,7 @@ const ALL_STORES = [
 Page({
   data: {
     // 导航
-    activeTab: 'orders',   // orders | tables | alerts | profile
+    activeTab: 'orders',   // orders | tables | alerts | notification
     // 订单
     orderFilter: 'all', // booked | confirmed | making | serving | completed | refunding | cancelled | all | pending
     orders: [],

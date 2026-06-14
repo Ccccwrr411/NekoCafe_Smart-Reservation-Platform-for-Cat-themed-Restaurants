@@ -4,6 +4,8 @@ import cn.edu.bjfu.nekocafe.interceptor.AuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.*;
 
+import java.io.File;
+
 /**
  * Spring MVC 全局配置
  * 职责：
@@ -54,6 +56,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // 将 /uploads/** 映射到 classpath:/static/uploads/（开发环境）
         // 生产环境改为服务器磁盘路径，如 file:/data/nekocafe/uploads/
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("classpath:/static/uploads/");
+                .addResourceLocations(
+                        "classpath:/static/uploads/",
+                        "file:" + System.getProperty("user.dir") + File.separator + "uploads" + File.separator
+                );
     }
 }

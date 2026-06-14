@@ -18,13 +18,21 @@
     <!-- 积分进度条 -->
     <view class="points-section">
       <view class="points-header">
-        <text class="points-val">{{userInfo.points}} 积分</text>
-        <text class="points-hint">再积 {{userInfo.pointsToNext}} 分升级 {{userInfo.nextLevel}}</text>
+        <view class="points-left">
+          <text class="points-val">{{userInfo.points}}</text>
+          <text class="points-unit">积分</text>
+        </view>
+        <view class="points-right" wx:if="{{userInfo.pointsToNext > 0}}">
+          <text class="points-hint">再积 {{userInfo.pointsToNext}} 分升级 {{userInfo.nextLevel}}</text>
+        </view>
+        <view class="points-right" wx:else>
+          <text class="points-hint points-max">{{userInfo.nextLevel}}</text>
+        </view>
       </view>
-      <view class="progress-bar">
+      <view class="progress-bar" wx:if="{{userInfo.pointsToNext > 0}}">
         <view
           class="progress-fill"
-          style="width: {{userInfo.points * 100 / (userInfo.points + userInfo.pointsToNext)}}%"
+          style="width: {{(userInfo.points - (userInfo.levelStartPoints || 0)) * 100 / ((userInfo.nextLevelThreshold || 1) - (userInfo.levelStartPoints || 0))}}%"
         ></view>
       </view>
     </view>

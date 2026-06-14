@@ -242,51 +242,6 @@
       </view>
     </block>
 
-    <!-- ────── Tab: 我的 ────── -->
-    <block wx:if="{{!loading && activeTab === 'profile'}}">
-      <view class="profile-section">
-        <view class="profile-card">
-          <view class="profile-avatar">👤</view>
-          <view class="profile-info">
-            <text class="profile-name">{{userName || '店员'}}</text>
-            <text class="profile-role">{{userRole}}</text>
-          </view>
-        </view>
-        <!-- 今日统计 -->
-        <view class="profile-stats">
-          <view class="ps-item">
-            <text class="ps-val">{{todayOrderCount}}</text>
-            <text class="ps-label">今日订单</text>
-          </view>
-          <view class="ps-item">
-            <text class="ps-val">¥{{todayRevenue}}</text>
-            <text class="ps-label">今日营收</text>
-          </view>
-          <view class="ps-item">
-            <text class="ps-val">{{occupancyRate}}</text>
-            <text class="ps-label">上座率</text>
-          </view>
-        </view>
-        <!-- 快捷入口 -->
-        <view class="profile-menu">
-          <view class="menu-item" bindtap="onViewRefund">
-            <text class="menu-icon">💰</text>
-            <text class="menu-label">退款审核</text>
-            <text class="menu-arrow">›</text>
-          </view>
-          <view wx:if="{{userRoleId === 'manager' || userRoleId === 'hq_ops'}}" class="menu-item" bindtap="onViewDashboard">
-            <text class="menu-icon">📊</text>
-            <text class="menu-label">数据看板</text>
-            <text class="menu-arrow">›</text>
-          </view>
-        </view>
-        <!-- 退出 -->
-        <view class="btn-logout-wrap">
-          <view class="btn btn-block btn-danger" bindtap="onLogout">退出登录</view>
-        </view>
-      </view>
-    </block>
-
     <!-- ────── Tab: 通知中心 ────── -->
     <block wx:if="{{!loading && activeTab === 'notification'}}">
       <view class="notif-header">
@@ -392,20 +347,15 @@
       <text class="nav-icon">🪑</text>
       <text class="nav-label">桌位</text>
     </view>
-    <view class="nav-item-center {{activeTab === 'notification' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="notification">
-      <view class="nav-center-btn">
-        <text class="nav-center-icon">🔔</text>
-        <text wx:if="{{unreadCount > 0}}" class="nav-center-badge">{{unreadCount > 99 ? '99+' : unreadCount}}</text>
-      </view>
+    <view class="nav-item {{activeTab === 'notification' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="notification">
+      <text class="nav-icon">🔔</text>
+      <text class="nav-label">消息</text>
+      <text wx:if="{{unreadCount > 0}}" class="nav-badge">{{unreadCount > 99 ? '99+' : unreadCount}}</text>
     </view>
     <view class="nav-item {{activeTab === 'alerts' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="alerts">
       <text class="nav-icon">⚠️</text>
       <text class="nav-label">告警</text>
       <text wx:if="{{pendingAlertCount > 0}}" class="nav-badge nav-badge-red">{{pendingAlertCount}}</text>
-    </view>
-    <view class="nav-item {{activeTab === 'profile' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="profile">
-      <text class="nav-icon">👤</text>
-      <text class="nav-label">我的</text>
     </view>
   </view>
 
