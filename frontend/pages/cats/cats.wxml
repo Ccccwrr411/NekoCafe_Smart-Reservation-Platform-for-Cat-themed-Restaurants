@@ -72,16 +72,6 @@
         </view>
       </view>
 
-      <!-- 健康评分 -->
-      <view class="detail-card health-score-card">
-        <view class="detail-card-title">🏥 健康评分</view>
-        <view class="health-score-circle">
-          <text class="score-number">{{catDetail.healthScore}}</text>
-          <text class="score-label">分</text>
-        </view>
-        <text class="health-advice">{{catDetail.healthAdvice}}</text>
-      </view>
-
       <!-- 体重趋势图 -->
       <view class="detail-card">
         <view class="detail-card-title">📊 体重变化趋势（kg）</view>
@@ -89,16 +79,17 @@
           <text>当前体重：{{catDetail.currentWeight}}kg</text>
           <text class="weight-range">（理想范围 {{catDetail.idealWeight.min}}~{{catDetail.idealWeight.max}}kg）</text>
         </view>
-        <canvas type="2d" id="weightChart" class="weight-chart-canvas"></canvas>
+        <canvas wx:if="{{!showHealthForm}}" type="2d" id="weightChart" class="weight-chart-canvas"></canvas>
       </view>
 
       <!-- 疫苗记录 -->
       <view class="detail-card">
         <view class="detail-card-title">💉 疫苗记录</view>
+        <view wx:if="{{!catDetail.vaccines || catDetail.vaccines.length === 0}}" class="empty-hint">暂无疫苗记录</view>
         <view wx:for="{{catDetail.vaccines}}" wx:key="name" class="vaccine-item">
           <view class="vaccine-left">
             <text class="vaccine-name">{{item.name}}</text>
-            <text class="vaccine-date">{{item.date}} → {{item.nextDue}}</text>
+            <text class="vaccine-date">{{item.date}}<text wx:if="{{item.nextDue}}"> → 下次 {{item.nextDue}}</text></text>
           </view>
           <view class="vaccine-status {{item.status === 'valid' ? 'status-valid' : item.status === 'expiring' ? 'status-expiring' : 'status-expired'}}">
             {{item.status === 'valid' ? '有效' : item.status === 'expiring' ? '即将到期' : '已过期'}}
@@ -109,6 +100,7 @@
       <!-- 互动记录时间线 -->
       <view class="detail-card">
         <view class="detail-card-title">📝 互动记录</view>
+        <view wx:if="{{!catDetail.interactions || catDetail.interactions.length === 0}}" class="empty-hint">暂无互动记录</view>
         <view class="timeline">
           <view wx:for="{{catDetail.interactions}}" wx:key="date" class="timeline-item">
             <view class="timeline-dot {{item.mood === 'happy' ? 'mood-happy' : item.mood === 'grumpy' ? 'mood-grumpy' : 'mood-neutral'}}"></view>
@@ -124,8 +116,87 @@
       </view>
 
       <!-- 底部占位 -->
-      <view style="height: 40rpx;"></view>
+      <view style="height: 140rpx;"></view>
     </view>
+
+    <!-- 猫咪管家：浮动打卡按钮 -->
+    <view wx:if="{{isCatKeeper}}" class="fab-btn" catchtap="openHealthForm">+</view>
   </view>
 
+</view>
+
+<!-- ══════════ 健康打卡弹窗 ══════════ -->
+<view wx:if="{{showHealthForm}}" class="modal-mask">
+  <view class="modal-body" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">🐱 健康打卡 — {{catDetail.name}}</text>
+      <view class="modal-close" catchtap="closeHealthForm">✕</view>
+    </view>
+
+    <!-- 记录类型选择 -->
+    <view class="form-group">
+      <text class="form-label">记录类型</text>
+      <picker range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypeChange">
+        <view class="picker-value">
+          {{typeOptions[typeIndex].label}} ▾
+        </view>
+      </picker>
+    </view>
+
+    <!-- 体重 -->
+    <view wx:if="{{healthFormType === 'WEIGHT'}}" class="form-group">
+      <text class="form-label">体重（kg）</text>
+      <input class="form-input" type="digit" placeholder="例如 4.6" value="{{healthFormValue}}" bindinput="onValueInput" />
+    </view>
+
+    <!-- 疫苗 -->
+    <block wx:if="{{healthFormType === 'VACCINE'}}">
+      <view class="form-group">
+        <text class="form-label">疫苗名称</text>
+        <input class="form-input" placeholder="例如 猫三联" value="{{healthFormValue}}" bindinput="onValueInput" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">接种日期</text>
+        <picker mode="date" value="{{healthFormVaccineDate}}" bindchange="onVaccineDatePick">
+          <view class="picker-value">{{healthFormVaccineDate || '请选择日期'}} ▾</view>
+        </picker>
+      </view>
+      <view class="form-group">
+        <text class="form-label">下次接种日期（选填）</text>
+        <picker mode="date" value="{{healthFormNextDue}}" bindchange="onDatePick">
+          <view class="picker-value">{{healthFormNextDue || '请选择日期'}} ▾</view>
+        </picker>
+      </view>
+    </block>
+
+    <!-- 互动 -->
+    <block wx:if="{{healthFormType === 'INTERACTION'}}">
+      <view class="form-group">
+        <text class="form-label">互动类型</text>
+        <input class="form-input" placeholder="例如 梳毛、玩耍、喂食" value="{{healthFormValue}}" bindinput="onValueInput" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">猫咪心情</text>
+        <view class="mood-row">
+          <view class="mood-btn {{healthFormMood === 'happy' ? 'mood-active' : ''}}" data-mood="happy" bindtap="onMoodChange">😊 开心</view>
+          <view class="mood-btn {{healthFormMood === 'neutral' ? 'mood-active' : ''}}" data-mood="neutral" bindtap="onMoodChange">😐 一般</view>
+          <view class="mood-btn {{healthFormMood === 'grumpy' ? 'mood-active' : ''}}" data-mood="grumpy" bindtap="onMoodChange">😾 不爽</view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 备注（通用） -->
+    <view class="form-group">
+      <text class="form-label">备注（选填）</text>
+      <textarea class="form-textarea" placeholder="补充描述..." value="{{healthFormNote}}" bindinput="onNoteInput" />
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="form-actions">
+      <view class="btn-cancel" bindtap="closeHealthForm">取消</view>
+      <view class="btn-submit {{healthSubmitting ? 'btn-disabled' : ''}}" bindtap="submitHealthRecord">
+        {{healthSubmitting ? '提交中...' : '提交打卡'}}
+      </view>
+    </view>
+  </view>
 </view>

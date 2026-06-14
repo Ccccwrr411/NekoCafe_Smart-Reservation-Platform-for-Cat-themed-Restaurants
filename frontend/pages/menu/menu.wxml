@@ -8,6 +8,29 @@
     <text class="menu-store-arrow">▾</text>
   </view>
 
+  <!-- ══ 预约状态栏 ══ -->
+  <!-- 有预约：显示当前预约信息 + 切换按钮 -->
+  <view wx:if="{{currentReserve}}" class="reserve-status-bar" bindtap="onOpenReservationPicker">
+    <view class="rsb-left">
+      <text class="rsb-icon">📅</text>
+      <view class="rsb-info">
+        <text class="rsb-table">{{currentReserve.tableName}}（{{currentReserve.tableType}}）</text>
+        <text class="rsb-meta">{{currentReserve.reserveDate}} {{currentReserve.reserveTime}} · {{currentReserve.persons}}人</text>
+      </view>
+    </view>
+    <view class="rsb-right">
+      <text wx:if="{{reservationList.length > 1}}" class="rsb-count">{{reservationList.length}}个预约 ›</text>
+      <text wx:else class="rsb-check">✓ 已选</text>
+    </view>
+  </view>
+
+  <!-- 无预约：引导去预约 -->
+  <view wx:if="{{!currentReserve && !loading}}" class="no-reserve-bar" bindtap="goReserve">
+    <text class="nr-b-icon">📅</text>
+    <text class="nr-b-text">暂无预约，点单需要先预约桌位</text>
+    <text class="nr-b-btn">去预约</text>
+  </view>
+
   <view wx:if="{{loading}}" class="loading-wrap"><text>加载菜单中...</text></view>
 
   <view wx:else class="menu-layout">
@@ -128,6 +151,38 @@
     <view class="cart-panel-footer">
       <text>合计：</text>
       <text class="panel-total">¥{{cartTotal}}</text>
+    </view>
+  </view>
+
+  <!-- ══ 预约选择弹层（菜单页） ══ -->
+  <view wx:if="{{showReservationPicker}}" class="picker-mask" bindtap="onCloseReservationPicker"></view>
+  <view wx:if="{{showReservationPicker}}" class="reserve-picker-panel" catchtap="">
+    <view class="picker-handle"></view>
+    <view class="rpp-header">
+      <text class="rpp-title">切换预约（{{reservationList.length}}个）</text>
+      <text class="rpp-close" bindtap="onCloseReservationPicker">✕</text>
+    </view>
+    <scroll-view scroll-y class="rpp-list">
+      <view
+        wx:for="{{reservationList}}"
+        wx:key="orderId"
+        wx:for-item="item"
+        data-index="{{index}}"
+        class="rpp-item {{selectedReservationIdx === index ? 'rpp-item-on' : ''}}"
+        bindtap="onSelectReservation"
+      >
+        <view class="rpp-item-left">
+          <text class="rpp-store">{{item.storeName}}</text>
+          <text class="rpp-table">{{item.tableName}} · {{item.tableType}}</text>
+          <text class="rpp-time">{{item.reserveDate}} {{item.reserveTime}} · {{item.persons}}人 · {{item.duration}}h</text>
+        </view>
+        <view class="rpp-radio {{selectedReservationIdx === index ? 'radio-on' : ''}}">
+          <text wx:if="{{selectedReservationIdx === index}}">✓</text>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="rpp-footer">
+      <text class="rpp-footer-hint">不同预约将切换到对应门店菜单</text>
     </view>
   </view>
 

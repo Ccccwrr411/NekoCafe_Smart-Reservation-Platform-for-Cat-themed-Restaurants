@@ -20,9 +20,9 @@ public class CatController {
     @Autowired
     private CatService catService;
 
-    /** I-1 猫咪列表 */
+    /** I-1 猫咪列表（storeId 为 null 时返回全部，用于总部运营） */
     @GetMapping("/cats")
-    public Result<List<CatVO>> listCats(@RequestParam Integer storeId) {
+    public Result<List<CatVO>> listCats(@RequestParam(required = false) Integer storeId) {
         return Result.success(catService.listCats(storeId));
     }
 

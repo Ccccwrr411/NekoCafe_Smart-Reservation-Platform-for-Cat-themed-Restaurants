@@ -1,26 +1,40 @@
 /* pages/settings/settings.wxss */
 .container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #f7f0eb;
   padding-bottom: 100rpx;
 }
 
+.section-title {
+  font-size: 24rpx;
+  color: #a0846e;
+  margin: 28rpx 24rpx 12rpx;
+  font-weight: 500;
+  letter-spacing: 2rpx;
+}
+
 .card {
-  margin: 24rpx;
+  margin: 0 24rpx;
   background: #fff;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 
 .settings-section {
-  padding: 8rpx 0;
+  padding: 4rpx 0;
 }
 
 .setting-item {
   display: flex;
   align-items: center;
-  padding: 28rpx 24rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 24rpx 24rpx;
+  border-bottom: 1rpx solid #f5f0eb;
+  transition: background 0.2s;
+}
+
+.setting-item:active {
+  background: #faf8f6;
 }
 
 .setting-item:last-child {
@@ -31,13 +45,33 @@
   font-size: 36rpx;
   width: 48rpx;
   text-align: center;
+  margin-right: 12rpx;
 }
 
 .setting-label {
   flex: 1;
   font-size: 28rpx;
-  color: #333;
-  margin-left: 16rpx;
+  color: #3d3226;
+}
+
+.setting-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.setting-value {
+  font-size: 26rpx;
+  color: #b0a090;
+  max-width: 320rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setting-arrow {
+  font-size: 32rpx;
+  color: #d0c8be;
 }
 
 .setting-toggle-wrap {
@@ -48,26 +82,28 @@
   transform: scale(0.8);
 }
 
-.setting-value {
-  font-size: 26rpx;
-  color: #999;
-  margin-left: auto;
+/* 头像预览 */
+.avatar-preview {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  border: 2rpx solid #f0ebe4;
 }
 
-.setting-arrow {
-  font-size: 32rpx;
-  color: #ccc;
-  margin-left: auto;
-}
-
+/* 退出登录按钮 */
 .logout-btn {
-  margin: 24rpx 40rpx;
+  margin: 32rpx 24rpx;
   text-align: center;
-  padding: 24rpx;
+  padding: 26rpx;
   background: #fff;
-  border: 1rpx solid #ffccc7;
-  color: #E74C3C;
+  border: 1rpx solid #e8d5cc;
+  color: #c97e5a;
   border-radius: 24rpx;
   font-size: 28rpx;
-  font-weight: 600;
+  font-weight: 500;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+}
+
+.logout-btn:active {
+  background: #fef5f2;
 }

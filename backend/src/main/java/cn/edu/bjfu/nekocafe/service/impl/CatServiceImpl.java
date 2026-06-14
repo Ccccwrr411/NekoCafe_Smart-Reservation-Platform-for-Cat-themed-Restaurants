@@ -1,8 +1,10 @@
 package cn.edu.bjfu.nekocafe.service.impl;
 
+import cn.edu.bjfu.nekocafe.dto.CatHealthRecordDTO;
 import cn.edu.bjfu.nekocafe.entity.CatHealthRecords;
 import cn.edu.bjfu.nekocafe.entity.CatHealthRecordsExample;
 import cn.edu.bjfu.nekocafe.entity.CatProfiles;
+import cn.edu.bjfu.nekocafe.entity.CatProfilesExample;
 import cn.edu.bjfu.nekocafe.mapper.CatHealthRecordsMapper;
 import cn.edu.bjfu.nekocafe.mapper.CatProfilesMapper;
 import cn.edu.bjfu.nekocafe.service.CatService;
@@ -23,9 +25,6 @@ import java.util.stream.Collectors;
  *
  * I-1: listCats       — 获取门店猫咪列表
  * I-2: getCatDetail   — 猫咪详情（含健康记录、疫苗、互动等）
- *
- * 注意：当前 cat_profiles 表没有 store_id 字段，因此 listCats 暂返回全部猫咪。
- *       后续如需按门店筛选，请在 cat_profiles 新增 store_id INT 字段并修改此处。
  */
 @Service
 public class CatServiceImpl implements CatService {
@@ -40,10 +39,12 @@ public class CatServiceImpl implements CatService {
 
     @Override
     public List<CatVO> listCats(Integer storeId) {
-        // TODO: cat_profiles 表当前无 store_id 字段，暂返回全部猫咪
-        // 如需按门店筛选: CatProfilesExample ex = new CatProfilesExample();
-        //                     ex.createCriteria().andStoreIdEqualTo(storeId);
-        List<CatProfiles> cats = catProfilesMapper.selectByExample(null);
+        // 按门店筛选：storeId 为 null 时返回全部（总部运营）
+        CatProfilesExample ex = new CatProfilesExample();
+        if (storeId != null) {
+            ex.createCriteria().andStoreIdEqualTo(storeId);
+        }
+        List<CatProfiles> cats = catProfilesMapper.selectByExample(ex);
 
         List<CatVO> result = new ArrayList<>();
         for (CatProfiles cp : cats) {
@@ -104,29 +105,32 @@ public class CatServiceImpl implements CatService {
         chre.setOrderByClause("record_date DESC");
         List<CatHealthRecords> records = catHealthRecordsMapper.selectByExample(chre);
 
-        // 按 recordType 分组
+        // 按 recordType 分组（数据库中为大写如 VACCINE/WEIGHT/INTERACTION，统一转小写匹配）
         Map<String, List<CatHealthRecords>> grouped = records.stream()
                 .filter(r -> r.getRecordType() != null)
-                .collect(Collectors.groupingBy(CatHealthRecords::getRecordType));
+                .collect(Collectors.groupingBy(r -> r.getRecordType().toLowerCase()));
 
-        // 体重历史
+        // 体重历史（按日期升序，图表左旧右新）
         List<CatHealthRecords> weightRecords = grouped.getOrDefault("weight", Collections.emptyList());
         if (!weightRecords.isEmpty()) {
             CatVO.WeightHistoryVO wh = new CatVO.WeightHistoryVO();
             List<String> labels = new ArrayList<>();
             List<Double> values = new ArrayList<>();
-            for (CatHealthRecords r : weightRecords) {
-                if (r.getRecordDate() != null) {
-                    labels.add(r.getRecordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString());
-                }
+            // 显式按日期升序排列，不依赖前端翻转
+            List<CatHealthRecords> sortedWeight = weightRecords.stream()
+                .filter(r -> r.getRecordDate() != null)
+                .sorted(Comparator.comparing(CatHealthRecords::getRecordDate))
+                .collect(Collectors.toList());
+            for (CatHealthRecords r : sortedWeight) {
+                labels.add(r.getRecordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString());
                 try {
-                    values.add(Double.parseDouble(r.getRecordValue()));
+                    // 兼容 "4.6kg"/"4.6 kg"/"4.6" 等格式
+                    String rawVal = r.getRecordValue().replaceAll("(?i)kg", "").trim();
+                    values.add(Double.parseDouble(rawVal));
                 } catch (NumberFormatException e) {
                     values.add(null);
                 }
             }
-            Collections.reverse(labels); // 按时间升序
-            Collections.reverse(values);
             wh.setLabels(labels);
             wh.setValues(values);
             vo.setWeightHistory(wh);
@@ -143,8 +147,13 @@ public class CatServiceImpl implements CatService {
             }
             // 从 note 字段解析 nextDue（约定格式: nextDue=yyyy-MM-dd）
             if (r.getNote() != null && r.getNote().contains("nextDue=")) {
-                v.setNextDue(r.getNote().replace("nextDue=", "").trim());
-                v.setStatus(evalVaccineStatus(v.getNextDue()));
+                String nextDue = r.getNote().replaceAll(".*nextDue=(\\d{4}-\\d{2}-\\d{2}).*", "$1");
+                v.setNextDue(nextDue);
+                v.setStatus(evalVaccineStatus(nextDue));
+            } else {
+                // 没有 nextDue 信息，默认有效
+                v.setNextDue(null);
+                v.setStatus("valid");
             }
             vaccines.add(v);
         }
@@ -163,11 +172,18 @@ public class CatServiceImpl implements CatService {
                 iv.setDate(r.getRecordDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().toString());
             }
             iv.setType(r.getRecordValue());
-            iv.setDesc(r.getNote());
-            // mood 由 note 里的 mood=xxx 解析
-            if (r.getNote() != null && r.getNote().contains("mood=")) {
-                String moodStr = r.getNote().replaceAll(".*mood=([a-z]+).*", "$1");
-                iv.setMood(moodStr);
+            // note 格式: "mood=happy|描述文字" 或纯描述文字
+            if (r.getNote() != null) {
+                if (r.getNote().contains("mood=")) {
+                    String moodStr = r.getNote().replaceAll(".*mood=([a-z]+).*", "$1");
+                    iv.setMood(moodStr);
+                    // desc 为去掉 mood=xxx| 前缀后的描述
+                    String desc = r.getNote().replaceAll("mood=[a-z]+\\|?", "").trim();
+                    iv.setDesc(desc.isEmpty() ? null : desc);
+                } else {
+                    iv.setMood("neutral");
+                    iv.setDesc(r.getNote());
+                }
             } else {
                 iv.setMood("neutral");
             }
@@ -175,12 +191,59 @@ public class CatServiceImpl implements CatService {
         }
         vo.setInteractions(interactions);
 
-        // 健康评分：综合体重偏离 + 疫苗状态
-        int score = calcHealthScore(vo.getCurrentWeight(), vo.getIdealWeight(), vaccines);
-        vo.setHealthScore(score);
-        vo.setHealthAdvice(genHealthAdvice(score, vaccines));
-
         return vo;
+    }
+
+    // ==================== 健康打卡（猫咪管家专用） ====================
+
+    @Override
+    public Map<String, Object> addHealthRecord(CatHealthRecordDTO dto) {
+        // 参数校验
+        if (dto.getCatId() == null) {
+            return Map.of("success", false, "message", "catId 不能为空");
+        }
+        String type = dto.getRecordType();
+        if (type == null || (!type.equalsIgnoreCase("WEIGHT")
+                && !type.equalsIgnoreCase("VACCINE")
+                && !type.equalsIgnoreCase("INTERACTION"))) {
+            return Map.of("success", false, "message", "recordType 必须为 WEIGHT / VACCINE / INTERACTION");
+        }
+        if (dto.getRecordValue() == null || dto.getRecordValue().isBlank()) {
+            return Map.of("success", false, "message", "recordValue 不能为空");
+        }
+
+        // 构造实体
+        CatHealthRecords record = new CatHealthRecords();
+        record.setCatId(dto.getCatId());
+        record.setRecordType(type.toUpperCase()); // 统一大写存入
+        record.setRecordValue(dto.getRecordValue());
+        record.setNote(dto.getNote());
+        record.setRecordDate(dto.getRecordDate() != null ? dto.getRecordDate() : new Date());
+        record.setStaffId(dto.getStaffId());
+        record.setCreatedAt(new Date());
+
+        catHealthRecordsMapper.insertSelective(record);
+
+        // 如果是体重记录，同步更新 cat_profiles.weight_kg
+        if ("WEIGHT".equalsIgnoreCase(type)) {
+            try {
+                String rawVal = dto.getRecordValue().replaceAll("(?i)kg", "").trim();
+                BigDecimal weightKg = new BigDecimal(rawVal);
+                CatProfiles cp = catProfilesMapper.selectByPrimaryKey(dto.getCatId());
+                if (cp != null) {
+                    cp.setWeightKg(weightKg);
+                    catProfilesMapper.updateByPrimaryKeySelective(cp);
+                }
+            } catch (NumberFormatException ignored) {
+                // 体重值格式异常不影响记录插入
+            }
+        }
+
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("success", true);
+        resp.put("recordId", record.getRecordId());
+        resp.put("message", "打卡成功");
+        return resp;
     }
 
     // ==================== 私有辅助方法 ====================
@@ -231,48 +294,5 @@ public class CatServiceImpl implements CatService {
         } catch (Exception e) {
             return "valid";
         }
-    }
-
-    /** 计算健康评分 (0-100)，体重 40 分 + 疫苗 60 分 */
-    private int calcHealthScore(Double currentWeight, CatVO.IdealWeightVO ideal, List<CatVO.VaccineVO> vaccines) {
-        int score = 100;
-
-        // 体重评分
-        if (currentWeight != null && ideal != null && ideal.getMin() != null && ideal.getMax() != null) {
-            double min = ideal.getMin();
-            double max = ideal.getMax();
-            if (currentWeight < min) {
-                score -= (int) ((min - currentWeight) / min * 40);
-            } else if (currentWeight > max) {
-                score -= (int) ((currentWeight - max) / max * 40);
-            }
-        }
-
-        // 疫苗评分
-        long expired = vaccines.stream().filter(v -> "expired".equals(v.getStatus())).count();
-        long expiring = vaccines.stream().filter(v -> "expiring".equals(v.getStatus())).count();
-        score -= expired * 30 + expiring * 10;
-
-        return Math.max(0, Math.min(100, score));
-    }
-
-    /** 根据评分和疫苗状态生成健康建议 */
-    private String genHealthAdvice(int score, List<CatVO.VaccineVO> vaccines) {
-        StringBuilder sb = new StringBuilder();
-        if (score >= 90) {
-            sb.append("猫咪状态良好，继续保持当前护理方案。");
-        } else if (score >= 70) {
-            sb.append("猫咪健康状况一般，建议关注体重管理和疫苗计划。");
-        } else {
-            sb.append("猫咪健康需要关注，请尽快安排体检。");
-        }
-        boolean hasExpired = vaccines.stream().anyMatch(v -> "expired".equals(v.getStatus()));
-        boolean hasExpiring = vaccines.stream().anyMatch(v -> "expiring".equals(v.getStatus()));
-        if (hasExpired) {
-            sb.append(" 有疫苗已过期，请尽快补种。");
-        } else if (hasExpiring) {
-            sb.append(" 有疫苗即将到期，请安排补种。");
-        }
-        return sb.toString();
     }
 }

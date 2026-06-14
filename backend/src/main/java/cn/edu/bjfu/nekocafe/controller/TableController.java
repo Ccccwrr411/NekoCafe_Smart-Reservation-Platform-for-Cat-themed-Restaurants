@@ -19,9 +19,13 @@ public class TableController {
     @Autowired
     private TableService tableService;
 
-    /** C-1 桌位列表 */
+    /** C-1 桌位列表（支持时段冲突判断） */
     @GetMapping("/tables")
-    public Result<List<TableVO>> listTables(@RequestParam Integer storeId) {
-        return Result.success(tableService.listTables(storeId));
+    public Result<List<TableVO>> listTables(
+            @RequestParam Integer storeId,
+            @RequestParam(required = false) String reserveDate,
+            @RequestParam(required = false) String reserveTime,
+            @RequestParam(required = false) Integer duration) {
+        return Result.success(tableService.listTables(storeId, reserveDate, reserveTime, duration));
     }
 }

@@ -38,6 +38,15 @@ public interface ReservationsMapper {
             @Param("statuses") List<String> statuses);
 
     /**
+     * 按 userId + tableId + status 查询预约记录（用于确认订单等场景）。
+     * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换。
+     */
+    List<Reservations> selectByUserIdAndTableIdAndStatus(
+            @Param("userId") Long userId,
+            @Param("tableId") Integer tableId,
+            @Param("status") String status);
+
+    /**
      * 按门店ID和状态列表查询预约记录。
      * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换。
      */
@@ -50,4 +59,24 @@ public interface ReservationsMapper {
      * 对 status 字段使用 ::reservation_status 显式类型转换。
      */
     List<Reservations> selectByStoreId(@Param("storeId") Integer storeId);
+
+    /**
+     * 按用户ID查询全部预约记录（用于"全部"标签）。
+     */
+    List<Reservations> selectByUserId(@Param("userId") Long userId);
+
+    /**
+     * 按 tableId + status 列表查询活跃预约（用于时间段冲突判断）。
+     */
+    List<Reservations> selectByTableIdAndStatuses(
+            @Param("tableId") Integer tableId,
+            @Param("statuses") List<String> statuses);
+
+    /**
+     * 统计某桌位除指定预约外的活跃预约数量（用于判断取消/改约时是否应释放桌位）。
+     */
+    int countActiveByTableIdExcluding(
+            @Param("tableId") Integer tableId,
+            @Param("statuses") List<String> statuses,
+            @Param("excludeId") Long excludeId);
 }

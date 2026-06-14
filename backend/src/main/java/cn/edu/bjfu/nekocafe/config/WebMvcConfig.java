@@ -4,6 +4,8 @@ import cn.edu.bjfu.nekocafe.interceptor.AuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.*;
 
+import java.io.File;
+
 /**
  * Spring MVC 全局配置
  * 职责：
@@ -19,7 +21,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(new AuthInterceptor())
                 .addPathPatterns("/api/**")               // 拦截所有 /api 接口
                 .excludePathPatterns(
-                        "/api/auth/login",         // 登录接口
+                        "/api/auth/login",         // 微信登录接口
+                        "/api/auth/login/phone",   // 手机号密码登录接口
+                        "/api/auth/send-code",     // 发送验证码接口
+                        "/api/auth/register",      // 手机号注册接口
                         "/api/stores",             // 门店列表（公开浏览）
                         "/api/stores/**",          // 门店详情（公开浏览）
                         "/api/tables",             // 桌位列表（公开浏览）
@@ -51,6 +56,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // 将 /uploads/** 映射到 classpath:/static/uploads/（开发环境）
         // 生产环境改为服务器磁盘路径，如 file:/data/nekocafe/uploads/
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("classpath:/static/uploads/");
+                .addResourceLocations(
+                        "classpath:/static/uploads/",
+                        "file:" + System.getProperty("user.dir") + File.separator + "uploads" + File.separator
+                );
     }
 }

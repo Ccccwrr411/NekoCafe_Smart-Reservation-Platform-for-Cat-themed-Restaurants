@@ -12,12 +12,17 @@
     "pages/orderDetail/orderDetail",
     "pages/queue/queue",
     "pages/realname/realname",
+    "pages/register/register",
     "pages/coupons/coupons",
     "pages/cats/cats",
     "pages/dashboard/dashboard",
     "pages/orderList/orderList",
     "pages/map/map",
+
+    "pages/contact/contact",
+    "pages/settings/settings",
     "pages/staffDashboard/staffDashboard"
+
   ],
   "tabBar": {
     "color": "#999999",

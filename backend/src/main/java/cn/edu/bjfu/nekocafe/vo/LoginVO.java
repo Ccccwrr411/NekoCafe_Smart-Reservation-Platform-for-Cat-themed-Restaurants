@@ -15,8 +15,8 @@ public class LoginVO {
         private String email;
         private String memberLevel;
         private Integer points;
-        private String role;
-        private String roleLabel;
+        private Integer roleId;    // 当前角色ID
+        private Integer storeId;   // 所属门店ID（总部运营为null）
 
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -32,10 +32,10 @@ public class LoginVO {
         public void setMemberLevel(String memberLevel) { this.memberLevel = memberLevel; }
         public Integer getPoints() { return points; }
         public void setPoints(Integer points) { this.points = points; }
-        public String getRole() { return role; }
-        public void setRole(String role) { this.role = role; }
-        public String getRoleLabel() { return roleLabel; }
-        public void setRoleLabel(String roleLabel) { this.roleLabel = roleLabel; }
+        public Integer getRoleId() { return roleId; }
+        public void setRoleId(Integer roleId) { this.roleId = roleId; }
+        public Integer getStoreId() { return storeId; }
+        public void setStoreId(Integer storeId) { this.storeId = storeId; }
     }
 
     public String getToken() { return token; }

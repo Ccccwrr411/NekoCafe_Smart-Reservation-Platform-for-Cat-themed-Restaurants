@@ -1,4 +1,6 @@
 // pages/contact/contact.js
+const { get } = require('../../utils/request')
+
 Page({
   data: {
     contactInfo: {
@@ -6,11 +8,21 @@ Page({
       wechat: 'NekoCafe_Official',
       email: 'service@nekocafe.com',
       workTime: '10:00 - 22:00'
-    }
+    },
+    storeInfo: null
   },
 
   onLoad() {
     wx.setNavigationBarTitle({ title: '联系客服' })
+    this.loadStoreInfo()
+  },
+
+  loadStoreInfo() {
+    get('/api/stores').then(res => {
+      if (res.code === 0 && res.data && res.data.length > 0) {
+        this.setData({ storeInfo: res.data[0] })
+      }
+    }).catch(() => {})
   },
 
   makePhoneCall() {

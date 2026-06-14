@@ -1,4 +1,4 @@
-// pages/staff/staff.js — 店员工作台（4Tab底部导航）
+// pages/staff/staff.js — 店员工作台（4Tab底部导航：订单/桌位/通知/告警）
 const { get, post } = require('../../utils/request')
 const app = getApp()
 
@@ -48,7 +48,7 @@ const ALL_STORES = [
 Page({
   data: {
     // 导航
-    activeTab: 'orders',   // orders | tables | alerts | profile
+    activeTab: 'orders',   // orders | tables | alerts | notification
     // 订单
     orderFilter: 'all', // booked | confirmed | making | serving | completed | refunding | cancelled | all | pending
     orders: [],
@@ -58,7 +58,12 @@ Page({
     showAllDropdown: false,
     // 桌位
     tables: [],
+    filteredTables: [],
     tableViewMode: 'map',   // map | list
+    // 桌型筛选（不同分类使用不同筛选字段）
+    tableFilter: 'all',
+    tableTypes: ['all', '双人桌', '四人桌', '包间', '吧台位'],
+    tableTypeLabels: { all: '全部', '双人桌': '双人', '四人桌': '四人', '包间': '包间', '吧台位': '吧台' },
     countAvailable: 0,
     countOccupied: 0,
     countBooked: 0,
@@ -195,13 +200,30 @@ Page({
         countByStatus[o.status] = (countByStatus[o.status] || 0) + 1
       })
 
-      // 桌位处理
-      const tablesWithLabel = tables.map(t => ({
-        ...t,
-        id: t.tableId,
-        name: t.tableNo || ('桌 ' + t.tableId),
-        statusLabel: TABLE_STATUS_LABEL[t.status] || t.status
-      }))
+      // 桌位处理（补充实景平面图位置坐标）
+      const mapAreaW = 650   // 地图容器可用宽度 rpx
+      const mapAreaH = 500   // 地图容器可用高度 rpx
+      const cardW = 160      // 每张桌位卡片宽度
+      const cardH = 100      // 每张桌位卡片高度
+      const gapX = 30        // 水平间距
+      const gapY = 24        // 垂直间距
+      const cols = Math.floor((mapAreaW + gapX) / (cardW + gapX)) || 3
+
+      const tablesWithLabel = tables.map((t, idx) => {
+        // 如果后端已返回坐标则使用，否则按网格自动排列
+        const col = idx % cols
+        const row = Math.floor(idx / cols)
+        return {
+          ...t,
+          id: t.tableId,
+          name: t.tableNo || ('桌 ' + t.tableId),
+          statusLabel: TABLE_STATUS_LABEL[t.status] || t.status,
+          top: t.top !== undefined ? t.top : (24 + row * (cardH + gapY)),
+          left: t.left !== undefined ? t.left : (24 + col * (cardW + gapX)),
+          width: t.width || cardW,
+          height: t.height || cardH
+        }
+      })
       const countAvailable = tables.filter(t => t.status === 'available').length
       const countOccupied = tables.filter(t => t.status === 'occupied').length
       const countBooked = tables.filter(t => t.status === 'booked').length
@@ -268,7 +290,23 @@ Page({
         return s !== 'PENDING' && s !== 'ACKNOWLEDGED'
       })
     }
-    this.setData({ filteredOrders, filteredAlerts })
+    // 桌型筛选（不同分类使用不同筛选字段）
+    const { tables, tableFilter } = this.data
+    let filteredTables
+    if (tableFilter === 'all') {
+      filteredTables = tables
+    } else if (tableFilter === '双人桌') {
+      filteredTables = tables.filter(t => t.capacity === 2)
+    } else if (tableFilter === '四人桌') {
+      filteredTables = tables.filter(t => t.capacity === 4)
+    } else if (tableFilter === '包间') {
+      filteredTables = tables.filter(t => t.tableType && t.tableType.includes('包'))
+    } else if (tableFilter === '吧台位') {
+      filteredTables = tables.filter(t => t.tableType && t.tableType.includes('吧台'))
+    } else {
+      filteredTables = tables
+    }
+    this.setData({ filteredOrders, filteredAlerts, filteredTables })
   },
 
   onFilterOrder(e) {
@@ -294,6 +332,12 @@ Page({
   onFilterAlert(e) {
     const filter = e.currentTarget.dataset.filter
     this.setData({ alertFilter: filter })
+    this.applyFilters()
+  },
+
+  // ── 桌型筛选切换 ──────────────────────────────
+  onTableFilterChange(e) {
+    this.setData({ tableFilter: e.currentTarget.dataset.type })
     this.applyFilters()
   },
 
@@ -488,7 +532,8 @@ Page({
         wx.showLoading({ title: '处理中...' })
         post('/api/staff/refund/review', {
           refundId: refund.refundId, action: 'reject',
-          operatorId: app.globalData.userInfo?.id || null
+          operatorId: app.globalData.userInfo?.id || null,
+          rejectReason: res.content.trim() || '未填写'
         }).then(apiRes => {
           wx.hideLoading()
           if (apiRes.code === 0 && apiRes.data?.success) {

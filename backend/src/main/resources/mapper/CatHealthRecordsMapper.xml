@@ -110,7 +110,7 @@
       #{recordValue,jdbcType=VARCHAR}, #{recordDate,jdbcType=DATE}, #{note,jdbcType=VARCHAR}, 
       #{staffId,jdbcType=BIGINT}, #{createdAt,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.CatHealthRecords">
+  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.CatHealthRecords" useGeneratedKeys="true" keyProperty="recordId">
     insert into public.cat_health_records
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="recordId != null">
