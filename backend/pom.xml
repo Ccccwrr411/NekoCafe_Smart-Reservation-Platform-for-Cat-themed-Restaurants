@@ -77,6 +77,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- BCrypt 密码加密（独立库，不引入 spring-security 全家桶） -->
+		<dependency>
+			<groupId>org.mindrot</groupId>
+			<artifactId>jbcrypt</artifactId>
+			<version>0.4</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>

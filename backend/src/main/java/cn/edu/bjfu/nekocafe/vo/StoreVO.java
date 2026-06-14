@@ -17,7 +17,7 @@ public class StoreVO {
     private Integer avgPrice;
     private Double rating;
     private Integer catCount;
-    private String imageUrl;     // 完整 URL：http://host/uploads/stores/store_{id}.jpg
+    private String imageUrl;     // 完整 OSS URL，直接来自 stores.image_url 字段
     private List<String> tags;
     private String openTime;     // 来自 businessHours 字段
     private String status;       // 1→"open" / 0→"closed"

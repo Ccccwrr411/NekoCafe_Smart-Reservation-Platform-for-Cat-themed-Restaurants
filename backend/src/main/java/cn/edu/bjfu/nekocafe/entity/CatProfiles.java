@@ -22,6 +22,8 @@ public class CatProfiles {
 
     private Boolean isDefault;
 
+    private Integer storeId;
+
     private Date createdAt;
 
     public Integer getCatId() {
@@ -94,6 +96,14 @@ public class CatProfiles {
 
     public void setIsDefault(Boolean isDefault) {
         this.isDefault = isDefault;
+    }
+
+    public Integer getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(Integer storeId) {
+        this.storeId = storeId;
     }
 
     public Date getCreatedAt() {

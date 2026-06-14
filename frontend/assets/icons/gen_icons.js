@@ -109,8 +109,8 @@ function iconReserve(col) {
   fillRect(c, 51, 12, 57, 22, col);
   // 网格点
   for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 3; col++) {
-      const x = 22 + col * 15;
+    for (let j = 0; j < 3; j++) {
+      const x = 22 + j * 15;
       const y = 36 + row * 10;
       fillRect(c, x, y, x + 5, y + 5, col);
     }

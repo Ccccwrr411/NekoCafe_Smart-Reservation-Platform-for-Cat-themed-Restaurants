@@ -191,7 +191,14 @@ Page({
       const isSelected = selected.includes(coupon.id)
       const meetsMinAmount = amount >= (coupon.minAmount || 0)
       const isDisabled = !meetsMinAmount
-      const amountText = (type === 'discount') ? Math.round(coupon.value * 10) + '折' : '¥' + coupon.value
+      let amountText = ''
+      if (coupon.type === 'discount') {
+        amountText = (coupon.value != null && coupon.value > 0) ? Math.round(coupon.value * 10) + '折' : '规则异常'
+      } else if (coupon.type === 'cashback') {
+        amountText = (coupon.value != null) ? '¥' + coupon.value : '¥异常'
+      } else {
+        amountText = (coupon.value != null) ? '价值¥' + coupon.value : '异常'
+      }
       return {
         ...coupon,
         isSelected,
@@ -225,16 +232,26 @@ Page({
   buildCouponRuleText(coupon) {
     const min = coupon.minAmount
     const type = coupon.type
+    const val = coupon.value
     if (type === 'discount') {
-      const zhe = (coupon.value * 10).toFixed(0)
+      if (val == null || val <= 0) {
+        return (min != null ? '满¥' + min + ' ' : '') + '折扣券（规则数据异常）'
+      }
+      const zhe = (val * 10).toFixed(0)
       const max = coupon.maxDiscount
-      return '满¥' + min + ' 享' + zhe + '折，最高减¥' + max
+      return (min != null ? '满¥' + min + ' ' : '') + '享' + zhe + '折' + (max != null ? '，最高减¥' + max : '')
     }
     if (type === 'cashback') {
-      return '满¥' + min + ' 减¥' + coupon.value
+      if (val == null) {
+        return (min != null ? '满¥' + min + ' ' : '') + '满减券（规则数据异常）'
+      }
+      return (min != null ? '满¥' + min + ' ' : '') + '减¥' + val
     }
     if (type === 'freebie') {
-      return '赠价值¥' + coupon.value + '商品'
+      if (val == null) {
+        return '赠品券（规则数据异常）'
+      }
+      return (min != null ? '满¥' + min + ' ' : '') + '赠价值¥' + val + '商品'
     }
     return ''
   },
@@ -293,18 +310,39 @@ Page({
       return
     }
 
-    if (coupon.type === 'freebie' && selected.length > 0) {
-      wx.showToast({ title: '赠品券不可与其他优惠叠加', icon: 'none' })
-      return
-    }
-
     if (selected.includes(couponId)) {
+      // 取消选中
       selected = selected.filter(id => id !== couponId)
     } else {
-      if (selected.length >= maxStack) {
-        wx.showToast({ title: '最多叠加' + maxStack + '张优惠券', icon: 'none' })
+      // 选中前的各种校验
+
+      // 规则1：同类型优惠券不可叠加（折扣券、满减券各只能选1张）
+      const hasSameType = selected.some(id => {
+        const c = this.data.coupons.find(co => co.id === id)
+        return c && c.type === coupon.type
+      })
+      if (hasSameType && (coupon.type === 'discount' || coupon.type === 'cashback')) {
+        const typeName = coupon.type === 'discount' ? '折扣券' : '满减券'
+        wx.showToast({ title: `同类型${typeName}不可叠加使用`, icon: 'none' })
         return
       }
+
+      // 规则2：赠品券不可与其他优惠叠加
+      if (coupon.type === 'freebie' && selected.length > 0) {
+        wx.showToast({ title: '赠品券不可与其他优惠叠加', icon: 'none' })
+        return
+      }
+      // 已有其他券时不能再选赠品券（上面已覆盖）；已有赠品券时不能再选其他券
+      const hasFreebie = selected.some(id => {
+        const c = this.data.coupons.find(co => co.id === id)
+        return c && c.type === 'freebie'
+      })
+      if (hasFreebie && coupon.type !== 'freebie') {
+        wx.showToast({ title: '赠品券不可与其他优惠叠加', icon: 'none' })
+        return
+      }
+
+      // 规则3：不可叠加券只能单独使用
       if (!coupon.stackable && selected.length > 0) {
         wx.showToast({ title: '该优惠券不可与其他优惠叠加', icon: 'none' })
         return
@@ -319,6 +357,13 @@ Page({
           return
         }
       }
+
+      // 规则4：不超过最大叠加数
+      if (selected.length >= maxStack) {
+        wx.showToast({ title: '最多叠加' + maxStack + '张优惠券', icon: 'none' })
+        return
+      }
+
       selected.push(couponId)
     }
 
@@ -350,70 +395,112 @@ Page({
     }
   },
 
+  /**
+   * 计算优惠折扣（与后端 CouponServiceImpl.calculatePromotion 逻辑一致）
+   *
+   * 叠加规则（遵循 stackingRules）：
+   *   1. 同类型优惠券不可叠加使用
+   *   2. 折扣券(discount)优先于满减券(cashback)计算
+   *   3. 折扣券最多选 1 张（不可叠加），满减券取优惠力度最大的一张
+   *   4. 折扣券按 minAmount 门槛判断，对当前剩余金额打折（递减式）
+   *   5. 满减券固定减额，不能超过剩余金额
+   *   6. 平台促销(platform)仅在无不可叠加优惠券时参与，与满减券互斥
+   */
   calcDiscount(selectedCouponIds, cartTotalOverride) {
     const cartTotal = cartTotalOverride != null ? cartTotalOverride : this.data.cartTotal
     const { coupons, promotions } = this.data
     let totalDiscount = 0
+    let remainingAmount = cartTotal
     const breakdown = [this.buildBreakdownItem('商品原价', cartTotal)]
 
+    // ── 1. 折扣券（最多 1 张，优先计算，对剩余金额打折）──
+    let bestDiscountCoupon = null
+    let bestDiscountSaving = 0
     selectedCouponIds.forEach(id => {
       const coupon = coupons.find(c => c.id === id)
-      if (!coupon) return
-      if (coupon.type === 'discount') {
-        if (cartTotal < (coupon.minAmount || 0)) return
-        let saving = Math.round(cartTotal * (1 - coupon.value))
-        if (coupon.maxDiscount && saving > coupon.maxDiscount) saving = coupon.maxDiscount
-        totalDiscount += saving
-        breakdown.push(this.buildBreakdownItem(coupon.name, -saving, 'discount'))
+      if (!coupon || coupon.type !== 'discount') return
+      if (coupon.value == null || coupon.value <= 0) return
+      if (remainingAmount < (coupon.minAmount || 0)) return
+      // 折扣券按当前剩余金额计算节省金额
+      let saving = Math.round(remainingAmount * (1 - coupon.value))
+      if (coupon.maxDiscount && saving > coupon.maxDiscount) {
+        saving = coupon.maxDiscount
+      }
+      if (saving > bestDiscountSaving) {
+        bestDiscountSaving = saving
+        bestDiscountCoupon = coupon
       }
     })
+    if (bestDiscountCoupon) {
+      totalDiscount += bestDiscountSaving
+      remainingAmount -= bestDiscountSaving
+      breakdown.push(this.buildBreakdownItem(bestDiscountCoupon.name, -bestDiscountSaving, 'discount'))
+    }
 
-    const applicablePromo = promotions
-      .filter(p => cartTotal >= p.minAmount)
-      .sort((a, b) => b.value - a.value)
-
+    // ── 2. 满减券（取优惠力度最大的一张，不可与多张叠加）──
+    let bestCashbackCoupon = null
+    let bestCashbackSaving = 0
     selectedCouponIds.forEach(id => {
       const coupon = coupons.find(c => c.id === id)
       if (!coupon || coupon.type !== 'cashback') return
-      if (cartTotal >= coupon.minAmount) {
-        totalDiscount += coupon.value
-        breakdown.push(this.buildBreakdownItem(coupon.name, -coupon.value, 'cashback'))
+      if (coupon.value == null || coupon.value <= 0) return
+      if (remainingAmount < (coupon.minAmount || 0)) return
+      let saving = Math.min(coupon.value, remainingAmount)
+      if (saving > bestCashbackSaving) {
+        bestCashbackSaving = saving
+        bestCashbackCoupon = coupon
       }
     })
+    if (bestCashbackCoupon) {
+      totalDiscount += bestCashbackSaving
+      remainingAmount -= bestCashbackSaving
+      breakdown.push(this.buildBreakdownItem(bestCashbackCoupon.name, -bestCashbackSaving, 'cashback'))
+    }
 
+    // ── 3. 平台促销活动（与满减券互斥，仅在无不可叠加券时参与）──
     const hasNonStackableCoupon = selectedCouponIds.some(id => {
       const c = coupons.find(co => co.id === id)
       return c && !c.stackable
     })
+    const hasCashback = bestCashbackCoupon != null
+
+    // 筛选满足门槛的平台促销，按优惠力度排序
+    const applicablePromo = (promotions || [])
+      .filter(p => {
+        const minAmt = p.minAmount != null ? p.minAmount : 0
+        return remainingAmount >= minAmt
+      })
+      .sort((a, b) => (b.value || 0) - (a.value || 0))
 
     if (!hasNonStackableCoupon && applicablePromo.length > 0) {
       const bestPromo = applicablePromo[0]
-      const hasCashback = selectedCouponIds.some(id => {
-        const c = coupons.find(co => co.id === id)
-        return c && c.type === 'cashback'
-      })
       if (!hasCashback) {
-        totalDiscount += bestPromo.value
-        breakdown.push(this.buildBreakdownItem(bestPromo.name, -bestPromo.value, 'platform'))
+        const promoValue = bestPromo.value || 0
+        totalDiscount += promoValue
+        remainingAmount -= promoValue
+        breakdown.push(this.buildBreakdownItem(bestPromo.name, -promoValue, 'platform'))
       } else {
         breakdown.push(this.buildBreakdownItem(
           '平台' + bestPromo.name + '（与满减券冲突，已跳过）', 0, 'skipped'
         ))
       }
-    } else if (applicablePromo.length > 0) {
+    } else if (applicablePromo.length > 0 && hasNonStackableCoupon) {
       breakdown.push(this.buildBreakdownItem(
         '平台满减（已有不可叠加优惠，已跳过）', 0, 'skipped'
       ))
     }
 
+    // ── 4. 赠品券（单独计算，价值叠加）──
     selectedCouponIds.forEach(id => {
       const coupon = coupons.find(c => c.id === id)
       if (!coupon || coupon.type !== 'freebie') return
+      if (coupon.value == null || coupon.value <= 0) return
       totalDiscount += coupon.value
+      remainingAmount -= coupon.value
       breakdown.push(this.buildBreakdownItem(coupon.name, -coupon.value, 'freebie'))
     })
 
-    const finalTotal = Math.max(0, cartTotal - totalDiscount)
+    const finalTotal = Math.max(0, remainingAmount)
     return { totalDiscount, finalTotal, discountBreakdown: breakdown }
   },
 

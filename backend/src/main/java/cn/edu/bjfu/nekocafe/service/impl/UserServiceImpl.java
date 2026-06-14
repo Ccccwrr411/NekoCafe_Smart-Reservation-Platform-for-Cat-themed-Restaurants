@@ -92,6 +92,14 @@ public class UserServiceImpl implements UserService {
             vo.setJoinDate(DATE_FMT.format(user.getCreatedAt()));
         }
 
+        // 实名认证信息
+        boolean isVerified = user.getIsVerified() != null && user.getIsVerified();
+        vo.setIsVerified(isVerified);
+        if (isVerified) {
+            vo.setRealName(user.getRealName());
+            vo.setIdCardMask(maskIdCard(user.getIdCard()));
+        }
+
         return vo;
     }
 

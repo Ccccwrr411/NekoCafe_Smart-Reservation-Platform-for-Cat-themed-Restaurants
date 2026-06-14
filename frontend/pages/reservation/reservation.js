@@ -230,9 +230,9 @@ Page({
       wx.showToast({ title: table.status === 'booked' ? '该桌已被预约' : '该桌维护中', icon: 'none' })
       return
     }
-    this.setData({ 
+    this.setData({
       selectedTable: table,
-      showTablePopup: true 
+      showTablePopup: true
     })
   },
 
@@ -284,7 +284,7 @@ Page({
     if (!selectedTable) return
 
     wx.showLoading({ title: '提交中...' })
-    
+
     post('/api/reservation/create', {
       storeId,
       tableId: selectedTable.id,

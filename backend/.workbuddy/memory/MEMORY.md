@@ -19,7 +19,7 @@
 - userId 来源：所有需要认证的接口从 `request.getAttribute("userId")` 获取（由拦截器注入）
 - MemberExt.level 等级映射：1→普通会员, 2→银卡会员, 3→金卡会员, 4→黑卡会员
 - Stores.status 映射：1→"open", 0→"closed"
-- 图片 URL 格式：`http://host/uploads/{type}/{filename}`
+- 图片 URL：直接从数据库字段读取完整 OSS URL（如 `https://nekocafe-images.oss-cn-beijing.aliyuncs.com/uploads/...`），**禁止后端拼接路径**；stores.image_url / dishes.image_url / cat_profiles.avatar_url / users.avatar_url；涉及 Redis 缓存的图片数据需注意缓存 key 版本管理
 
 ## 接口分组
 - A: 认证（1个）

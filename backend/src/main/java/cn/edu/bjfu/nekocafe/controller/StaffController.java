@@ -1,6 +1,8 @@
 package cn.edu.bjfu.nekocafe.controller;
 
 import cn.edu.bjfu.nekocafe.common.Result;
+import cn.edu.bjfu.nekocafe.dto.CatHealthRecordDTO;
+import cn.edu.bjfu.nekocafe.service.CatService;
 import cn.edu.bjfu.nekocafe.service.StaffService;
 import cn.edu.bjfu.nekocafe.vo.DashboardMetricsVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,11 @@ import java.util.Map;
  *       L-3 GET /api/staff/orders
  *       L-4 POST /api/staff/order/accept
  *       L-5 POST /api/staff/table/dispatch
+ *       L-6 POST /api/staff/order/progress
+ *       L-7 GET /api/staff/refunds
+ *       L-8 POST /api/staff/refund/review
+ *       L-9 POST /api/staff/alert/acknowledge
+ *       L-10 POST /api/staff/alert/resolve
  */
 @RestController
 @RequestMapping("/api")
@@ -24,6 +31,9 @@ public class StaffController {
 
     @Autowired
     private StaffService staffService;
+
+    @Autowired
+    private CatService catService;
 
     /** K-1 运营指标看板 */
     @GetMapping("/dashboard/metrics")
@@ -107,5 +117,17 @@ public class StaffController {
         Long operatorId = body.get("operatorId") != null
                 ? Long.valueOf(body.get("operatorId").toString()) : null;
         return Result.success(staffService.resolveAlert(exceptionId, resolution, operatorId));
+    }
+
+
+    /** 猫咪健康打卡（猫咪管家 cat_keeper 专用） */
+    @PostMapping("/staff/cat/health")
+    public Result<?> addCatHealthRecord(@RequestBody CatHealthRecordDTO dto) {
+        Map<String, Object> result = catService.addHealthRecord(dto);
+        if (Boolean.TRUE.equals(result.get("success"))) {
+            return Result.success(result);
+        } else {
+            return Result.error(1, result.get("message").toString());
+        }
     }
 }
