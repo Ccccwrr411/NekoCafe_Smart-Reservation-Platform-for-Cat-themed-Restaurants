@@ -45,9 +45,9 @@ public class Result<T> {
         return success(null);
     }
 
-    // 失败时的快捷返回方法
-    public static Result<?> error(Integer code, String message) {
-        Result<?> result = new Result<>();
+    // 失败时的快捷返回方法（带泛型，兼容需要特定 Result<T> 的场景）
+    public static <T> Result<T> error(Integer code, String message) {
+        Result<T> result = new Result<>();
         result.setCode(code);
         result.setMessage(message);
         return result;

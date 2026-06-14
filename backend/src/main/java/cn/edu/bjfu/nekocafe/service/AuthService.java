@@ -14,6 +14,12 @@ import java.util.Map;
 public interface AuthService {
 
     /**
+     * 微信快捷登录（仅用 code 查 openid）
+     * 流程：code → 查 users.openid → 找到则签发 JWT，找不到返回错误提示注册
+     */
+    LoginVO wxQuickLogin(String code);
+
+    /**
      * 微信登录（A-1）
      * 流程：code → 调微信 API 换 openid → 查/创建用户 → 签发 JWT
      */

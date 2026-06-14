@@ -1,11 +1,26 @@
 /* pages/register/register.wxss */
+
+/* ============================================
+   设计系统 - 与登录页完全统一
+   主色: #C97E5A (温暖陶土色)
+   辅色: #F5EDE6 (奶油底色)
+   卡片: #FFFFFF
+   文字: #2D2420 (深棕) / #8B7355 (浅棕)
+   ============================================ */
+
+/* ── 容器 ── */
 .register-container {
-  min-height: 100vh;
-  background: linear-gradient(160deg, #C97E5A 0%, #F7F0EB 60%);
+  height: 100vh;
+  background: #F5EDE6;
+  box-sizing: border-box;
+}
+
+.register-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 60rpx 48rpx 60rpx;
+  width: 100%;
+  padding: 80rpx 40rpx 60rpx;
   box-sizing: border-box;
 }
 
@@ -14,104 +29,172 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 36rpx;
+  margin-bottom: 44rpx;
 }
-.logo-cat  { font-size: 80rpx; margin-bottom: 12rpx; }
-.logo-name { font-size: 44rpx; font-weight: 800; color: #fff; letter-spacing: 4rpx; }
-.logo-sub  { font-size: 24rpx; color: rgba(255,255,255,0.85); margin-top: 10rpx; }
+.logo-cat {
+  font-size: 80rpx;
+  margin-bottom: 12rpx;
+}
+.logo-name {
+  font-size: 42rpx;
+  font-weight: 700;
+  color: #C97E5A;
+  letter-spacing: 4rpx;
+}
+.logo-sub {
+  font-size: 24rpx;
+  color: #A0897A;
+  margin-top: 10rpx;
+  letter-spacing: 2rpx;
+}
 
 /* ── 角色选择 ── */
 .role-section {
   width: 100%;
-  background: rgba(255,255,255,0.95);
-  border-radius: 28rpx;
-  padding: 32rpx 24rpx 24rpx;
+  background: #FFF;
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx 24rpx;
   box-sizing: border-box;
-  margin-bottom: 28rpx;
-  box-shadow: 0 8rpx 32rpx rgba(201,126,90,0.18);
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 20rpx rgba(0, 0, 0, 0.04);
 }
 .role-title {
   font-size: 26rpx;
-  color: #999;
+  color: #8B7355;
   text-align: center;
   display: block;
-  margin-bottom: 24rpx;
-  letter-spacing: 1rpx;
+  margin-bottom: 22rpx;
+  font-weight: 500;
 }
 .role-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16rpx;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12rpx;
 }
 .role-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20rpx 6rpx 16rpx;
-  background: #F7F0EB;
-  border-radius: 18rpx;
+  padding: 18rpx 4rpx 14rpx;
+  background: #F8F4F0;
+  border-radius: 16rpx;
   border: 2rpx solid transparent;
-  transition: all 0.15s;
+  transition: all 0.2s;
 }
 .role-card-active {
   background: #FFF5F0;
   border-color: #C97E5A;
-  box-shadow: 0 0 0 4rpx rgba(201,126,90,0.15);
+  box-shadow: 0 0 0 3rpx rgba(201, 126, 90, 0.12);
 }
-.role-icon  { font-size: 48rpx; margin-bottom: 8rpx; }
-.role-name  { font-size: 25rpx; font-weight: 600; color: #333; }
-.role-name-en { font-size: 19rpx; color: #999; margin-top: 4rpx; }
-.role-card-active .role-name { color: #C97E5A; }
+.role-icon {
+  font-size: 40rpx;
+  margin-bottom: 6rpx;
+}
+.role-name {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #2D2420;
+}
+.role-name-en {
+  font-size: 18rpx;
+  color: #B8A390;
+  margin-top: 2rpx;
+}
+.role-card-active .role-name {
+  color: #C97E5A;
+}
+
+/* ── 门店选择 ── */
+.store-section {
+  width: 100%;
+  background: #FFF;
+  border-radius: 24rpx;
+  padding: 28rpx 28rpx 24rpx;
+  box-sizing: border-box;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 20rpx rgba(0, 0, 0, 0.04);
+}
+.store-title {
+  font-size: 26rpx;
+  color: #8B7355;
+  display: block;
+  margin-bottom: 16rpx;
+  font-weight: 500;
+}
+.store-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  background: #F8F4F0;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  border: 2rpx solid transparent;
+}
+.store-picker-text {
+  font-size: 28rpx;
+  color: #2D2420;
+}
+.store-picker-text.placeholder {
+  color: #C4B8AC;
+}
+.store-picker-arrow {
+  font-size: 22rpx;
+  color: #C97E5A;
+}
 
 /* ── 表单卡片 ── */
 .form-card {
   width: 100%;
-  background: rgba(255,255,255,0.95);
-  border-radius: 28rpx;
-  padding: 36rpx 28rpx;
+  background: #FFF;
+  border-radius: 24rpx;
+  padding: 32rpx 28rpx;
   box-sizing: border-box;
-  margin-bottom: 36rpx;
-  box-shadow: 0 8rpx 32rpx rgba(201,126,90,0.18);
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 20rpx rgba(0, 0, 0, 0.04);
 }
 .form-item {
-  margin-bottom: 28rpx;
+  margin-bottom: 24rpx;
 }
 .form-item:last-child {
   margin-bottom: 0;
 }
 .form-label {
   font-size: 26rpx;
-  color: #666;
+  color: #8B7355;
   margin-bottom: 12rpx;
   display: block;
+  font-weight: 500;
 }
 .form-input {
   width: 100%;
   height: 88rpx;
-  background: #F7F0EB;
+  background: #F8F4F0;
   border-radius: 16rpx;
   padding: 0 24rpx;
-  font-size: 30rpx;
-  color: #333;
+  font-size: 28rpx;
+  color: #2D2420;
   box-sizing: border-box;
   border: 2rpx solid transparent;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
-/* 输入框错误态：红色边框 */
+.form-input:focus {
+  border-color: #C97E5A;
+  background: #FFF8F4;
+}
 .form-input.input-error {
-  border-color: #E53935;
+  border-color: #E57373;
   background: #FFF5F5;
 }
 
 /* ── 行内错误提示 ── */
 .field-error {
   display: block;
-  font-size: 24rpx;
-  color: #E53935;
+  font-size: 22rpx;
+  color: #E57373;
   margin-top: 8rpx;
   padding-left: 4rpx;
-  line-height: 1.4;
 }
 
 /* ── 验证码行 ── */
@@ -130,46 +213,53 @@
   line-height: 88rpx;
   font-size: 24rpx;
   background: #C97E5A;
-  color: #fff;
+  color: #FFF;
   border-radius: 16rpx;
   text-align: center;
   padding: 0;
   border: none;
+  font-weight: 500;
 }
 .btn-send-code::after { border: none; }
 .btn-code-disabled {
-  background: #ccc !important;
-  color: #999 !important;
+  background: #D4C5B9 !important;
+  color: #FFF !important;
+}
+
+/* ── 沙箱验证码提示 ── */
+.sandbox-hint {
+  margin-top: 10rpx;
+  padding: 10rpx 16rpx;
+  background: #FFF8E1;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  color: #E65100;
+  font-weight: 500;
 }
 
 /* ── 注册按钮 ── */
 .btn-register {
   width: 100%;
   background: #C97E5A;
-  color: #fff;
-  border-radius: 50rpx;
+  color: #FFF;
+  border-radius: 48rpx;
   height: 96rpx;
   line-height: 96rpx;
   font-size: 32rpx;
   font-weight: 600;
   border: none;
-  margin-bottom: 24rpx;
-  box-shadow: 0 6rpx 20rpx rgba(201,126,90,0.4);
+  margin-bottom: 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(201, 126, 90, 0.3);
+  transition: all 0.2s;
 }
 .btn-register::after { border: none; }
-.btn-disabled {
-  background: #ccc !important;
-  box-shadow: none !important;
+.btn-register:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
-
-/* ── 沙箱验证码提示 ── */
-.sandbox-hint {
-  margin-top: 8rpx;
-  padding: 8rpx 16rpx;
-  background: #FFF8E1;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  color: #E65100;
+.btn-disabled {
+  background: #D4C5B9 !important;
+  box-shadow: none !important;
 }
 
 /* ── 返回登录 ── */
@@ -177,44 +267,5 @@
   text-align: center;
   font-size: 28rpx;
   color: #C97E5A;
-  margin-top: 24rpx;
-}
-
-/* ── 门店选择 ── */
-.store-section {
-  width: 100%;
-  background: rgba(255,255,255,0.95);
-  border-radius: 28rpx;
-  padding: 28rpx 28rpx 24rpx;
-  box-sizing: border-box;
-  margin-bottom: 28rpx;
-  box-shadow: 0 8rpx 32rpx rgba(201,126,90,0.18);
-}
-.store-title {
-  font-size: 26rpx;
-  color: #999;
-  display: block;
-  margin-bottom: 20rpx;
-  letter-spacing: 1rpx;
-}
-.store-picker {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 88rpx;
-  background: #F7F0EB;
-  border-radius: 16rpx;
-  padding: 0 24rpx;
-  border: 2rpx solid transparent;
-}
-.store-picker-text {
-  font-size: 30rpx;
-  color: #333;
-}
-.store-picker-text.placeholder {
-  color: #bbb;
-}
-.store-picker-arrow {
-  font-size: 24rpx;
-  color: #999;
+  padding: 8rpx 0 20rpx;
 }

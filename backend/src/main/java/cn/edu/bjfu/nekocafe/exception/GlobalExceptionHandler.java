@@ -23,6 +23,12 @@ public class GlobalExceptionHandler {
         return Result.error(e.getCode(), e.getMessage());
     }
 
+    /** 业务参数校验异常 → 400，message 原样返回 */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Result<?> handleIllegalArgument(IllegalArgumentException e) {
+        return Result.error(ErrorCode.BAD_REQUEST, e.getMessage());
+    }
+
     /** Spring 找不到静态资源时抛出的异常，直接返回 404 即可 */
     @ExceptionHandler(NoResourceFoundException.class)
     public Result<?> handleNoResource(NoResourceFoundException e) {

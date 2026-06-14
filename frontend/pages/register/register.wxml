@@ -1,5 +1,6 @@
 <!--pages/register/register.wxml-->
-<view class="register-container">
+<scroll-view scroll-y="true" class="register-container" enhanced="{{true}}" show-scrollbar="{{false}}">
+<view class="register-inner">
 
   <!-- Logo -->
   <view class="register-logo">
@@ -151,3 +152,4 @@
   </view>
 
 </view>
+</scroll-view>

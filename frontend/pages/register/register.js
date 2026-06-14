@@ -29,7 +29,11 @@ Page({
   },
 
   // ── 生命周期 ──
-  onLoad() {
+  onLoad(options) {
+    // 如果从登录页跳转过来，自动填充手机号
+    if (options && options.phone) {
+      this.setData({ phone: options.phone })
+    }
     // 获取门店列表（非顾客注册时需要选择门店）
     get('/api/stores').then(res => {
       if (res.code === 0 && res.data) {
@@ -111,6 +115,12 @@ Page({
       && password.length > 0
       && confirmPassword.length > 0
     this.setData({ canSubmit })
+  },
+  // 供页面加载时初始化检查
+  onReady() {
+    if (this.data.phone) {
+      this.checkForm()
+    }
   },
 
   // ── 发送验证码 ──
