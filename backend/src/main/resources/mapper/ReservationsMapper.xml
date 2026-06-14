@@ -78,8 +78,8 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    reservation_id, user_id, store_id, table_id, cat_profile_id, reservation_time, duration_min, 
-    party_size, special_request, order_amount, total_amount, status, points_used, points_earned, 
+    reservation_id, user_id, store_id, table_id, cat_profile_id, reservation_time, duration_min,
+    party_size, special_request, order_amount, total_amount, status, points_used, points_earned,
     created_at, updated_at
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.ReservationsExample" resultMap="BaseResultMap">
@@ -97,7 +97,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    select 
+    select
     <include refid="Base_Column_List" />
     from public.reservations
     where reservation_id = #{reservationId,jdbcType=BIGINT}
@@ -113,20 +113,21 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations">
-    insert into public.reservations (reservation_id, user_id, store_id, 
-      table_id, cat_profile_id, reservation_time, 
-      duration_min, party_size, special_request, 
-      order_amount, total_amount, status, 
-      points_used, points_earned, created_at, 
+    insert into public.reservations (reservation_id, user_id, store_id,
+      table_id, cat_profile_id, reservation_time,
+      duration_min, party_size, special_request,
+      order_amount, total_amount, status,
+      points_used, points_earned, created_at,
       updated_at)
-    values (#{reservationId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, #{storeId,jdbcType=INTEGER}, 
-      #{tableId,jdbcType=INTEGER}, #{catProfileId,jdbcType=INTEGER}, #{reservationTime,jdbcType=TIMESTAMP}, 
-      #{durationMin,jdbcType=INTEGER}, #{partySize,jdbcType=INTEGER}, #{specialRequest,jdbcType=VARCHAR}, 
-      #{orderAmount,jdbcType=NUMERIC}, #{totalAmount,jdbcType=NUMERIC}, #{status}::reservation_status, 
-      #{pointsUsed,jdbcType=INTEGER}, #{pointsEarned,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP}, 
+    values (#{reservationId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, #{storeId,jdbcType=INTEGER},
+      #{tableId,jdbcType=INTEGER}, #{catProfileId,jdbcType=INTEGER}, #{reservationTime,jdbcType=TIMESTAMP},
+      #{durationMin,jdbcType=INTEGER}, #{partySize,jdbcType=INTEGER}, #{specialRequest,jdbcType=VARCHAR},
+      #{orderAmount,jdbcType=NUMERIC}, #{totalAmount,jdbcType=NUMERIC}, #{status}::reservation_status,
+      #{pointsUsed,jdbcType=INTEGER}, #{pointsEarned,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP},
       #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations">
+  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations"
+    useGeneratedKeys="true" keyProperty="reservationId" keyColumn="reservation_id">
     insert into public.reservations
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="reservationId != null">
@@ -397,6 +398,32 @@
       <foreach collection="statuses" item="s" open="(" separator="," close=")">
         #{s}::reservation_status
       </foreach>
+    order by reservation_time DESC
+  </select>
+
+  <!--
+    专用查询：按 userId 查全部预约（用于"全部"标签）。
+  -->
+  <select id="selectByUserId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+    order by reservation_time DESC
+  </select>
+
+  <!--
+    专用查询：按 userId + tableId + status 查询预约（用于确认订单等场景），
+    对 status 枚举字段显式 CAST。
+  -->
+  <select id="selectByUserIdAndTableIdAndStatus" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+      and table_id = #{tableId,jdbcType=INTEGER}
+      and status = #{status,jdbcType=VARCHAR}::reservation_status
+    order by created_at DESC
   </select>
 
   <!--
@@ -426,8 +453,6 @@
     order by reservation_time DESC
   </select>
 
-<<<<<<< Updated upstream
-=======
   <!--
     专用查询：按 tableId + status 列表查活跃预约（用于时间段冲突判断）。
   -->
@@ -442,6 +467,22 @@
       </foreach>
     order by reservation_time
   </select>
+
+  <!--
+    专用查询：统计某桌位除指定预约外的活跃预约数量。
+    用于判断取消/改约后是否还有其他活跃预约，决定是否释放 table_status。
+  -->
+  <select id="countActiveByTableIdExcluding" resultType="java.lang.Integer">
+    select count(*)
+    from public.reservations
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+      and reservation_id != #{excludeId,jdbcType=BIGINT}
+  </select>
+
 
   <!--
     总部运营：统计某门店今日 COMPLETED 订单数
@@ -464,5 +505,4 @@
     where store_id = #{storeId,jdbcType=INTEGER}
   </select>
 
->>>>>>> Stashed changes
 </mapper>

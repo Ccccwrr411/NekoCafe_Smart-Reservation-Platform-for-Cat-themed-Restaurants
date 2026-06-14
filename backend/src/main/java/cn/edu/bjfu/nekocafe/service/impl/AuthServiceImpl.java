@@ -1,76 +1,76 @@
 package cn.edu.bjfu.nekocafe.service.impl;
 
 import cn.edu.bjfu.nekocafe.dto.LoginDTO;
+import cn.edu.bjfu.nekocafe.dto.PhoneLoginDTO;
+import cn.edu.bjfu.nekocafe.dto.RegisterDTO;
 import cn.edu.bjfu.nekocafe.entity.MemberExt;
+import cn.edu.bjfu.nekocafe.entity.UserRoles;
+import cn.edu.bjfu.nekocafe.entity.UserRolesExample;
 import cn.edu.bjfu.nekocafe.entity.Users;
 import cn.edu.bjfu.nekocafe.entity.UsersExample;
 import cn.edu.bjfu.nekocafe.mapper.MemberExtMapper;
+import cn.edu.bjfu.nekocafe.mapper.UserRolesMapper;
 import cn.edu.bjfu.nekocafe.mapper.UsersMapper;
 import cn.edu.bjfu.nekocafe.service.AuthService;
 import cn.edu.bjfu.nekocafe.util.JwtUtil;
 import cn.edu.bjfu.nekocafe.vo.LoginVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 认证服务实现
  *
- * 登录流程（课设版）：
- *   1. 前端传 wx.login() 返回的 code
- *   2. 【正式环境】应调微信 code2session 接口换 openid
- *      【课设环境】直接用 code 作为用户标识，存到 phone 字段做查询
- *   3. 根据 phone 查 users 表，若无则自动注册新用户
- *   4. 查 member_ext 表获取积分和等级
- *   5. 调用 JwtUtil.generateToken(userId) 签发 Token
- *   6. 组装 LoginVO 返回
+ * 登录方式：
+ *   1. 微信登录：手机号+验证码 → 查用户 → 找到则登录，找不到则提示注册
+ *   2. 手机号注册：验证码校验 → 创建用户 → 写 user_roles → JWT
+ *   3. 手机号登录：手机号+密码 → 校验 → JWT
+ *
+ * 核心设计：手机号作为用户唯一标识，所有登录方式最终都绑定到手机号。
  */
 @Service
 public class AuthServiceImpl implements AuthService {
 
-  @Autowired
-  private UsersMapper usersMapper;
+    @Autowired
+    private UsersMapper usersMapper;
 
-  @Autowired
-  private MemberExtMapper memberExtMapper;
+    @Autowired
+    private MemberExtMapper memberExtMapper;
 
-  @Override
-  public LoginVO wxLogin(LoginDTO dto) {
-    String code = dto.getCode();
-    if (code == null || code.isEmpty()) {
-      throw new IllegalArgumentException("code 不能为空");
-    }
+    @Autowired
+    private UserRolesMapper userRolesMapper;
 
-        // ========== 1. 课设版：用 code 当用户标识查 openid 字段 ==========
-        // 正式环境应改为：调微信 code2session 拿真实 openid，然后 phone 字段存真实手机号
-        // 注意：微信 code 长度约 32 字符，超过 phone 字段 varchar(20) 限制，必须存 openid 字段
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    /** 验证码在 Redis 中的 key 前缀 */
+    private static final String SMS_CODE_PREFIX = "sms:";
+    /** 验证码有效期（分钟） */
+    private static final int CODE_EXPIRE_MINUTES = 5;
+
+    /** 默认角色 ID（顾客） */
+    private static final int DEFAULT_ROLE_ID = 1;
+
+    // ==================== 微信快捷登录 ====================
+
+    @Override
+    public LoginVO wxQuickLogin(String code) {
+        // 用 wx.login code 查 users.openid 字段
         UsersExample example = new UsersExample();
         example.createCriteria().andOpenidEqualTo(code);
         List<Users> list = usersMapper.selectByExample(example);
 
-        Users user;
         if (list.isEmpty()) {
-            // 新用户：自动注册
-            user = new Users();
-            user.setOpenid(code);                   // 课设用 code 存 openid 字段（varchar 足够长）
-            user.setNickname("猫咖爱好者");           // 默认昵称
-            user.setAvatarUrl("https://nekocafe-images.oss-cn-beijing.aliyuncs.com/uploads/avatars/default.png");
-            user.setStatus((short) 1);              // 1=正常
-            user.setCreatedAt(new Date());
-            user.setUpdatedAt(new Date());
-            usersMapper.insertSelective(user);
+            throw new IllegalArgumentException("该微信账号未绑定，请先注册或使用手机号登录后绑定");
+        }
 
-<<<<<<< Updated upstream
-            // 同时创建 member_ext 记录
-            MemberExt memberExt = new MemberExt();
-            memberExt.setUserId(user.getUserId());
-            memberExt.setLevel(1);                   // 默认普通会员
-            memberExt.setTotalPoints(0);
-            memberExt.setCreatedAt(new Date());
-            memberExtMapper.insertSelective(memberExt);
-=======
         Users user = list.get(0);
 
         // 检查用户状态
@@ -78,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("账号已被禁用，请联系客服");
         }
 
-        return buildLoginVO(user, null);
+        return buildLoginVO(user);
     }
 
     // ==================== 微信登录 ====================
@@ -138,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
         // 7. 确保有 user_roles 记录（老用户可能缺少关联记录）
         ensureUserRole(user.getUserId(), dto.getRoleId(), dto.getStoreId());
 
-        return buildLoginVO(user, null);
+        return buildLoginVO(user);
     }
 
     // ==================== 发送验证码 ====================
@@ -230,7 +230,7 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.delete(redisKey);
 
         // 8. 签发 JWT，返回
-        return buildLoginVO(user, null);
+        return buildLoginVO(user);
     }
 
     // ==================== 手机号密码登录 ====================
@@ -268,8 +268,8 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("账号已被禁用，请联系客服");
         }
 
-        // 5. 签发 JWT（传入前端选择的角色）
-        return buildLoginVO(user, dto.getRoleId());
+        // 5. 签发 JWT，返回
+        return buildLoginVO(user);
     }
 
     // ==================== 私有辅助方法 ====================
@@ -292,14 +292,10 @@ public class AuthServiceImpl implements AuthService {
             ur.setStoreId(null);  // 全门店权限
         } else if (roleId != null && roleId > 1 && storeId == null) {
             ur.setStoreId(1);  // 课设兜底
->>>>>>> Stashed changes
         } else {
-            user = list.get(0);
+            ur.setStoreId(storeId);
         }
 
-<<<<<<< Updated upstream
-        // ========== 2. 查积分和等级 ==========
-=======
         userRolesMapper.insertSelective(ur);
     }
 
@@ -320,51 +316,31 @@ public class AuthServiceImpl implements AuthService {
 
     // ==================== 工具方法 ====================
 
-    /** 构建登录响应 VO（微信登录、手机号注册、手机号登录共用）
-     * @param selectedRoleId 前端选择的角色 ID，非登录场景传 null 则取第一条
-     */
-    private LoginVO buildLoginVO(Users user, Integer selectedRoleId) {
+    /** 构建登录响应 VO（微信登录、手机号注册、手机号登录共用） */
+    private LoginVO buildLoginVO(Users user) {
         // 查积分和等级
->>>>>>> Stashed changes
         MemberExt memberExt = memberExtMapper.selectByPrimaryKey(user.getUserId());
         int points = (memberExt != null && memberExt.getTotalPoints() != null)
                 ? memberExt.getTotalPoints() : 0;
         int level = (memberExt != null && memberExt.getLevel() != null)
                 ? memberExt.getLevel() : 1;
 
-<<<<<<< Updated upstream
-        // ========== 3. 签发 JWT ==========
-        String token = JwtUtil.generateToken(user.getUserId());
-=======
-        // 查角色和门店：如果前端指定了角色，优先匹配该角色行；否则取第一条
+        // 查角色和门店（取第一条 user_roles 记录）
         UserRolesExample ure = new UserRolesExample();
         ure.createCriteria().andUserIdEqualTo(user.getUserId());
         List<UserRoles> userRoles = userRolesMapper.selectByExample(ure);
         Integer roleId = null;
         Integer storeId = null;
         if (!userRoles.isEmpty()) {
-            UserRoles ur = null;
-            if (selectedRoleId != null) {
-                // 按前端选的角色匹配
-                for (UserRoles r : userRoles) {
-                    if (selectedRoleId.equals(r.getRoleId())) {
-                        ur = r;
-                        break;
-                    }
-                }
-            }
-            if (ur == null) {
-                ur = userRoles.get(0); // 兜底：取第一条
-            }
+            UserRoles ur = userRoles.get(0);
             roleId = ur.getRoleId();
             storeId = ur.getStoreId();
         }
 
-        // 签发 JWT（携带 roleId + storeId，用于拦截器角色校验）
-        String token = JwtUtil.generateToken(user.getUserId(), roleId, storeId);
->>>>>>> Stashed changes
+        // 签发 JWT（token 仅返回给前端，不再写入数据库 openid 字段）
+        String token = JwtUtil.generateToken(user.getUserId());
 
-        // ========== 4. 组装响应 ==========
+        // 组装响应
         LoginVO result = new LoginVO();
         result.setToken(token);
 
@@ -372,33 +348,15 @@ public class AuthServiceImpl implements AuthService {
         userInfo.setId(user.getUserId());
         userInfo.setNickName(user.getNickname());
         userInfo.setAvatarUrl(user.getAvatarUrl());
-        userInfo.setPhone(maskPhone(user.getPhone()));       // 手机号脱敏（phone 为 null 时返回 null，前端可做判断）
+        userInfo.setPhone(maskPhone(user.getPhone()));
+        userInfo.setEmail(user.getEmail());
         userInfo.setMemberLevel(levelToString(level));
         userInfo.setPoints(points);
-        // 根据前端传入的角色设置权限
-        String loginRole = dto.getRole();
-        if (loginRole == null || loginRole.isEmpty()) {
-            loginRole = "customer";
-        }
-        userInfo.setRole(loginRole);
-        userInfo.setRoleLabel(resolveRoleLabel(loginRole));
+        userInfo.setRoleId(roleId);
+        userInfo.setStoreId(storeId);
         result.setUserInfo(userInfo);
 
-    return result;
-  }
-
-    // ========== 工具方法 ==========
-
-    /** 角色英文 → 中文 */
-    private String resolveRoleLabel(String role) {
-        if (role == null) return "顾客";
-        switch (role) {
-            case "staff":       return "店员";
-            case "manager":     return "店长";
-            case "hq_ops":      return "总部运营";
-            case "cat_keeper":  return "猫咪管家";
-            default:            return "顾客";
-        }
+        return result;
     }
 
     /** 手机号脱敏：保留前3后4，中间变 **** */

@@ -3,6 +3,8 @@ package cn.edu.bjfu.nekocafe.controller;
 import cn.edu.bjfu.nekocafe.annotation.OperationLog;
 import cn.edu.bjfu.nekocafe.annotation.RequireRole;
 import cn.edu.bjfu.nekocafe.common.Result;
+import cn.edu.bjfu.nekocafe.dto.CatHealthRecordDTO;
+import cn.edu.bjfu.nekocafe.service.CatService;
 import cn.edu.bjfu.nekocafe.service.StaffService;
 import cn.edu.bjfu.nekocafe.vo.DashboardMetricsVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,9 @@ public class StaffController {
 
     @Autowired
     private StaffService staffService;
+
+    @Autowired
+    private CatService catService;
 
     /** K-1 运营指标看板 */
     @RequireRole({3, 4})
@@ -105,7 +110,8 @@ public class StaffController {
         String action = (String) body.get("action");
         Long operatorId = body.get("operatorId") != null
                 ? Long.valueOf(body.get("operatorId").toString()) : null;
-        return Result.success(staffService.reviewRefund(refundId, action, operatorId));
+        String rejectReason = (String) body.get("rejectReason");
+        return Result.success(staffService.reviewRefund(refundId, action, operatorId, rejectReason));
     }
 
     /** L-9 告警已知晓 */
@@ -128,9 +134,6 @@ public class StaffController {
                 ? Long.valueOf(body.get("operatorId").toString()) : null;
         return Result.success(staffService.resolveAlert(exceptionId, resolution, operatorId));
     }
-<<<<<<< Updated upstream
-=======
-
 
     /** 猫咪健康打卡（猫咪管家 cat_keeper 专用） */
     @OperationLog("猫咪健康打卡")
@@ -144,5 +147,4 @@ public class StaffController {
             return Result.error(1, result.get("message").toString());
         }
     }
->>>>>>> Stashed changes
 }

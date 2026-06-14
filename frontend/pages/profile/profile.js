@@ -1,14 +1,10 @@
 // pages/profile/profile.js
 const { get } = require('../../utils/request')
-const { ORDER_STATUS_MAP } = require('../../utils/util')
 const app = getApp()
 
 Page({
   data: {
     userInfo: null,
-    orders: [],
-    loading: true,
-    ORDER_STATUS_MAP,
     menuItems: []
   },
 
@@ -21,7 +17,6 @@ Page({
 
     this.buildMenuItems()
     this.loadUserInfo()
-    this.loadOrders()
   },
 
   // 根据角色动态构建菜单
@@ -29,11 +24,10 @@ Page({
     const role = app.globalData.userRole || 'customer'
     const baseMenu = [
       { icon: '🎫', label: '我的优惠券', path: '/pages/coupons/coupons' },
-      { icon: '⭐', label: '我的收藏', path: '' },
       { icon: '🐾', label: '猫咪档案', path: '/pages/cats/cats' },
       { icon: '🪪', label: '实名认证', path: '/pages/realname/realname' },
-      { icon: '📞', label: '联系客服', path: '' },
-      { icon: '⚙️', label: '设置', path: '' }
+      { icon: '📞', label: '联系客服', path: '/pages/contact/contact' },
+      { icon: '⚙️', label: '设置', path: '/pages/settings/settings' }
     ]
     // 店员/店长/总部运营：在菜单顶部插入后台入口
     if (role === 'staff' || role === 'manager') {
@@ -58,27 +52,25 @@ Page({
   loadUserInfo() {
     get('/api/user/profile').then(res => {
       if (res.code === 0) {
-        this.setData({ userInfo: res.data })
-        wx.setStorageSync('userInfo', res.data)
+        const userInfo = this.fixAvatarUrl(res.data)
+        this.setData({ userInfo })
+        wx.setStorageSync('userInfo', userInfo)
       }
     })
   },
 
-  loadOrders() {
-    get('/api/orders?userId=1001').then(res => {
-      if (res.code === 0) {
-        this.setData({ orders: res.data.slice(0, 3), loading: false })
-      }
-    })
+  // 补全头像 URL：相对路径 → 完整 URL
+  fixAvatarUrl(userInfo) {
+    if (!userInfo || !userInfo.avatarUrl) return userInfo
+    if (userInfo.avatarUrl.startsWith('http://') || userInfo.avatarUrl.startsWith('https://')) {
+      return userInfo
+    }
+    const baseUrl = app.globalData.baseUrl || 'http://127.0.0.1:8081'
+    return { ...userInfo, avatarUrl: baseUrl + userInfo.avatarUrl }
   },
 
   goAllOrders() {
     wx.navigateTo({ url: '/pages/orderList/orderList' })
-  },
-
-  goOrderDetail(e) {
-    const orderId = e.currentTarget.dataset.orderid
-    wx.navigateTo({ url: `/pages/orderDetail/orderDetail?orderId=${orderId}` })
   },
 
   onMenuItemClick(e) {

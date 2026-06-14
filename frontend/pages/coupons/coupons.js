@@ -17,7 +17,7 @@ Page({
 
   loadCoupons() {
     this.setData({ loading: true })
-    get('/api/coupons?userId=1001').then(res => {
+    get('/api/coupons').then(res => {
       wx.stopPullDownRefresh()
       if (res.code === 0) {
         this.setData({ coupons: res.data, loading: false })

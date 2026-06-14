@@ -17,11 +17,16 @@ public class UserProfileVO {
     private Integer points;        // totalPoints
     private Integer pointsToNext;  // 距下一级所需积分
     private String nextLevel;
+    private Integer levelStartPoints;   // 当前等级起始积分（进度条起点）
+    private Integer nextLevelThreshold; // 下一级积分阈值（进度条终点）
     private Integer totalOrders;
     private Integer totalSpent;    // cumulativeAmount 取整
     private Integer couponCount;
     private List<Integer> favoriteStores;
     private String joinDate;       // Users.createdAt 格式化
+    private Boolean isVerified;    // 是否已完成实名认证
+    private String realName;       // 实名认证姓名（未认证为 null）
+    private String idCardMask;     // 脱敏身份证号（未认证为 null）
 
     // ---- Getters & Setters ----
     public Long getId() { return id; }
@@ -44,6 +49,10 @@ public class UserProfileVO {
     public void setPointsToNext(Integer pointsToNext) { this.pointsToNext = pointsToNext; }
     public String getNextLevel() { return nextLevel; }
     public void setNextLevel(String nextLevel) { this.nextLevel = nextLevel; }
+    public Integer getLevelStartPoints() { return levelStartPoints; }
+    public void setLevelStartPoints(Integer levelStartPoints) { this.levelStartPoints = levelStartPoints; }
+    public Integer getNextLevelThreshold() { return nextLevelThreshold; }
+    public void setNextLevelThreshold(Integer nextLevelThreshold) { this.nextLevelThreshold = nextLevelThreshold; }
     public Integer getTotalOrders() { return totalOrders; }
     public void setTotalOrders(Integer totalOrders) { this.totalOrders = totalOrders; }
     public Integer getTotalSpent() { return totalSpent; }
@@ -54,4 +63,10 @@ public class UserProfileVO {
     public void setFavoriteStores(List<Integer> favoriteStores) { this.favoriteStores = favoriteStores; }
     public String getJoinDate() { return joinDate; }
     public void setJoinDate(String joinDate) { this.joinDate = joinDate; }
+    public Boolean getIsVerified() { return isVerified; }
+    public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }
+    public String getRealName() { return realName; }
+    public void setRealName(String realName) { this.realName = realName; }
+    public String getIdCardMask() { return idCardMask; }
+    public void setIdCardMask(String idCardMask) { this.idCardMask = idCardMask; }
 }

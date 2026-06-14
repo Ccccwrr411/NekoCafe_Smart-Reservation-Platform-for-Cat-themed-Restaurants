@@ -86,7 +86,8 @@ function mockRequest(url, data) {
 function realRequest(url, method, data) {
   const app = getApp()
   const baseUrl = app.globalData.baseUrl || 'http://127.0.0.1:8081'
-  const isLoginRequest = (url === '/api/auth/login')
+  const isLoginRequest = (url === '/api/auth/login' || url === '/api/auth/login/phone'
+    || url === '/api/auth/send-code' || url === '/api/auth/register')
   const token = wx.getStorageSync('token') || ''
 
   return new Promise((resolve, reject) => {

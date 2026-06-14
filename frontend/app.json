@@ -12,6 +12,7 @@
     "pages/orderDetail/orderDetail",
     "pages/queue/queue",
     "pages/realname/realname",
+    "pages/register/register",
     "pages/coupons/coupons",
     "pages/cats/cats",
     "pages/dashboard/dashboard",
@@ -20,6 +21,12 @@
     "pages/hq/marketing",
     "pages/hq/workspace",
     "pages/hq/promo-form/promo-form"
+    "pages/map/map",
+
+    "pages/contact/contact",
+    "pages/settings/settings",
+    "pages/staffDashboard/staffDashboard"
+
   ],
   "tabBar": {
     "color": "#999999",

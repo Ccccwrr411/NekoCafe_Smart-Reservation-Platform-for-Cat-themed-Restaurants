@@ -14,6 +14,7 @@ public class OrderSubmitDTO {
     private List<String> couponIds;
     private String remark;
     private Integer tableId;
+    private String orderId;
 
     public static class OrderItemDTO {
         private Integer menuId;
@@ -47,4 +48,6 @@ public class OrderSubmitDTO {
     public void setRemark(String remark) { this.remark = remark; }
     public Integer getTableId() { return tableId; }
     public void setTableId(Integer tableId) { this.tableId = tableId; }
+    public String getOrderId() { return orderId; }
+    public void setOrderId(String orderId) { this.orderId = orderId; }
 }

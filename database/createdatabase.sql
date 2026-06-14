@@ -69,7 +69,11 @@ CREATE TABLE tables (
     capacity INT DEFAULT 2,
     table_type VARCHAR(50),
     cat_theme VARCHAR(100),
-    is_active BOOLEAN DEFAULT TRUE
+    is_active BOOLEAN DEFAULT TRUE,
+    top DOUBLE PRECISION,
+    "left" DOUBLE PRECISION,
+    width DOUBLE PRECISION,
+    height DOUBLE PRECISION
 );
 
 -- 桌位实时状态表

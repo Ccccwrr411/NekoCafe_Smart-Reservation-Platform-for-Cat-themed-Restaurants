@@ -15,10 +15,14 @@ public class Tables {
 
     private Boolean isActive;
 
-    private String top;
-    private String left;
-    private String width;
-    private String height;
+    private Double top;
+
+    private Double left;
+
+    private Double width;
+
+    private Double height;
+
     public Integer getTableId() {
         return tableId;
     }
@@ -74,15 +78,36 @@ public class Tables {
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
     }
-    public String getTop() { return top; }
-    public void setTop(String top) { this.top = top; }
 
-    public String getLeft() { return left; }
-    public void setLeft(String left) { this.left = left; }
+    public Double getTop() {
+        return top;
+    }
 
-    public String getWidth() { return width; }
-    public void setWidth(String width) { this.width = width; }
+    public void setTop(Double top) {
+        this.top = top;
+    }
 
-    public String getHeight() { return height; }
-    public void setHeight(String height) { this.height = height; }
+    public Double getLeft() {
+        return left;
+    }
+
+    public void setLeft(Double left) {
+        this.left = left;
+    }
+
+    public Double getWidth() {
+        return width;
+    }
+
+    public void setWidth(Double width) {
+        this.width = width;
+    }
+
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
+    }
 }

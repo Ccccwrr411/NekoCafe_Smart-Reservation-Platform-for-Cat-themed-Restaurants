@@ -45,26 +45,30 @@
 .points-section {
   background: rgba(255,255,255,0.15);
   border-radius: 16rpx;
-  padding: 16rpx 20rpx;
+  padding: 20rpx 24rpx;
   margin-bottom: 20rpx;
 }
 .points-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10rpx;
+  margin-bottom: 12rpx;
 }
-.points-val  { font-size: 28rpx; font-weight: 600; color: #fff; }
-.points-hint { font-size: 22rpx; color: rgba(255,255,255,0.7); }
+.points-left { display: flex; align-items: baseline; gap: 8rpx; }
+.points-val { font-size: 44rpx; font-weight: 800; color: #fff; line-height: 1; }
+.points-unit { font-size: 24rpx; color: rgba(255,255,255,0.8); font-weight: 500; }
+.points-right { text-align: right; max-width: 55%; }
+.points-hint { font-size: 22rpx; color: rgba(255,255,255,0.75); }
+.points-max { color: #FFD54F; font-weight: 600; }
 .progress-bar {
   height: 10rpx;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.25);
   border-radius: 5rpx;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: #FFD54F;
+  background: linear-gradient(90deg, #FFD54F, #FFB300);
   border-radius: 5rpx;
   transition: width 0.5s;
 }
