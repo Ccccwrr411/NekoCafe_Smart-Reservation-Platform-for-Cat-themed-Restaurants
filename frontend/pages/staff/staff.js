@@ -1,4 +1,4 @@
-// pages/staff/staff.js — 店员工作台（4Tab底部导航：订单/桌位/通知/告警）
+// pages/staff/staff.js — 店员工作台（5Tab底部导航：订单/桌位/叫号/消息/告警）
 const { get, post } = require('../../utils/request')
 const app = getApp()
 
@@ -37,13 +37,15 @@ const STATUS_TO_DB = {
   cleaning: 'CLEANING',
   maintenance: 'IDLE'  // 数据库无 maintenance，映射为 IDLE
 }
-const ALL_STORES = [
-  { id: 1, name: 'NekoCafé 朝阳店' },
-  { id: 2, name: 'NekoCafé 海淀店' },
-  { id: 3, name: 'NekoCafé 通州店' },
-  { id: 4, name: 'NekoCafé 西城店' },
-  { id: 5, name: 'NekoCafé 丰台店' }
-]
+// 门店列表将从后端 /api/stores 动态加载，此处仅作类型参考
+const ALL_STORES = []
+// 排队桌型友好映射
+const QUEUE_TYPE_LABEL_MAP = {
+  '双人桌': '双人桌', '四人桌': '四人桌', '大桌': '大桌', '吧台': '吧台',
+  'window': '靠窗座', '靠窗座': '靠窗座',
+  '沙发座': '沙发座', '包厢': '包厢', '包间': '包间',
+  '任意': '任意', 'any': '任意',
+}
 
 Page({
   data: {
@@ -76,6 +78,15 @@ Page({
     // 通知
     notifications: [],
     unreadCount: 0,
+    // 排队叫号
+    queueStatus: { waitingCount: 0, currentNumber: 0, avgWaitMinutes: 0, queueList: [], myNumber: null, myWaitMinutes: 0 },
+    calledList: [],
+    missedList: [],
+    calledKnownCount: 0,
+    calledPendingCount: 0,
+    hasCalledPending: false,
+    // 排队叫号分区切换: 'waiting' | 'called' | 'missed'
+    queueSection: 'waiting',
     // 概览
     todayOrderCount: 0,
     pendingCount: 0,
@@ -87,7 +98,7 @@ Page({
     userName: '',
     userRoleId: '',
     storeId: 1,
-    storeName: 'NekoCafe 朝阳店',
+    storeName: '',
     showStorePicker: false,
     allStores: ALL_STORES,
     storePickerIndex: 0,
@@ -110,46 +121,119 @@ Page({
 
   onLoad(options) {
     if (!app.requireRole(['staff', 'manager', 'hq_ops'])) return
-    const userInfo = app.globalData.userInfo || {}
-    const userRole = app.globalData.userRole || ''
+    // 直接从 Storage 读取最新 userInfo（避免 globalData 未同步）
+    const userInfo = wx.getStorageSync('userInfo') || app.globalData.userInfo || {}
+    const userRole = wx.getStorageSync('userRole') || app.globalData.userRole || ''
     const isHqOps = (userRole === 'hq_ops')
     const paramStoreId = options.storeId ? parseInt(options.storeId) : null
-    let storeId, storeName
+    // storeId 优先级：URL参数 > Storage userInfo.storeId > globalData > 兜底
+    const storeId = paramStoreId || (userInfo.storeId != null ? userInfo.storeId : (app.globalData.userInfo?.storeId || 1))
+    // storeName 优先用 userInfo.storeName（后端登录时已查，100%准确）
+    let storeName = userInfo.storeName || ''
     if (isHqOps) {
-      storeId = paramStoreId || 1
-      const store = ALL_STORES.find(s => s.id === storeId)
-      storeName = '总部视角 · ' + (store ? store.name : ALL_STORES[0].name)
-    } else {
-      storeId = paramStoreId || (userInfo.storeId || 1)
-      const store = ALL_STORES.find(s => s.id === storeId)
-      storeName = store ? store.name : (userInfo.storeName || 'NekoCafe 朝阳店')
+      storeName = '总部视角 · ' + (storeName || ('门店#' + storeId))
     }
-    const pickerIndex = ALL_STORES.findIndex(s => s.id === storeId)
     this.setData({
       userRole: userInfo.roleLabel || '',
       userName: userInfo.nickName || '',
       userRoleId: userRole,
-      storeId, storeName,
+      storeId: storeId,
+      storeName: storeName,
       showStorePicker: isHqOps,
-      storePickerIndex: pickerIndex >= 0 ? pickerIndex : 0
+      storePickerIndex: 0
     })
-    this.loadData()
+    // 先加载门店列表（用于总部切换和兜底 storeName），再加载业务数据
+    this.loadStoreName(() => {
+      this.loadData()
+    })
   },
 
   onShow() {
     if (!app.checkRole(['staff', 'manager', 'hq_ops'])) return
-    this.loadData()
+    // 从后端数据库获取最新用户信息（含 storeId/storeName），确保编译后也是正确的
+    app.fetchAndSyncUserInfo().then((userInfo) => {
+      const userRole = app.globalData.userRole || ''
+      const isHqOps = (userRole === 'hq_ops')
+
+      const newStoreId = (userInfo && userInfo.storeId != null) ? userInfo.storeId : this.data.storeId
+      let newStoreName = (userInfo && userInfo.storeName) || ''
+      if (isHqOps) {
+        newStoreName = '总部视角 · ' + (newStoreName || ('门店#' + newStoreId))
+      }
+
+      if (newStoreId !== this.data.storeId || newStoreName !== this.data.storeName) {
+        this.setData({ storeId: newStoreId, storeName: newStoreName })
+      }
+      this.loadData()
+    })
   },
 
   onPullDownRefresh() {
     this.loadData()
   },
 
+  // ── 动态获取门店名称（根据当前 storeId） ─────────
+  loadStoreName(callback) {
+    const userRole = app.globalData.userRole || ''
+    const isHqOps = (userRole === 'hq_ops')
+    const storeId = this.data.storeId
+
+    get('/api/stores').then(res => {
+      let stores = []
+      // 兼容不同返回格式：{ code:0, data:[...] } 或直接返回数组
+      if (Array.isArray(res)) {
+        stores = res
+      } else if (res && res.code === 0 && Array.isArray(res.data)) {
+        stores = res.data
+      } else if (res && Array.isArray(res.data)) {
+        stores = res.data
+      }
+
+      if (stores.length > 0) {
+        const store = stores.find(s => s.id === storeId || s.storeId === storeId)
+        const pickerIndex = stores.findIndex(s => s.id === storeId || s.storeId === storeId)
+
+        let storeName = ''
+        if (store) {
+          storeName = store.name || store.storeName || ''
+        }
+        if (isHqOps) {
+          storeName = '总部视角 · ' + (storeName || ('门店#' + storeId))
+        } else if (!storeName) {
+          // 店员/店长兜底：显示 storeId
+          storeName = '门店#' + storeId
+        }
+
+        this.setData({
+          storeName: storeName,
+          allStores: stores,
+          storePickerIndex: pickerIndex >= 0 ? pickerIndex : 0
+        })
+      } else {
+        // 接口返回空，兜底
+        this.setData({
+          storeName: isHqOps ? ('总部视角 · 门店#' + storeId) : ('门店#' + storeId)
+        })
+      }
+    }).catch(() => {
+      // 网络异常兜底
+      this.setData({
+        storeName: isHqOps ? ('总部视角 · 门店#' + storeId) : ('门店#' + storeId)
+      })
+    }).finally(() => {
+      if (typeof callback === 'function') callback()
+    })
+  },
+
   // ── 门店切换 ─────────────────────────────────
   onStoreChange(e) {
     const idx = parseInt(e.detail.value)
-    const store = ALL_STORES[idx]
-    this.setData({ storeId: store.id, storeName: '总部视角 · ' + store.name, storePickerIndex: idx })
+    const stores = this.data.allStores
+    if (stores.length === 0) return
+    const store = stores[idx]
+    const storeId = store.id || store.storeId
+    const storeName = '总部视角 · ' + (store.name || store.storeName || ('门店#' + storeId))
+    this.setData({ storeId: storeId, storeName: storeName, storePickerIndex: idx })
     this.loadData()
   },
 
@@ -163,8 +247,9 @@ Page({
       get('/api/staff/orders?storeId=' + sid),
       get('/api/staff/refunds?storeId=' + sid),
       get('/api/notifications/store?storeId=' + sid + '&page=1&size=50'),
-      get('/api/notifications/unread/store?storeId=' + sid)
-    ]).then(([tableRes, alertRes, orderRes, refundRes, notifRes, unreadRes]) => {
+      get('/api/notifications/unread/store?storeId=' + sid),
+      get('/api/queue/status?storeId=' + sid)
+    ]).then(([tableRes, alertRes, orderRes, refundRes, notifRes, unreadRes, queueRes]) => {
       wx.stopPullDownRefresh()
       const tables = (tableRes.code === 0) ? tableRes.data : []
       const alerts = (alertRes.code === 0) ? alertRes.data : []
@@ -172,6 +257,30 @@ Page({
       const allRefunds = (refundRes.code === 0) ? refundRes.data : []
       const notifications = (notifRes.code === 0) ? notifRes.data : []
       const unreadCount = (unreadRes.code === 0) ? unreadRes.data : 0
+
+      // 排队状态（桌型友好显示）
+      const queueStatus = (queueRes.code === 0 && queueRes.data) ? queueRes.data : { waitingCount: 0, currentNumber: 0, avgWaitMinutes: 0, queueList: [], calledList: [], missedList: [] }
+      // 等待队列
+      if (queueStatus.queueList) {
+        queueStatus.queueList = queueStatus.queueList.map(item => ({
+          ...item,
+          typeDisplay: QUEUE_TYPE_LABEL_MAP[item.type] || item.type || '—'
+        }))
+      }
+      // 已叫号列表（CALLED/KNOWN）
+      const calledList = (queueStatus.calledList || []).map(item => ({
+        ...item,
+        typeDisplay: QUEUE_TYPE_LABEL_MAP[item.type] || item.type || '—'
+      }))
+      // 过号列表（MISSED）
+      const missedList = (queueStatus.missedList || []).map(item => ({
+        ...item,
+        typeDisplay: QUEUE_TYPE_LABEL_MAP[item.type] || item.type || '—'
+      }))
+      // 预计算叫号统计（WXML 不支持 filter 等 JS 表达式）
+      const calledKnownCount = calledList.filter(i => i.status === 'KNOWN').length
+      const calledPendingCount = calledList.filter(i => i.status === 'CALLED').length
+      const hasCalledPending = calledPendingCount > 0
 
       // 待审核退款数：退款记录中状态为 REQUEST_CANCEL / REQUEST_REFUND
       const refundCount = allRefunds.filter(r => {
@@ -252,7 +361,8 @@ Page({
         tables: tablesWithLabel, alerts: alertsWithLabel, orders, notifications,
         allRefunds, countByStatus, countAvailable, countOccupied, countBooked, countCleaning,
         todayOrderCount, pendingCount, refundCount, occupancyRate, todayRevenue,
-        unreadCount, pendingAlertCount, loading: false
+        unreadCount, pendingAlertCount, queueStatus, calledList, missedList,
+        calledKnownCount, calledPendingCount, hasCalledPending, loading: false
       })
       this.applyFilters()
     }).catch(() => {
@@ -705,6 +815,38 @@ Page({
           wx.hideLoading()
           wx.showToast({ title: '网络异常', icon: 'none' })
         })
+      }
+    })
+  },
+
+  // ── 排队叫号分区切换 ─────────────────
+  onSwitchQueueSection(e) {
+    const section = e.currentTarget.dataset.section
+    this.setData({ queueSection: section })
+  },
+
+  // ── 排队叫号（店员操作：WAITING → CALLED，5分钟未确认自动变 MISSED）─────────────────
+  onCallNumber(e) {
+    const item = e.currentTarget.dataset.item
+    wx.showModal({
+      title: '确认叫号',
+      content: `叫号 Q${item.number}（${item.persons}人 · ${item.typeDisplay}）？\n叫号后顾客端会弹窗提示确认，5分钟内未确认将自动过号。`,
+      confirmText: '确认叫号',
+      confirmColor: '#C97E5A',
+      success: (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '叫号中...' })
+        post('/api/queue/call', { storeId: this.data.storeId, queueId: item.queueId }).then(apiRes => {
+          wx.hideLoading()
+          if (apiRes.code === 0 && apiRes.data) {
+            const d = apiRes.data
+            wx.showToast({ title: `已叫号 Q${d.number}`, icon: 'success' })
+            // 刷新数据（calledList 和 missedList 从后端重新获取）
+            this.loadData()
+          } else {
+            wx.showToast({ title: apiRes.message || '叫号失败', icon: 'none' })
+          }
+        }).catch(() => { wx.hideLoading(); wx.showToast({ title: '网络异常', icon: 'none' }) })
       }
     })
   },

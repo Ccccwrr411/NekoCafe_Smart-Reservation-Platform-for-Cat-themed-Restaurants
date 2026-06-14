@@ -40,6 +40,10 @@
       <view class="entry-icon">📅</view>
       <text>立即预约</text>
     </view>
+    <view class="entry-item" bindtap="goQueue">
+      <view class="entry-icon">🎟️</view>
+      <text>排队取号</text>
+    </view>
     <view class="entry-item" bindtap="goMenu">
       <view class="entry-icon">🍜</view>
       <text>在线点单</text>

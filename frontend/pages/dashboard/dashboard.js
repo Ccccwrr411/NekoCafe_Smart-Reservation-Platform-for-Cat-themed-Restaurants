@@ -28,22 +28,24 @@ Page({
 
   onLoad() {
     if (!app.requireRole(['manager', 'hq_ops'])) return
-    const userInfo = app.globalData.userInfo || {}
-    const userRole = app.globalData.userRole || ''
-    const isHqOps = (userRole === 'hq_ops')
-    const storeId = isHqOps ? 1 : (userInfo.storeId || 1)
-    const storeName = isHqOps ? '总部视角 · 朝阳店' : (userInfo.storeName || 'NekoCafé 朝阳店')
-    const pickerIndex = isHqOps ? 0 : ALL_STORES.findIndex(s => s.id === storeId)
-    this.setData({
-      userRole: userInfo.roleLabel || '',
-      userRoleId: userRole,
-      userName: userInfo.nickName || '',
-      storeId: storeId,
-      storeName: storeName,
-      showStorePicker: isHqOps,
-      storePickerIndex: pickerIndex >= 0 ? pickerIndex : 0
+    // 从后端数据库获取最新用户信息（含 storeId/storeName）
+    app.fetchAndSyncUserInfo().then((userInfo) => {
+      const role = wx.getStorageSync('userRole') || app.globalData.userRole || ''
+      const isHqOps = (role === 'hq_ops')
+      const storeId = isHqOps ? 1 : ((userInfo && userInfo.storeId) || 1)
+      const storeName = isHqOps ? ('总部视角 · ' + ((userInfo && userInfo.storeName) || '朝阳店')) : ((userInfo && userInfo.storeName) || '')
+      const pickerIndex = isHqOps ? 0 : ALL_STORES.findIndex(s => s.id === storeId)
+      this.setData({
+        userRole: (userInfo && userInfo.roleLabel) || '',
+        userRoleId: role,
+        userName: (userInfo && userInfo.nickName) || '',
+        storeId: storeId,
+        storeName: storeName,
+        showStorePicker: isHqOps,
+        storePickerIndex: pickerIndex >= 0 ? pickerIndex : 0
+      })
+      this.loadAll()
     })
-    this.loadAll()
   },
 
   // ── 门店切换（仅总部运营） ──────────────────────────────
