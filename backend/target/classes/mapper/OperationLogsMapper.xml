@@ -117,7 +117,7 @@
     values (#{logId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, #{username,jdbcType=VARCHAR}, 
       #{roleAtTime,jdbcType=VARCHAR}, #{operationType,jdbcType=VARCHAR}, #{targetType,jdbcType=VARCHAR}, 
       #{targetId,jdbcType=VARCHAR}, #{requestIp,jdbcType=VARCHAR}, #{userAgent,jdbcType=VARCHAR}, 
-      #{requestParams,jdbcType=OTHER}, #{result,jdbcType=VARCHAR}, #{errorMsg,jdbcType=VARCHAR}, 
+      #{requestParams}::jsonb, #{result,jdbcType=VARCHAR}, #{errorMsg,jdbcType=VARCHAR}, 
       #{createdAt,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.OperationLogs">
@@ -192,7 +192,7 @@
         #{userAgent,jdbcType=VARCHAR},
       </if>
       <if test="requestParams != null">
-        #{requestParams,jdbcType=OTHER},
+        #{requestParams}::jsonb,
       </if>
       <if test="result != null">
         #{result,jdbcType=VARCHAR},
@@ -242,7 +242,7 @@
         user_agent = #{row.userAgent,jdbcType=VARCHAR},
       </if>
       <if test="row.requestParams != null">
-        request_params = #{row.requestParams,jdbcType=OTHER},
+        request_params = #{row.requestParams}::jsonb,
       </if>
       <if test="row.result != null">
         result = #{row.result,jdbcType=VARCHAR},
@@ -269,7 +269,7 @@
       target_id = #{row.targetId,jdbcType=VARCHAR},
       request_ip = #{row.requestIp,jdbcType=VARCHAR},
       user_agent = #{row.userAgent,jdbcType=VARCHAR},
-      request_params = #{row.requestParams,jdbcType=OTHER},
+      request_params = #{row.requestParams}::jsonb,
       result = #{row.result,jdbcType=VARCHAR},
       error_msg = #{row.errorMsg,jdbcType=VARCHAR},
       created_at = #{row.createdAt,jdbcType=TIMESTAMP}
@@ -305,7 +305,7 @@
         user_agent = #{userAgent,jdbcType=VARCHAR},
       </if>
       <if test="requestParams != null">
-        request_params = #{requestParams,jdbcType=OTHER},
+        request_params = #{requestParams}::jsonb,
       </if>
       <if test="result != null">
         result = #{result,jdbcType=VARCHAR},
@@ -329,7 +329,7 @@
       target_id = #{targetId,jdbcType=VARCHAR},
       request_ip = #{requestIp,jdbcType=VARCHAR},
       user_agent = #{userAgent,jdbcType=VARCHAR},
-      request_params = #{requestParams,jdbcType=OTHER},
+      request_params = #{requestParams}::jsonb,
       result = #{result,jdbcType=VARCHAR},
       error_msg = #{errorMsg,jdbcType=VARCHAR},
       created_at = #{createdAt,jdbcType=TIMESTAMP}

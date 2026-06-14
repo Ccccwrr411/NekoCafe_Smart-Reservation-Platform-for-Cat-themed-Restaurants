@@ -79,4 +79,14 @@ public interface ReservationsMapper {
             @Param("tableId") Integer tableId,
             @Param("statuses") List<String> statuses,
             @Param("excludeId") Long excludeId);
+
+    /**
+     * 总部运营：统计某门店今日 COMPLETED 订单数。
+     */
+    Long countTodayCompletedByStoreId(@Param("storeId") Integer storeId);
+
+    /**
+     * 总部运营：统计某门店累计去重用户数（有过预约记录的用户）。
+     */
+    Long countDistinctUsersByStoreId(@Param("storeId") Integer storeId);
 }

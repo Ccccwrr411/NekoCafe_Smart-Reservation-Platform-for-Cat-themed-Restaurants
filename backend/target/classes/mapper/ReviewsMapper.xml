@@ -383,4 +383,13 @@
       updated_at = #{updatedAt,jdbcType=TIMESTAMP}
     where review_id = #{reviewId,jdbcType=BIGINT}
   </update>
+
+  <!-- ══ 总部运营：按门店查询平均评分 ══ -->
+  <select id="avgRatingByStoreId" parameterType="java.lang.Integer" resultType="java.lang.Double">
+    SELECT AVG(overall_rating)
+    FROM public.reviews
+    WHERE store_id = #{storeId,jdbcType=INTEGER}
+      AND status = 'VISIBLE'
+  </select>
+
 </mapper>

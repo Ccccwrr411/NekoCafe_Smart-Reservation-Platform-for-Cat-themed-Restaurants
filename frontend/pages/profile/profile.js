@@ -42,8 +42,8 @@ Page({
     }
     if (role === 'hq_ops') {
       baseMenu.unshift(
-        { icon: '🏪', label: '店员工作台', path: '/pages/staff/staff' },
-        { icon: '📊', label: '数据看板', path: '/pages/dashboard/dashboard' }
+        { icon: '📊', label: '运营工作台', path: '/pages/hq/workspace' },
+        { icon: '🏪', label: '店员工作台', path: '/pages/staff/staff' }
       )
     }
     this.setData({ menuItems: baseMenu })

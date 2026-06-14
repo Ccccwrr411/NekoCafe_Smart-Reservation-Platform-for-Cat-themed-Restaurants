@@ -18,6 +18,10 @@
     "pages/dashboard/dashboard",
     "pages/orderList/orderList",
     "pages/map/map",
+    "pages/hq/marketing",
+    "pages/hq/workspace",
+    "pages/hq/promo-form/promo-form"
+    "pages/map/map",
 
     "pages/contact/contact",
     "pages/settings/settings",

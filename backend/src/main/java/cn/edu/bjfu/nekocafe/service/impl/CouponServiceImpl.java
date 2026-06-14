@@ -313,4 +313,72 @@ public class CouponServiceImpl implements CouponService {
             return null;
         }
     }
+
+    // ==================== E-10 : 首页活跃活动列表 ====================
+
+    @Override
+    public List<Map<String, Object>> getActivePromotions() {
+        Date now = new Date();
+        PromotionsExample ex = new PromotionsExample();
+        ex.createCriteria()
+            .andIsActiveEqualTo(true)
+            .andStartTimeLessThanOrEqualTo(now)
+            .andEndTimeGreaterThanOrEqualTo(now);
+        ex.setOrderByClause("end_time ASC");
+
+        List<Promotions> list = promotionsMapper.selectByExample(ex);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Promotions p : list) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("promoId", p.getPromoId());
+            item.put("name", p.getName());
+            item.put("type", p.getType());
+            item.put("ruleJson", p.getRuleJson());
+            item.put("startTime", p.getStartTime() != null ? DATE_FMT.format(p.getStartTime()) : null);
+            item.put("endTime", p.getEndTime() != null ? DATE_FMT.format(p.getEndTime()) : null);
+            item.put("stores", p.getApplicableStores());
+            result.add(item);
+        }
+        return result;
+    }
+
+    // ==================== E-11 : 用户主动领券 ====================
+
+    @Override
+    public Map<String, Object> claimCoupon(Long userId, Integer promoId) {
+        Promotions promo = promotionsMapper.selectByPrimaryKey(promoId);
+        if (promo == null) throw new RuntimeException("活动不存在");
+        if (!Boolean.TRUE.equals(promo.getIsActive())) throw new RuntimeException("活动已结束");
+
+        Date now = new Date();
+        if (promo.getStartTime() != null && promo.getStartTime().after(now))
+            throw new RuntimeException("活动尚未开始");
+        if (promo.getEndTime() != null && promo.getEndTime().before(now))
+            throw new RuntimeException("活动已结束");
+
+        // 检查是否已领取（未使用状态的券视为已领）
+        UserCouponsExample uce = new UserCouponsExample();
+        uce.createCriteria()
+            .andUserIdEqualTo(userId)
+            .andPromoIdEqualTo(promoId)
+            .andStatusEqualTo("UNUSED");
+        List<UserCoupons> existing = userCouponsMapper.selectByExample(uce);
+        if (!existing.isEmpty())
+            throw new RuntimeException("您已领取过此优惠券");
+
+        UserCoupons uc = new UserCoupons();
+        uc.setUserId(userId);
+        uc.setPromoId(promoId);
+        uc.setStatus("UNUSED");
+        uc.setExpireTime(promo.getEndTime());
+        uc.setCreatedAt(now);
+        userCouponsMapper.insertSelective(uc);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("couponId", uc.getCouponId());
+        result.put("promoName", promo.getName());
+        result.put("expireTime", promo.getEndTime() != null ? DATE_FMT.format(promo.getEndTime()) : null);
+        result.put("success", true);
+        return result;
+    }
 }

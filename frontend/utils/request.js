@@ -149,6 +149,7 @@ function realRequest(url, method, data) {
 const get  = (url, data) => request(url, 'GET', data)
 const post = (url, data) => request(url, 'POST', data)
 const put  = (url, data) => request(url, 'PUT', data)
-const del  = (url, data) => request(url, 'DELETE', data)
+const del   = (url, data) => request(url, 'DELETE', data)
+const patch = (url, data) => request(url, 'PATCH', data)
 
-module.exports = { request, get, post, put, del, isUseMock }
+module.exports = { request, get, post, put, del, patch, isUseMock }
