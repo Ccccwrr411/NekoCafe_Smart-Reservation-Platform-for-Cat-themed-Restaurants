@@ -12,6 +12,7 @@
     "pages/orderDetail/orderDetail",
     "pages/queue/queue",
     "pages/realname/realname",
+    "pages/register/register",
     "pages/coupons/coupons",
     "pages/cats/cats",
     "pages/dashboard/dashboard",

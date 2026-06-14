@@ -57,6 +57,7 @@ const ROLE_USERS = {
 
 Page({
   data: {
+    loginTab: 'wx',        // 当前 Tab: 'wx' | 'phone'
     loading: false,
     selectedRole: '',
     roles: [
@@ -65,79 +66,204 @@ Page({
       { id: 'manager',    icon: '🏪',  name: '店长',     nameEn: 'Manager'    },
       { id: 'hq_ops',     icon: '📊',  name: '总部运营', nameEn: 'HQ Ops'     },
       { id: 'cat_keeper', icon: '🐱',  name: '猫咪管家', nameEn: 'Cat Keeper' }
-    ]
+    ],
+    // 手机号登录表单
+    phone: '',
+    password: '',
+    // 微信登录用
+    nickname: '',
+    // 门店数据（微信登录用）
+    stores: [],
+    storeNames: [],
+    selectedStoreId: null,
+    selectedStoreIndex: -1,
+    canWxLogin: false
   },
 
+  // ── 页面加载：获取门店列表（微信登录用） ──
+  onLoad() {
+    this.getStores()
+  },
+
+  // ── 门店数据 ──
+  getStores() {
+    const { get } = require('../../utils/request')
+    get('/api/stores').then(res => {
+      if (res.code === 0 && res.data) {
+        const stores = res.data
+        const storeNames = stores.map(s => s.name)
+        this.setData({ stores, storeNames })
+      }
+    }).catch(() => {})
+  },
+
+  // ── Tab 切换 ──
+  switchTab(e) {
+    this.setData({ loginTab: e.currentTarget.dataset.tab })
+  },
+
+  // ── 微信登录：角色选择 ──
   onSelectRole(e) {
-    this.setData({ selectedRole: e.currentTarget.dataset.role })
+    const role = e.currentTarget.dataset.role
+    this.setData({
+      selectedRole: role,
+      selectedStoreIndex: -1,
+      selectedStoreId: null
+    })
+    this.updateCanWxLogin()
   },
 
-  onMockLogin() {
-    const role = this.data.selectedRole
-    if (!role) return
+  // ── 微信登录：门店选择 ──
+  onStorePick(e) {
+    const idx = Number(e.detail.value)
+    this.setData({
+      selectedStoreIndex: idx,
+      selectedStoreId: this.data.stores[idx].id
+    })
+    this.updateCanWxLogin()
+  },
 
+  // ── 微信登录：昵称输入 ──
+  onNicknameInput(e) {
+    this.setData({ nickname: e.detail.value })
+  },
+
+  // ── 计算微信登录按钮是否可用 ──
+  updateCanWxLogin() {
+    const { selectedRole, selectedStoreIndex } = this.data
+    let can = !!selectedRole
+    if (selectedRole && selectedRole !== 'customer' && selectedRole !== 'hq_ops') {
+      can = can && selectedStoreIndex >= 0
+    }
+    this.setData({ canWxLogin: can })
+  },
+
+  // ── 微信登录 ──
+  onMockLogin() {
+    if (!this.data.canWxLogin) return
+
+    const { selectedRole, selectedStoreId, nickname } = this.data
     this.setData({ loading: true })
 
-    if (isUseMock()) {
-      this.finishLogin(ROLE_USERS[role], role, `mock_token_${role}_20260604`)
+    try {
+      if (isUseMock()) {
+        const mockUser = { ...ROLE_USERS[selectedRole] }
+        // 用自定义昵称覆盖
+        if (nickname && nickname.trim()) {
+          mockUser.nickName = nickname.trim()
+        }
+        // 非顾客/非总部运营：用实际选择的门店覆盖
+        if (selectedRole !== 'customer' && selectedRole !== 'hq_ops' && selectedStoreId != null) {
+          mockUser.storeId = selectedStoreId
+        }
+        this.finishLogin(mockUser, selectedRole, `mock_token_${selectedRole}_20260604`)
+        return
+      }
+
+      wx.login({
+        success: (loginRes) => {
+          try {
+            if (!loginRes.code) {
+              this.setData({ loading: false })
+              wx.showToast({ title: '微信登录失败', icon: 'none' })
+              return
+            }
+            const payload = { code: loginRes.code, roleId: this.roleToId(selectedRole) }
+            if (selectedStoreId != null) payload.storeId = selectedStoreId
+            if (nickname && nickname.trim()) payload.nickname = nickname.trim()
+            post('/api/auth/login', payload).then(res => {
+              if (res.code === 0 && res.data) {
+                const roleLabelMap = {
+                  customer: '顾客',
+                  staff: '店员',
+                  manager: '店长',
+                  hq_ops: '总部运营',
+                  cat_keeper: '猫咪管家'
+                }
+                const userInfo = {
+                  ...res.data.userInfo,
+                  role: selectedRole,
+                  roleLabel: roleLabelMap[selectedRole]
+                }
+                this.finishLogin(userInfo, selectedRole, res.data.token)
+              } else {
+                this.setData({ loading: false })
+                wx.showToast({ title: res.message || '登录失败', icon: 'none' })
+              }
+            }).catch(() => {
+              this.setData({ loading: false })
+              wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
+            })
+          } catch (err) {
+            console.error('[wxLogin] success callback error:', err)
+            this.setData({ loading: false })
+            wx.showToast({ title: '登录异常，请重试', icon: 'none' })
+          }
+        },
+        fail: () => {
+          this.setData({ loading: false })
+          wx.showToast({ title: '微信登录失败', icon: 'none' })
+        }
+      })
+    } catch (err) {
+      console.error('[onMockLogin] error:', err)
+      this.setData({ loading: false })
+      wx.showToast({ title: '登录异常，请重试', icon: 'none' })
+    }
+  },
+
+  // ── 手机号登录：表单输入 ──
+  onPhoneInput(e) {
+    this.setData({ phone: e.detail.value })
+  },
+  onPasswordInput(e) {
+    this.setData({ password: e.detail.value })
+  },
+
+  // ── 手机号登录 ──
+  onPhoneLogin() {
+    const { phone, password } = this.data
+    if (!phone || !password) {
+      wx.showToast({ title: '请输入手机号和密码', icon: 'none' })
+      return
+    }
+    if (!/^1\d{10}$/.test(phone)) {
+      wx.showToast({ title: '手机号格式不正确', icon: 'none' })
       return
     }
 
-    // 对接微信沙箱后端：wx.login 换取真实 token
-    wx.login({
-      success: (loginRes) => {
-        if (!loginRes.code) {
-          this.setData({ loading: false })
-          wx.showToast({ title: '微信登录失败', icon: 'none' })
-          return
-        }
-        // post('/api/auth/login', { code: loginRes.code, role }).then(res => {
-        //   if (res.code === 0 && res.data) {
-        //     const userInfo = { ...res.data.userInfo, role, roleLabel: ROLE_USERS[role].roleLabel }
-        //     this.finishLogin(userInfo, role, res.data.token)
-        //   } else {
-        //     this.setData({ loading: false })
-        //     wx.showToast({ title: res.message || '登录失败', icon: 'none' })
-        //   }
-        // }).catch(() => {
-        //   this.setData({ loading: false })
-        //   wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
-        // })
+    this.setData({ loading: true })
 
-        post('/api/auth/login', { code: loginRes.code, role }).then(res => {
-          if (res.code === 0 && res.data) {
-            // 定义角色对应的中文名称
-            const roleLabelMap = {
-              customer: '顾客',
-              staff: '店员',
-              manager: '店长',
-              hq_ops: '总部运营',
-              cat_keeper: '猫咪管家'
-            }
-            
-            // 只合并后端返回的真实数据，不混入 ROLE_USERS 的假数据
-            const userInfo = {
-              ...res.data.userInfo,  // 后端返回的真实用户信息（包含 id: 31）
-              role: role,
-              roleLabel: roleLabelMap[role]
-            }
-            this.finishLogin(userInfo, role, res.data.token)
-          } else {
-            this.setData({ loading: false })
-            wx.showToast({ title: res.message || '登录失败', icon: 'none' })
-          }
-        }).catch(() => {
-          this.setData({ loading: false })
-          wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
-        })
-      },
-      fail: () => {
+    post('/api/auth/login/phone', { phone, password }).then(res => {
+      if (res.code === 0 && res.data) {
+        const userInfo = {
+          ...res.data.userInfo,
+          role: 'customer',
+          roleLabel: '顾客'
+        }
+        this.finishLogin(userInfo, 'customer', res.data.token)
+      } else {
         this.setData({ loading: false })
-        wx.showToast({ title: '微信登录失败', icon: 'none' })
+        wx.showToast({ title: res.message || '登录失败', icon: 'none' })
       }
+    }).catch(() => {
+      this.setData({ loading: false })
+      wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' })
     })
   },
 
+  // ── 跳转注册页 ──
+  goRegister() {
+    wx.navigateTo({ url: '/pages/register/register' })
+  },
+
+  // ── 角色 ID 映射（前端字符串 → 数据库 roleId） ──
+  roleToId(role) {
+    const map = { customer: 1, staff: 2, manager: 3, hq_ops: 4, cat_keeper: 5 }
+    return map[role] || 1
+  },
+
+  // ── 登录完成：存储信息 + 跳转 ──
   finishLogin(userInfo, role, token) {
     wx.setStorageSync('token', token)
     wx.setStorageSync('userInfo', userInfo)
@@ -150,21 +276,8 @@ Page({
     app.globalData.currentStore = null
     app.globalData.selectedTable = null
 
-    const routeMap = {
-      customer:   '/pages/index/index',
-      staff:      '/pages/staff/staff',
-      manager:    '/pages/dashboard/dashboard',
-      hq_ops:     '/pages/dashboard/dashboard',
-      cat_keeper: '/pages/cats/cats'
-    }
-    const targetUrl = routeMap[role]
-    const tabBarPages = ['/pages/index/index', '/pages/reservation/reservation', '/pages/menu/menu', '/pages/profile/profile']
-
     this.setData({ loading: false })
-    if (tabBarPages.includes(targetUrl)) {
-      wx.switchTab({ url: targetUrl })
-    } else {
-      wx.reLaunch({ url: targetUrl })
-    }
+    // 所有角色统一跳转到首页
+    wx.switchTab({ url: '/pages/index/index' })
   }
 })

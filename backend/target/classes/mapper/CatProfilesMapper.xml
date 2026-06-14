@@ -11,6 +11,7 @@
     <result column="weight_kg" jdbcType="NUMERIC" property="weightKg" />
     <result column="avatar_url" jdbcType="VARCHAR" property="avatarUrl" />
     <result column="is_default" jdbcType="BIT" property="isDefault" />
+    <result column="store_id" jdbcType="INTEGER" property="storeId" />
     <result column="created_at" jdbcType="TIMESTAMP" property="createdAt" />
   </resultMap>
   <sql id="Example_Where_Clause">
@@ -73,7 +74,7 @@
   </sql>
   <sql id="Base_Column_List">
     cat_id, user_id, name, breed, personality, birth_date, weight_kg, avatar_url, is_default,
-    created_at
+    store_id, created_at
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.CatProfilesExample" resultMap="BaseResultMap">
     select
@@ -108,11 +109,11 @@
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.CatProfiles">
     insert into public.cat_profiles (cat_id, user_id, name,
       breed, personality, birth_date,
-      weight_kg, avatar_url, is_default,
+      weight_kg, avatar_url, is_default, store_id,
       created_at)
     values (#{catId,jdbcType=INTEGER}, #{userId,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR},
       #{breed,jdbcType=VARCHAR}, #{personality,jdbcType=VARCHAR}, #{birthDate,jdbcType=DATE},
-      #{weightKg,jdbcType=NUMERIC}, #{avatarUrl,jdbcType=VARCHAR}, #{isDefault,jdbcType=BIT},
+      #{weightKg,jdbcType=NUMERIC}, #{avatarUrl,jdbcType=VARCHAR}, #{isDefault,jdbcType=BIT}, #{storeId,jdbcType=INTEGER},
       #{createdAt,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.CatProfiles">
@@ -145,6 +146,9 @@
       <if test="isDefault != null">
         is_default,
       </if>
+      <if test="storeId != null">
+        store_id,
+      </if>
       <if test="createdAt != null">
         created_at,
       </if>
@@ -176,6 +180,9 @@
       </if>
       <if test="isDefault != null">
         #{isDefault,jdbcType=BIT},
+      </if>
+      <if test="storeId != null">
+        #{storeId,jdbcType=INTEGER},
       </if>
       <if test="createdAt != null">
         #{createdAt,jdbcType=TIMESTAMP},
@@ -218,6 +225,9 @@
       <if test="row.isDefault != null">
         is_default = #{row.isDefault,jdbcType=BIT},
       </if>
+      <if test="row.storeId != null">
+        store_id = #{row.storeId,jdbcType=INTEGER},
+      </if>
       <if test="row.createdAt != null">
         created_at = #{row.createdAt,jdbcType=TIMESTAMP},
       </if>
@@ -237,6 +247,7 @@
       weight_kg = #{row.weightKg,jdbcType=NUMERIC},
       avatar_url = #{row.avatarUrl,jdbcType=VARCHAR},
       is_default = #{row.isDefault,jdbcType=BIT},
+      store_id = #{row.storeId,jdbcType=INTEGER},
       created_at = #{row.createdAt,jdbcType=TIMESTAMP}
     <if test="example != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -269,6 +280,9 @@
       <if test="isDefault != null">
         is_default = #{isDefault,jdbcType=BIT},
       </if>
+      <if test="storeId != null">
+        store_id = #{storeId,jdbcType=INTEGER},
+      </if>
       <if test="createdAt != null">
         created_at = #{createdAt,jdbcType=TIMESTAMP},
       </if>
@@ -285,6 +299,7 @@
       weight_kg = #{weightKg,jdbcType=NUMERIC},
       avatar_url = #{avatarUrl,jdbcType=VARCHAR},
       is_default = #{isDefault,jdbcType=BIT},
+      store_id = #{storeId,jdbcType=INTEGER},
       created_at = #{createdAt,jdbcType=TIMESTAMP}
     where cat_id = #{catId,jdbcType=INTEGER}
   </update>

@@ -87,16 +87,26 @@ Page({
   buildCouponRuleText(coupon) {
     const min = coupon.minAmount
     const type = coupon.type
+    const val = coupon.value
     if (type === 'discount') {
-      const zhe = (coupon.value * 10).toFixed(0)
+      if (val == null || val <= 0) {
+        return (min != null ? '满¥' + min + ' ' : '') + '折扣券（规则数据异常）'
+      }
+      const zhe = (val * 10).toFixed(0)
       const max = coupon.maxDiscount
-      return '满¥' + min + ' 享' + zhe + '折，最高减¥' + max
+      return (min != null ? '满¥' + min + ' ' : '') + '享' + zhe + '折' + (max != null ? '，最高减¥' + max : '')
     }
     if (type === 'cashback') {
-      return '满¥' + min + ' 减¥' + coupon.value
+      if (val == null) {
+        return (min != null ? '满¥' + min + ' ' : '') + '满减券（规则数据异常）'
+      }
+      return (min != null ? '满¥' + min + ' ' : '') + '减¥' + val
     }
     if (type === 'freebie') {
-      return '赠价值¥' + coupon.value + '商品'
+      if (val == null) {
+        return '赠品券（规则数据异常）'
+      }
+      return (min != null ? '满¥' + min + ' ' : '') + '赠价值¥' + val + '商品'
     }
     return ''
   },
@@ -223,6 +233,7 @@ Page({
       if (!coupon) return
       if (coupon.type === 'discount') {
         if (cartTotal < (coupon.minAmount || 0)) return
+        if (coupon.value == null || coupon.value <= 0) return
         let saving = Math.round(cartTotal * (1 - coupon.value))
         if (coupon.maxDiscount && saving > coupon.maxDiscount) saving = coupon.maxDiscount
         totalDiscount += saving
@@ -237,7 +248,8 @@ Page({
     selectedCouponIds.forEach(id => {
       const coupon = coupons.find(c => c.id === id)
       if (!coupon || coupon.type !== 'cashback') return
-      if (cartTotal >= coupon.minAmount) {
+      if (coupon.value == null) return
+      if (cartTotal >= (coupon.minAmount || 0)) {
         totalDiscount += coupon.value
         breakdown.push(this.buildBreakdownItem(coupon.name, -coupon.value, 'cashback'))
       }
@@ -271,6 +283,7 @@ Page({
     selectedCouponIds.forEach(id => {
       const coupon = coupons.find(c => c.id === id)
       if (!coupon || coupon.type !== 'freebie') return
+      if (coupon.value == null) return
       totalDiscount += coupon.value
       breakdown.push(this.buildBreakdownItem(coupon.name, -coupon.value, 'freebie'))
     })

@@ -14,11 +14,35 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 64rpx;
+  margin-bottom: 48rpx;
 }
 .logo-cat  { font-size: 100rpx; margin-bottom: 12rpx; }
 .logo-name { font-size: 52rpx; font-weight: 800; color: #fff; letter-spacing: 4rpx; }
 .logo-sub  { font-size: 24rpx; color: rgba(255,255,255,0.85); margin-top: 10rpx; }
+
+/* ── 登录方式 Tab ── */
+.login-tabs {
+  display: flex;
+  width: 100%;
+  background: rgba(255,255,255,0.3);
+  border-radius: 16rpx;
+  margin-bottom: 36rpx;
+  overflow: hidden;
+}
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: 28rpx;
+  color: rgba(255,255,255,0.7);
+  transition: all 0.2s;
+}
+.tab-active {
+  background: rgba(255,255,255,0.95);
+  color: #C97E5A;
+  font-weight: 600;
+  border-radius: 16rpx;
+}
 
 /* ── 角色选择 ── */
 .role-section {
@@ -64,6 +88,107 @@
 .role-name-en { font-size: 20rpx; color: #999; margin-top: 4rpx; }
 .role-card-active .role-name { color: #C97E5A; }
 
+/* ── 昵称输入（微信登录用） ── */
+.nickname-section {
+  width: 100%;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20rpx;
+  padding: 28rpx 28rpx 24rpx;
+  box-sizing: border-box;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(201,126,90,0.12);
+}
+.nickname-title {
+  font-size: 26rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 20rpx;
+  letter-spacing: 1rpx;
+}
+.nickname-input {
+  width: 100%;
+  height: 80rpx;
+  background: #F7F0EB;
+  border-radius: 14rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  color: #333;
+  border: 2rpx solid #E8D5C4;
+}
+.nickname-input::placeholder {
+  color: #C4A88C;
+  font-size: 26rpx;
+}
+
+/* ── 门店选择（微信登录用） ── */
+.store-section {
+  width: 100%;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20rpx;
+  padding: 28rpx 28rpx 24rpx;
+  box-sizing: border-box;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(201,126,90,0.12);
+}
+.store-title {
+  font-size: 26rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 20rpx;
+  letter-spacing: 1rpx;
+}
+.store-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F7F0EB;
+  border-radius: 14rpx;
+  padding: 24rpx 28rpx;
+  border: 2rpx solid #E8D5C4;
+}
+.store-picker-text {
+  font-size: 28rpx;
+  color: #333;
+}
+.store-picker-arrow {
+  font-size: 22rpx;
+  color: #C97E5A;
+}
+
+/* ── 手机号登录表单 ── */
+.phone-form {
+  width: 100%;
+  background: rgba(255,255,255,0.95);
+  border-radius: 28rpx;
+  padding: 36rpx 28rpx;
+  box-sizing: border-box;
+  margin-bottom: 36rpx;
+  box-shadow: 0 8rpx 32rpx rgba(201,126,90,0.18);
+}
+.form-item {
+  margin-bottom: 28rpx;
+}
+.form-item:last-child {
+  margin-bottom: 0;
+}
+.form-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+  display: block;
+}
+.form-input {
+  width: 100%;
+  height: 88rpx;
+  background: #F7F0EB;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  color: #333;
+  box-sizing: border-box;
+}
+
 /* ── 登录按钮 ── */
 .btn-wx-login {
   width: 100%;
@@ -83,4 +208,14 @@
   background: #ccc !important;
   box-shadow: none !important;
 }
+
+/* ── 注册链接 ── */
+.register-link {
+  text-align: center;
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  color: #C97E5A;
+}
+
+/* ── 底部提示 ── */
 .login-hint { font-size: 22rpx; color: rgba(0,0,0,0.4); text-align: center; }

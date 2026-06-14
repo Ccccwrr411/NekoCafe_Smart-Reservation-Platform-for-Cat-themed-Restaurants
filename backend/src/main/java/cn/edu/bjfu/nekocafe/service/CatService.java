@@ -1,5 +1,6 @@
 package cn.edu.bjfu.nekocafe.service;
 
+import cn.edu.bjfu.nekocafe.dto.CatHealthRecordDTO;
 import cn.edu.bjfu.nekocafe.vo.CatVO;
 import java.util.List;
 import java.util.Map;
@@ -20,4 +21,10 @@ public interface CatService {
      * 包含健康记录、疫苗、互动记录等
      */
     CatVO getCatDetail(Integer catId);
+
+    /**
+     * 猫咪健康打卡（猫咪管家专用）
+     * 新增体重/疫苗/互动记录
+     */
+    Map<String, Object> addHealthRecord(CatHealthRecordDTO dto);
 }

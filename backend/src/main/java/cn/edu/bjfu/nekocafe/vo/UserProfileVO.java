@@ -22,6 +22,9 @@ public class UserProfileVO {
     private Integer couponCount;
     private List<Integer> favoriteStores;
     private String joinDate;       // Users.createdAt 格式化
+    private Boolean isVerified;    // 是否已完成实名认证
+    private String realName;       // 实名认证姓名（未认证为 null）
+    private String idCardMask;     // 脱敏身份证号（未认证为 null）
 
     // ---- Getters & Setters ----
     public Long getId() { return id; }
@@ -54,4 +57,10 @@ public class UserProfileVO {
     public void setFavoriteStores(List<Integer> favoriteStores) { this.favoriteStores = favoriteStores; }
     public String getJoinDate() { return joinDate; }
     public void setJoinDate(String joinDate) { this.joinDate = joinDate; }
+    public Boolean getIsVerified() { return isVerified; }
+    public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }
+    public String getRealName() { return realName; }
+    public void setRealName(String realName) { this.realName = realName; }
+    public String getIdCardMask() { return idCardMask; }
+    public void setIdCardMask(String idCardMask) { this.idCardMask = idCardMask; }
 }

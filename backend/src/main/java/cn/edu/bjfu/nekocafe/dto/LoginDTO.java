@@ -6,13 +6,19 @@ package cn.edu.bjfu.nekocafe.dto;
 public class LoginDTO {
     /** wx.login() 返回的临时 code */
     private String code;
-
-    /** 前端选择的角色：customer / staff / manager / hq_ops / cat_keeper */
-    private String role;
+    /** 角色 ID（前端选择的角色，对应 roles 表） */
+    private Integer roleId;
+    /** 门店 ID（非顾客角色必填） */
+    private Integer storeId;
+    /** 昵称（微信登录新用户可自定义） */
+    private String nickname;
 
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
-
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public Integer getRoleId() { return roleId; }
+    public void setRoleId(Integer roleId) { this.roleId = roleId; }
+    public Integer getStoreId() { return storeId; }
+    public void setStoreId(Integer storeId) { this.storeId = storeId; }
+    public String getNickname() { return nickname; }
+    public void setNickname(String nickname) { this.nickname = nickname; }
 }
