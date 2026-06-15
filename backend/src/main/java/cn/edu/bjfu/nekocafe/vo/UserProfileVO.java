@@ -27,8 +27,6 @@ public class UserProfileVO {
     private Boolean isVerified;    // 是否已完成实名认证
     private String realName;       // 实名认证姓名（未认证为 null）
     private String idCardMask;     // 脱敏身份证号（未认证为 null）
-    private Integer storeId;       // 用户绑定的门店 ID
-    private String storeName;      // 用户绑定的门店名称
 
     // ---- Getters & Setters ----
     public Long getId() { return id; }
@@ -71,8 +69,4 @@ public class UserProfileVO {
     public void setRealName(String realName) { this.realName = realName; }
     public String getIdCardMask() { return idCardMask; }
     public void setIdCardMask(String idCardMask) { this.idCardMask = idCardMask; }
-    public Integer getStoreId() { return storeId; }
-    public void setStoreId(Integer storeId) { this.storeId = storeId; }
-    public String getStoreName() { return storeName; }
-    public void setStoreName(String storeName) { this.storeName = storeName; }
 }

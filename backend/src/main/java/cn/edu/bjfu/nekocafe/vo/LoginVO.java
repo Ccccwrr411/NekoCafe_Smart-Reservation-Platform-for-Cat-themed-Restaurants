@@ -17,7 +17,6 @@ public class LoginVO {
         private Integer points;
         private Integer roleId;    // 当前角色ID
         private Integer storeId;   // 所属门店ID（总部运营为null）
-        private String storeName;  // 所属门店名称
 
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -37,8 +36,6 @@ public class LoginVO {
         public void setRoleId(Integer roleId) { this.roleId = roleId; }
         public Integer getStoreId() { return storeId; }
         public void setStoreId(Integer storeId) { this.storeId = storeId; }
-        public String getStoreName() { return storeName; }
-        public void setStoreName(String storeName) { this.storeName = storeName; }
     }
 
     public String getToken() { return token; }

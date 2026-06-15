@@ -242,12 +242,11 @@ CREATE TABLE queue (
     user_id BIGINT,
     party_size INT NOT NULL,
     preferred_table_type VARCHAR(50),
-    status VARCHAR(20) DEFAULT 'WAITING', -- WAITING, CALLED, KNOWN, MISSED
+    status VARCHAR(20) DEFAULT 'WAITING', -- WAITING, CALLED, SEATED, CANCELLED
     queue_number VARCHAR(20) NOT NULL,
     called_at TIMESTAMP,
     seated_table_id INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 

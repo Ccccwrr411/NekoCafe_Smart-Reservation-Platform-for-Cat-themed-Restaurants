@@ -4,13 +4,11 @@ import cn.edu.bjfu.nekocafe.dto.LoginDTO;
 import cn.edu.bjfu.nekocafe.dto.PhoneLoginDTO;
 import cn.edu.bjfu.nekocafe.dto.RegisterDTO;
 import cn.edu.bjfu.nekocafe.entity.MemberExt;
-import cn.edu.bjfu.nekocafe.entity.Stores;
 import cn.edu.bjfu.nekocafe.entity.UserRoles;
 import cn.edu.bjfu.nekocafe.entity.UserRolesExample;
 import cn.edu.bjfu.nekocafe.entity.Users;
 import cn.edu.bjfu.nekocafe.entity.UsersExample;
 import cn.edu.bjfu.nekocafe.mapper.MemberExtMapper;
-import cn.edu.bjfu.nekocafe.mapper.StoresMapper;
 import cn.edu.bjfu.nekocafe.mapper.UserRolesMapper;
 import cn.edu.bjfu.nekocafe.mapper.UsersMapper;
 import cn.edu.bjfu.nekocafe.service.AuthService;
@@ -48,9 +46,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private UserRolesMapper userRolesMapper;
-
-    @Autowired
-    private StoresMapper storesMapper;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -336,22 +331,14 @@ public class AuthServiceImpl implements AuthService {
         List<UserRoles> userRoles = userRolesMapper.selectByExample(ure);
         Integer roleId = null;
         Integer storeId = null;
-        String storeName = null;
         if (!userRoles.isEmpty()) {
             UserRoles ur = userRoles.get(0);
             roleId = ur.getRoleId();
             storeId = ur.getStoreId();
-            // 查门店名称
-            if (storeId != null) {
-                Stores store = storesMapper.selectByPrimaryKey(storeId);
-                if (store != null) {
-                    storeName = store.getName();
-                }
-            }
         }
 
         // 签发 JWT（token 仅返回给前端，不再写入数据库 openid 字段）
-        String token = JwtUtil.generateToken(user.getUserId(), roleId, storeId);
+        String token = JwtUtil.generateToken(user.getUserId());
 
         // 组装响应
         LoginVO result = new LoginVO();
@@ -367,7 +354,6 @@ public class AuthServiceImpl implements AuthService {
         userInfo.setPoints(points);
         userInfo.setRoleId(roleId);
         userInfo.setStoreId(storeId);
-        userInfo.setStoreName(storeName);
         result.setUserInfo(userInfo);
 
         return result;
