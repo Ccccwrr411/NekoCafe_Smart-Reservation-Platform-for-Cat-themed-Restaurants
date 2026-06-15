@@ -427,6 +427,17 @@
   </select>
 
   <!--
+    按用户ID查询全部预约记录（用于"全部"标签）。
+  -->
+  <select id="selectByUserId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+    order by reservation_time DESC
+  </select>
+
+  <!--
     专用查询：按 tableId + status 列表查活跃预约（用于时间段冲突判断）。
   -->
   <select id="selectByTableIdAndStatuses" resultMap="BaseResultMap">

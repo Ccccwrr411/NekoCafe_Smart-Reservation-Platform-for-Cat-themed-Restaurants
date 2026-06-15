@@ -32,7 +32,7 @@
       <view class="progress-bar" wx:if="{{userInfo.pointsToNext > 0}}">
         <view
           class="progress-fill"
-          style="width: {{(userInfo.points - (userInfo.levelStartPoints || 0)) * 100 / ((userInfo.nextLevelThreshold || 1) - (userInfo.levelStartPoints || 0))}}"
+          style="width: {{userInfo.points * 100 / (userInfo.nextLevelThreshold || 1)}}%"
         ></view>
       </view>
     </view>
