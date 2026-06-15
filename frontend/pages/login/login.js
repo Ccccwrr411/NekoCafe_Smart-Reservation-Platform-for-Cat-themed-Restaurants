@@ -170,13 +170,14 @@ Page({
         post('/api/auth/wx-login', { code: loginRes.code }).then(res => {
           that.setData({ wechatLoading: false })
           if (res.code === 0 && res.data) {
-            // 登录成功
+            // 登录成功（后端返回的 roleId → 前端角色标识）
+            // 数据库: 1=超级管理员, 2=店长, 3=店员, 4=兽医, 5=普通顾客
             const roleMap = {
-              1: { role: 'customer', label: '顾客' },
-              2: { role: 'staff', label: '店员' },
-              3: { role: 'manager', label: '店长' },
-              4: { role: 'hq_ops', label: '总部运营' },
-              5: { role: 'cat_keeper', label: '猫咪管家' }
+              1: { role: 'hq_ops', label: '总部运营' },
+              2: { role: 'manager', label: '店长' },
+              3: { role: 'staff', label: '店员' },
+              4: { role: 'cat_keeper', label: '猫咪管家' },
+              5: { role: 'customer', label: '顾客' }
             }
             const roleId = res.data.userInfo.roleId || 1
             const roleInfo = roleMap[roleId] || roleMap[1]
@@ -430,9 +431,10 @@ Page({
   },
 
   // ── 角色 ID 映射（前端字符串 → 数据库 roleId） ──
+  // 数据库: 1=超级管理员, 2=店长, 3=店员, 4=兽医, 5=普通顾客
   roleToId(role) {
-    const map = { customer: 1, staff: 2, manager: 3, hq_ops: 4, cat_keeper: 5 }
-    return map[role] || 1
+    const map = { customer: 5, staff: 3, manager: 2, hq_ops: 1, cat_keeper: 4 }
+    return map[role] || 5
   },
 
   // ── 补全头像 URL（相对路径 → 完整 URL）──
@@ -463,8 +465,22 @@ Page({
     app.globalData.currentStore = null
     app.globalData.selectedTable = null
 
-    this.setData({ loading: false })
-    // 所有角色统一跳转到首页
-    wx.switchTab({ url: '/pages/index/index' })
+
+    const routeMap = {
+      customer:   '/pages/index/index',
+      staff:      '/pages/staff/staff',
+      manager:    '/pages/staffDashboard/staffDashboard',
+      hq_ops:     '/pages/staffDashboard/staffDashboard',
+      cat_keeper: '/pages/cats/cats'
+    }
+    const targetUrl = routeMap[role] || '/pages/index/index'
+    const tabBarPages = ['/pages/index/index', '/pages/reservation/reservation', '/pages/menu/menu', '/pages/profile/profile']
+
+    // 根据目标页面类型选择跳转方式
+    if (tabBarPages.includes(targetUrl)) {
+      wx.switchTab({ url: targetUrl })
+    } else {
+      wx.redirectTo({ url: targetUrl })
+    }
   }
 })

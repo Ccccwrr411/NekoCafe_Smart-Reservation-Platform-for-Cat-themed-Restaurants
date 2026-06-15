@@ -960,6 +960,103 @@ module.exports = {
   },
 
   // ─────────────────────────────────────────────
+  // 店长-排班列表  GET /api/manager/schedules?storeId=1
+  // 数据来源: staff_schedules + staff_shifts + user_roles
+  // ─────────────────────────────────────────────
+  '/api/manager/schedules': function(queryParams) {
+    const storeId = parseInt(queryParams.storeId || 1)
+    const staffSchedules = [
+      { scheduleId: 1, storeId: 1, staffId: 2, workDate: '2026-06-10', shiftId: 4, startTime: '2026-06-10 09:55:00', endTime: '2026-06-10 22:05:00', position: '店长' },
+      { scheduleId: 2, storeId: 1, staffId: 3, workDate: '2026-06-10', shiftId: 1, startTime: '2026-06-10 07:50:00', endTime: '2026-06-10 16:00:00', position: '店员' },
+      { scheduleId: 3, storeId: 1, staffId: 4, workDate: '2026-06-10', shiftId: 5, startTime: '2026-06-10 13:50:00', endTime: '2026-06-10 18:10:00', position: '驻店兽医' },
+      { scheduleId: 4, storeId: 1, staffId: 3, workDate: '2026-06-11', shiftId: 2, startTime: '',                  endTime: '',                  position: '店员' },
+      { scheduleId: 5, storeId: 1, staffId: 2, workDate: '2026-06-11', shiftId: 4, startTime: '',                  endTime: '',                  position: '店长' },
+      { scheduleId: 6, storeId: 1, staffId: 3, workDate: '2026-06-12', shiftId: 6, startTime: '2026-06-12 14:55:00', endTime: '2026-06-12 22:00:00', position: '店员' },
+      { scheduleId: 7, storeId: 1, staffId: 4, workDate: '2026-06-12', shiftId: 5, startTime: '2026-06-12 13:55:00', endTime: '2026-06-12 18:05:00', position: '兽医' },
+      { scheduleId: 8, storeId: 2, staffId: 2, workDate: '2026-06-12', shiftId: 4, startTime: '2026-06-12 09:55:00', endTime: '2026-06-12 22:05:00', position: '店长' },
+      { scheduleId: 9, storeId: 2, staffId: 5, workDate: '2026-06-13', shiftId: 1, startTime: '2026-06-13 07:50:00', endTime: '2026-06-13 16:00:00', position: '店员' },
+      { scheduleId: 10, storeId: 1, staffId: 2, workDate: '2026-06-13', shiftId: 4, startTime: '',                 endTime: '',                  position: '店长' }
+    ]
+    const shiftMap = {
+      1: { shiftName: '早班A',  startTime: '07:00', endTime: '15:00' },
+      2: { shiftName: '晚班A',  startTime: '15:00', endTime: '23:00' },
+      4: { shiftName: '周末特班',startTime: '09:00', endTime: '21:00' },
+      5: { shiftName: '临时替班',startTime: '10:00', endTime: '18:00' },
+      6: { shiftName: '夜班',   startTime: '22:00', endTime: '06:00' }
+    }
+    const staffNameMap = { 2: '王店长', 3: '店员小张', 4: '兽医李姐', 5: '海淀店赵店员' }
+    const list = staffSchedules
+      .filter(s => s.storeId === storeId)
+      .map(s => ({
+        ...s,
+        staffName: staffNameMap[s.staffId] || ('员工#' + s.staffId),
+        shiftName: (shiftMap[s.shiftId] || {}).shiftName || ('班次#' + s.shiftId),
+        startTimeLabel: s.startTime ? s.startTime.substring(11, 16) : '--:--',
+        endTimeLabel:   s.endTime   ? s.endTime.substring(11, 16)   : '--:--'
+      }))
+    return { code: 0, message: 'success', data: list }
+  },
+
+  // ─────────────────────────────────────────────
+  // 店长-班次定义  GET /api/manager/shifts
+  // 数据来源: staff_shifts
+  // ─────────────────────────────────────────────
+  '/api/manager/shifts': {
+    code: 0, message: 'success',
+    data: [
+      { shiftId: 6, shiftName: '早班A',   startTime: '07:00:00', endTime: '15:00:00' },
+      { shiftId: 7, shiftName: '晚班A',   startTime: '15:00:00', endTime: '23:00:00' },
+      { shiftId: 8, shiftName: '周末特班', startTime: '09:00:00', endTime: '21:00:00' },
+      { shiftId: 9, shiftName: '临时替班', startTime: '10:00:00', endTime: '18:00:00' },
+      { shiftId: 10, shiftName: '夜班',   startTime: '22:00:00', endTime: '06:00:00' }
+    ]
+  },
+
+  // ─────────────────────────────────────────────
+  // 店长-异常申请列表  GET /api/manager/exceptions?storeId=1
+  // 数据来源: shift_exceptions
+  // ─────────────────────────────────────────────
+  '/api/manager/exceptions': function(queryParams) {
+    const storeId = parseInt(queryParams.storeId || 1)
+    const staffNameMap = { 2: '王店长', 3: '店员小张', 4: '兽医李姐', 5: '海淀店赵店员' }
+    const all = [
+      { exceptionId: 1,  storeId: 1, staffId: 3, exceptionDate: '2026-06-11', type: 'LEAVE',    status: 'APPROVED',     approverId: 2, reason: '病假',                           createdAt: '2026-06-03 14:32' },
+      { exceptionId: 3,  storeId: 2, staffId: 5, exceptionDate: '2026-06-16', type: 'LEAVE',    status: 'REJECTED',     approverId: 2, reason: '事假',                           createdAt: '2026-06-03 14:32' },
+      { exceptionId: 5,  storeId: 2, staffId: 4, exceptionDate: '2026-06-21', type: 'SWAP',     status: 'APPROVED',     approverId: 1, reason: '调休',                           createdAt: '2026-06-03 14:32' },
+      { exceptionId: 11, storeId: 1, staffId: 3, exceptionDate: '2026-06-12', type: 'NO_SHOW',  status: 'PENDING',      approverId: 0, reason: '客人预约未到店 | 预约 1005 | 时间 2026-06-12 13:00', createdAt: '2026-06-12 13:20' },
+      { exceptionId: 12, storeId: 2, staffId: 4, exceptionDate: '2026-06-12', type: 'SWAP',     status: 'PENDING',      approverId: 0, reason: '与同事调班申请，中班换晚班',     createdAt: '2026-06-12 11:00' },
+      { exceptionId: 20, storeId: 1, staffId: 2, exceptionDate: '2026-06-11', type: 'OVERTIME', status: 'ACKNOWLEDGED', approverId: 1, reason: '客人超时占座 | 桌号 101 | 预约 1001', createdAt: '2026-06-11 15:30' },
+      { exceptionId: 21, storeId: 1, staffId: 3, exceptionDate: '2026-06-10', type: 'LEAVE',    status: 'ACKNOWLEDGED', approverId: 1, reason: '病假：感冒需要休息一天',         createdAt: '2026-06-09 08:00' },
+      { exceptionId: 22, storeId: 2, staffId: 4, exceptionDate: '2026-06-11', type: 'SWAP',     status: 'ACKNOWLEDGED', approverId: 2, reason: '临时换班：晚班换中班',           createdAt: '2026-06-10 18:00' },
+      { exceptionId: 30, storeId: 1, staffId: 2, exceptionDate: '2026-06-08', type: 'OVERTIME', status: 'RESOLVED',     approverId: 1, reason: '客人超时占座 | 桌号 104 | 预约 998', createdAt: '2026-06-08 16:00' },
+      { exceptionId: 31, storeId: 2, staffId: 4, exceptionDate: '2026-06-07', type: 'NO_SHOW',  status: 'RESOLVED',     approverId: 2, reason: '客人预约未到店 | 预约 997',     createdAt: '2026-06-07 14:30' },
+      { exceptionId: 40, storeId: 1, staffId: 3, exceptionDate: '2026-06-14', type: 'LEAVE',    status: 'APPROVED',     approverId: 1, reason: '调休申请：上周末加班补休',       createdAt: '2026-06-10 10:00' },
+      { exceptionId: 41, storeId: 2, staffId: 5, exceptionDate: '2026-06-15', type: 'LEAVE',    status: 'REJECTED',     approverId: 2, reason: '事假：人手不足，已驳回',         createdAt: '2026-06-11 09:00' },
+      { exceptionId: 10, storeId: 1, staffId: 2, exceptionDate: '2026-06-12', type: 'OVERTIME', status: 'ACKNOWLEDGED', approverId: 79, reason: '客人超时占座 | 桌号 102 | 预约 1002', createdAt: '2026-06-12 14:00' },
+      { exceptionId: 2,  storeId: 1, staffId: 2, exceptionDate: '2026-06-15', type: 'SWAP',     status: 'RESOLVED',     approverId: 79, reason: '与同事换班',                     createdAt: '2026-06-03 14:32' },
+      { exceptionId: 4,  storeId: 1, staffId: 3, exceptionDate: '2026-06-20', type: 'LEAVE',    status: 'ACKNOWLEDGED', approverId: 135, reason: '年假申请',                     createdAt: '2026-06-03 14:32' },
+      { exceptionId: 13, storeId: 1, staffId: 3, exceptionDate: '2026-06-15', type: 'LEAVE',    status: 'RESOLVED',     approverId: 135, reason: '年假申请，6月15日休息一天',     createdAt: '2026-06-12 09:30' }
+    ]
+    const list = all
+      .filter(e => e.storeId === storeId)
+      .map(e => ({
+        ...e,
+        staffName: staffNameMap[e.staffId] || ('员工#' + e.staffId),
+        typeLabel:   { LEAVE: '请假', SWAP: '调班', OVERTIME: '加班', NO_SHOW: '客人未到' }[e.type] || e.type,
+        statusLabel: { PENDING: '待审批', APPROVED: '已通过', REJECTED: '已驳回', ACKNOWLEDGED: '已确认', RESOLVED: '已解决' }[e.status] || e.status
+      }))
+    return { code: 0, message: 'success', data: list }
+  },
+
+  // ─────────────────────────────────────────────
+  // 店长-审批异常申请  POST /api/manager/exception/review
+  // ─────────────────────────────────────────────
+  '/api/manager/exception/review': function(body) {
+    const newStatus = body.action === 'approve' ? 'APPROVED' : 'REJECTED'
+    return { code: 0, message: 'success', data: { success: true, message: body.action === 'approve' ? '已通过' : '已驳回', exceptionId: body.exceptionId, status: newStatus } }
+  },
+
+  // ─────────────────────────────────────────────
   // 门店全部已读  POST /api/notifications/read-all/store
   // ─────────────────────────────────────────────
   '/api/notifications/read-all/store': function(body) {

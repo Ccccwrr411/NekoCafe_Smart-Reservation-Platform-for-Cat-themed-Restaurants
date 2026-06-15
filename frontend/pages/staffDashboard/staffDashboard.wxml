@@ -1,0 +1,329 @@
+<!--pages/staffDashboard/staffDashboard.wxml-->
+<view class="container">
+  <!-- ══ 顶部共用 Header ══ -->
+  <view class="staff-header">
+    <view class="header-left">
+      <text class="header-title">🏪 店长工作台</text>
+      <text class="header-sub">{{storeName}} · {{userRoleLabel}}</text>
+    </view>
+    <view class="header-avatar" wx:if="{{userInfo.avatarUrl}}">
+      <image src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+    </view>
+    <view class="header-avatar header-avatar-default" wx:else>
+      <text>{{userInfo.nickName ? userInfo.nickName[0] : '👤'}}</text>
+    </view>
+  </view>
+
+  <!-- ══ Tab1: 数据看板（数据来自 /api/dashboard/metrics） ══ -->
+  <view wx:if="{{activeTab === 'dashboard'}}" class="tab-content">
+    <view class="dash-banner-inner">
+      <text class="dash-banner-title">📊 数据看板</text>
+      <text class="dash-banner-sub">实时掌控门店运营全貌</text>
+    </view>
+
+    <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
+
+    <block wx:if="{{!loading && metrics}}">
+      <!-- 今日概览：4 个核心数字（直接来自 todayOverview） -->
+      <view class="overview-card">
+        <text class="card-title">📊 今日概览</text>
+        <view class="overview-grid">
+          <view class="ov-item">
+            <text class="ov-val ov-revenue">¥{{metrics.todayOverview.revenue}}</text>
+            <text class="ov-label">今日营收</text>
+          </view>
+          <view class="ov-item">
+            <text class="ov-val ov-orders">{{metrics.todayOverview.orderCount}}</text>
+            <text class="ov-label">订单数</text>
+          </view>
+          <view class="ov-item">
+            <text class="ov-val ov-members">{{metrics.todayOverview.newMembers}}</text>
+            <text class="ov-label">复购客户</text>
+          </view>
+          <view class="ov-item">
+            <text class="ov-val ov-avg">¥{{metrics.todayOverview.avgOrderValue}}</text>
+            <text class="ov-label">客单价</text>
+          </view>
+        </view>
+        <view class="btn-view-orders" bindtap="onViewStoreOrders">
+          📋 查看门店订单详情 ›
+        </view>
+      </view>
+
+      <!-- 近 7 天坪效（labels+values 直接来自 spaceEfficiency） -->
+      <view class="info-card">
+        <text class="card-title">📈 近{{metrics.spaceEfficiency.labels.length}}天坪效（元/座/天）</text>
+        <view class="metric-row">
+          <text class="metric-label" wx:for="{{metrics.spaceEfficiency.labels}}" wx:key="*this">{{item}}</text>
+        </view>
+        <view class="metric-row">
+          <text class="metric-val-blue" wx:for="{{metrics.spaceEfficiency.values}}" wx:key="*this">{{item}}</text>
+        </view>
+      </view>
+
+      <!-- 翻台率 -->
+      <view class="info-card">
+        <text class="card-title">🔄 近{{metrics.turnoverRate.labels.length}}天翻台率</text>
+        <view class="metric-row">
+          <text class="metric-label" wx:for="{{metrics.turnoverRate.labels}}" wx:key="*this">{{item}}</text>
+        </view>
+        <view class="metric-row">
+          <text class="metric-val-orange" wx:for="{{metrics.turnoverRate.values}}" wx:key="*this">{{item}}x</text>
+        </view>
+      </view>
+
+      <!-- 会员复购率 -->
+      <view class="info-card">
+        <text class="card-title">👥 会员复购率（近{{metrics.repurchaseRate.labels.length}}天）</text>
+        <view class="metric-row">
+          <text class="metric-label" wx:for="{{metrics.repurchaseRate.labels}}" wx:key="*this">{{item}}</text>
+        </view>
+        <view class="metric-row">
+          <text class="metric-val-green" wx:for="{{metrics.repurchaseRate.values}}" wx:key="*this">{{item}}%</text>
+        </view>
+      </view>
+    </block>
+
+    <view wx:if="{{!loading && !metrics}}" class="empty-wrap">
+      <text>暂无数据</text>
+    </view>
+  </view>
+
+  <!-- ══ Tab2: 人员调动（排班 / 班次 / 异常申请） ══ -->
+  <view wx:if="{{activeTab === 'schedule'}}" class="tab-content">
+    <view class="dash-banner-inner">
+      <text class="dash-banner-title">👥 人员调动</text>
+      <text class="dash-banner-sub">排班 · 班次 · 异常申请</text>
+    </view>
+
+    <!-- 快速统计 -->
+    <view class="quick-stat-grid">
+      <view class="quick-stat">
+        <text class="quick-stat-val">{{scheduleStat.todayOnDuty}}</text>
+        <text class="quick-stat-label">今日在岗</text>
+      </view>
+      <view class="quick-stat">
+        <text class="quick-stat-val">{{scheduleStat.pendingReview}}</text>
+        <text class="quick-stat-label">待审批</text>
+      </view>
+      <view class="quick-stat">
+        <text class="quick-stat-val">{{scheduleStat.onLeave}}</text>
+        <text class="quick-stat-label">请假中</text>
+      </view>
+      <view class="quick-stat">
+        <text class="quick-stat-val">{{scheduleStat.shiftDefCount}}</text>
+        <text class="quick-stat-label">班次定义</text>
+      </view>
+    </view>
+
+    <!-- 子 Tab 切换 -->
+    <view class="sub-tab-bar">
+      <view
+        wx:for="{{scheduleSubTabs}}"
+        wx:key="key"
+        class="sub-tab {{scheduleSubTab === item.key ? 'sub-tab-active' : ''}}"
+        bindtap="onSwitchScheduleTab"
+        data-key="{{item.key}}"
+      >{{item.label}}</view>
+    </view>
+
+    <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
+
+    <!-- 子 Tab1: 排班表 -->
+    <block wx:if="{{!loading && scheduleSubTab === 'schedule'}}">
+      <view wx:if="{{schedules.length === 0}}" class="empty-wrap">
+        <text>暂无排班记录</text>
+      </view>
+      <view wx:else class="schedule-list">
+        <view
+          wx:for="{{schedules}}"
+          wx:key="scheduleId"
+          class="schedule-card"
+        >
+          <view class="sched-head">
+            <text class="sched-name">{{item.staffName}}</text>
+            <text class="sched-position">{{item.position}}</text>
+          </view>
+          <view class="sched-body">
+            <view class="sched-row">
+              <text class="sched-label">📅 日期</text>
+              <text class="sched-val">{{item.workDate}}</text>
+            </view>
+            <view class="sched-row">
+              <text class="sched-label">🕐 班次</text>
+              <text class="sched-val">{{item.shiftName}}</text>
+            </view>
+            <view class="sched-row">
+              <text class="sched-label">⏰ 时段</text>
+              <text class="sched-val">
+                <text wx:if="{{item.startTime}}" class="time-active">{{item.startTime}} - {{item.endTime}}</text>
+                <text wx:else class="time-pending">未签到</text>
+              </text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 子 Tab2: 班次定义 -->
+    <block wx:if="{{!loading && scheduleSubTab === 'shift'}}">
+      <view wx:if="{{shifts.length === 0}}" class="empty-wrap">
+        <text>暂无班次定义</text>
+      </view>
+      <view wx:else class="shift-list">
+        <view
+          wx:for="{{shifts}}"
+          wx:key="shiftId"
+          class="shift-card"
+        >
+          <view class="shift-icon">⏰</view>
+          <view class="shift-info">
+            <text class="shift-name">{{item.shiftName}}</text>
+            <text class="shift-time">{{item.startTime}} - {{item.endTime}}</text>
+          </view>
+          <text class="shift-id">#{{item.shiftId}}</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- 子 Tab3: 异常申请 -->
+    <block wx:if="{{!loading && scheduleSubTab === 'exception'}}">
+      <view wx:if="{{exceptions.length === 0}}" class="empty-wrap">
+        <text>暂无异常申请</text>
+      </view>
+      <view wx:else class="exception-list">
+        <view
+          wx:for="{{exceptions}}"
+          wx:key="exceptionId"
+          class="exc-card"
+        >
+          <view class="exc-head">
+            <view class="exc-head-left">
+              <text class="exc-type">{{TYPE_LABEL[item.type]}}</text>
+              <text class="exc-staff">{{item.staffName}}</text>
+            </view>
+            <view
+              class="exc-status"
+              style="background:{{STATUS_COLOR[item.status].bg}};color:{{STATUS_COLOR[item.status].fg}}"
+            >{{STATUS_LABEL[item.status]}}</view>
+          </view>
+          <view class="exc-body">
+            <view class="exc-row">
+              <text class="exc-label">📅 日期</text>
+              <text class="exc-val">{{item.exceptionDate}}</text>
+            </view>
+            <view class="exc-row">
+              <text class="exc-label">💬 原因</text>
+              <text class="exc-val exc-reason">{{item.reason}}</text>
+            </view>
+            <view class="exc-row">
+              <text class="exc-label">⏱ 提交时间</text>
+              <text class="exc-val">{{item.createdAt}}</text>
+            </view>
+          </view>
+          <!-- PENDING 状态：店长可审批 -->
+          <view wx:if="{{item.status === 'PENDING'}}" class="exc-actions">
+            <view
+              class="exc-btn exc-btn-reject"
+              bindtap="onReviewException"
+              data-id="{{item.exceptionId}}"
+              data-action="reject"
+            >驳回</view>
+            <view
+              class="exc-btn exc-btn-approve"
+              bindtap="onReviewException"
+              data-id="{{item.exceptionId}}"
+              data-action="approve"
+            >通过</view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <!-- ══ Tab3: 我的（数据基于真实后端计算） ══ -->
+  <view wx:if="{{activeTab === 'mine'}}" class="tab-content">
+    <view class="user-card">
+      <view class="user-card-bg"></view>
+      <view class="user-card-content">
+        <view class="user-avatar-big" wx:if="{{userInfo.avatarUrl}}">
+          <image src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+        </view>
+        <view class="user-avatar-big user-avatar-default" wx:else>
+          <text>{{userInfo.nickName ? userInfo.nickName[0] : '👤'}}</text>
+        </view>
+        <view class="user-info-block">
+          <text class="user-name">{{userInfo.nickName || '店长'}}</text>
+          <view class="user-role-badge">
+            <text class="role-icon">🏪</text>
+            <text class="role-text">{{userRoleLabel}}</text>
+          </view>
+          <text class="user-store">{{storeName}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 数据概览 -->
+    <view class="mine-stat-row">
+      <view class="mine-stat-item">
+        <text class="mine-stat-num">{{mineStat.managedStores}}</text>
+        <text class="mine-stat-label">管理门店</text>
+      </view>
+      <view class="mine-stat-divider"></view>
+      <view class="mine-stat-item">
+        <text class="mine-stat-num">{{mineStat.teamSize}}</text>
+        <text class="mine-stat-label">团队成员</text>
+      </view>
+      <view class="mine-stat-divider"></view>
+      <view class="mine-stat-item">
+        <text class="mine-stat-num">{{mineStat.pendingReview}}</text>
+        <text class="mine-stat-label">待审批</text>
+      </view>
+    </view>
+
+    <!-- 功能菜单 -->
+    <view class="mine-menu card">
+      <view class="mine-menu-row" bindtap="onViewStoreOrders">
+        <view class="mine-menu-icon">📋</view>
+        <text class="mine-menu-label">查看门店订单</text>
+        <text class="mine-menu-arrow">›</text>
+      </view>
+      <view class="mine-menu-row" bindtap="onGoSettings">
+        <view class="mine-menu-icon">⚙️</view>
+        <text class="mine-menu-label">设置</text>
+        <text class="mine-menu-arrow">›</text>
+      </view>
+    </view>
+
+    <view class="app-version">NekoCafé v1.0.0 · 🐱 店长工作台</view>
+
+    <!-- 退出登录 -->
+    <view class="logout-btn" bindtap="onTapLogout">退出登录</view>
+  </view>
+
+  <!-- ══ 自定义底部 TabBar ══ -->
+  <view class="custom-tabbar">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="key"
+      class="tab-item {{activeTab === item.key ? 'tab-item-active' : ''}}"
+      bindtap="onSwitchTab"
+      data-key="{{item.key}}"
+    >
+      <text class="tab-icon">{{item.icon}}</text>
+      <text class="tab-label">{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- ══ 退出登录确认弹窗 ══ -->
+  <view wx:if="{{showLogoutModal}}" class="modal-mask" bindtap="onCancelLogout">
+    <view class="modal-card" catchtap="">
+      <text class="modal-title">退出登录</text>
+      <text class="modal-content">确认退出当前账号？</text>
+      <view class="modal-actions">
+        <view class="modal-btn modal-btn-cancel" bindtap="onCancelLogout">取消</view>
+        <view class="modal-btn modal-btn-confirm" bindtap="onConfirmLogout">确认退出</view>
+      </view>
+    </view>
+  </view>
+</view>
