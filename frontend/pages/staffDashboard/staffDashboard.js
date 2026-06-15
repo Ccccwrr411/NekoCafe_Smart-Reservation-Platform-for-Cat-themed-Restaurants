@@ -83,8 +83,8 @@ Page({
     this.setData({
       userInfo: userInfo,
       userRoleLabel: userInfo.roleLabel || (userRole === 'hq_ops' ? '总部运营' : '店长'),
-      storeId: userInfo.storeId || 1,
-      storeName: userInfo.storeName || 'NekoCafé 朝阳店',
+      storeId: userInfo.storeId,
+      storeName: userInfo.storeName || '',
       mineStat: {
         ...this.data.mineStat,
         managedStores: userRole === 'hq_ops' ? 5 : 1
@@ -94,8 +94,12 @@ Page({
 
   loadAll() {
     var self = this
-    this.setData({ loading: true })
     var storeId = this.data.storeId
+    if (!storeId) {
+      this.setData({ loading: false })
+      return
+    }
+    this.setData({ loading: true })
     Promise.all([
       get('/api/dashboard/metrics?storeId=' + storeId + '&range=7d'),
       get('/api/manager/schedules?storeId=' + storeId),
@@ -166,16 +170,20 @@ Page({
   },
 
   onViewStoreOrders() {
-    var storeId = this.data.storeId || 1
+    var storeId = this.data.storeId
+    if (!storeId) {
+      wx.showToast({ title: '暂无门店信息', icon: 'none' })
+      return
+    }
     wx.navigateTo({ url: '/pages/staff/staff?storeId=' + storeId })
   },
 
   onEditProfile() {
-    wx.navigateTo({ url: '/pages/editProfile/editProfile' })
+    wx.navigateTo({ url: '/pages/settings/settings' })
   },
 
   onGoSettings() {
-    wx.showToast({ title: '设置页面开发中', icon: 'none' })
+    wx.navigateTo({ url: '/pages/settings/settings' })
   },
 
   onTapLogout() {

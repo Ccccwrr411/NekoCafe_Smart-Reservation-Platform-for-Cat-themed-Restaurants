@@ -7,8 +7,10 @@ import cn.edu.bjfu.nekocafe.entity.MemberExt;
 import cn.edu.bjfu.nekocafe.entity.UserRoles;
 import cn.edu.bjfu.nekocafe.entity.UserRolesExample;
 import cn.edu.bjfu.nekocafe.entity.Users;
+import cn.edu.bjfu.nekocafe.entity.Stores;
 import cn.edu.bjfu.nekocafe.entity.UsersExample;
 import cn.edu.bjfu.nekocafe.mapper.MemberExtMapper;
+import cn.edu.bjfu.nekocafe.mapper.StoresMapper;
 import cn.edu.bjfu.nekocafe.mapper.UserRolesMapper;
 import cn.edu.bjfu.nekocafe.mapper.UsersMapper;
 import cn.edu.bjfu.nekocafe.service.AuthService;
@@ -48,6 +50,9 @@ public class AuthServiceImpl implements AuthService {
     private UserRolesMapper userRolesMapper;
 
     @Autowired
+    private StoresMapper storesMapper;
+
+    @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
     /** 验证码在 Redis 中的 key 前缀 */
@@ -55,8 +60,8 @@ public class AuthServiceImpl implements AuthService {
     /** 验证码有效期（分钟） */
     private static final int CODE_EXPIRE_MINUTES = 5;
 
-    /** 默认角色 ID（顾客） */
-    private static final int DEFAULT_ROLE_ID = 1;
+    /** 默认角色 ID（普通顾客=5） */
+    private static final int DEFAULT_ROLE_ID = 5;
 
     // ==================== 微信快捷登录 ====================
 
@@ -285,12 +290,12 @@ public class AuthServiceImpl implements AuthService {
         ur.setUserId(userId);
         ur.setRoleId(roleId);
 
-        // 总部运营（roleId=4）：storeId 为 null，表示全门店权限
-        // 顾客（roleId=1）：storeId 可为 null
+        // 总部运营（roleId=1，超级管理员）：storeId 为 null，表示全门店权限
+        // 顾客（roleId=5）：storeId 可为 null
         // 其他非顾客角色：优先用传入的 storeId，没传则默认门店 1
-        if (roleId != null && roleId == 4) {
+        if (roleId != null && roleId == 1) {
             ur.setStoreId(null);  // 全门店权限
-        } else if (roleId != null && roleId > 1 && storeId == null) {
+        } else if (roleId != null && roleId != 5 && storeId == null) {
             ur.setStoreId(1);  // 课设兜底
         } else {
             ur.setStoreId(storeId);
@@ -354,6 +359,14 @@ public class AuthServiceImpl implements AuthService {
         userInfo.setPoints(points);
         userInfo.setRoleId(roleId);
         userInfo.setStoreId(storeId);
+
+        // 查询门店名称
+        if (storeId != null) {
+            Stores store = storesMapper.selectByPrimaryKey(storeId);
+            if (store != null) {
+                userInfo.setStoreName(store.getName());
+            }
+        }
         result.setUserInfo(userInfo);
 
         return result;

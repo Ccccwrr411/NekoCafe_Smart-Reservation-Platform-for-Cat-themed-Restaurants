@@ -1,10 +1,10 @@
 -- 1. 插入 users (5条)
 INSERT INTO users (phone, password_hash, nickname, real_name, id_card, is_verified, status) VALUES
-('13800000001', 'hash_1', '张三', '张伟', '110105199001011234', TRUE, 1),
-('13800000002', 'hash_2', '李四', '李娜', '110105199202021234', TRUE, 1),
-('13800000003', 'hash_3', '王五喵', '王强', '110105199503031234', TRUE, 1),
-('13800000004', 'hash_4', '赵六', '赵敏', '110105199804041234', TRUE, 1),
-('13800000005', 'hash_5', '孙七', '孙悦', '110105200005051234', FALSE, 1);
+('13800000001', '$2b$12$6wqvt1/KVgEmHuRNgMMm3OBxz1e2fQv6p8u7M9wTFSvz0jsuyJfcm', '张三', '张伟', '110105199001011234', TRUE, 1),
+('13800000002', '$2b$12$ysEwoE96KPFf7saCewVlkepqWQObA0v7BlJD.oJh00s24umw3iO4.', '李四', '李娜', '110105199202021234', TRUE, 1),
+('13800000003', '$2b$12$H/MPcbvvzpYfyoP2gIEWPu4I1vxr1CUEaguNDGUgDbHwSpy7KLcsW', '王五喵', '王强', '110105199503031234', TRUE, 1),
+('13800000004', '$2b$12$IQ2ClW6WVchyoH1reoQYiOYOeaGj3g6r13fD.5pb1FVh3SWL8eMZu', '赵六', '赵敏', '110105199804041234', TRUE, 1),
+('13800000005', '$2b$12$ijOGbKiiWQ3YTWXyKWQfXOLpHI7TvDPtM7MvStUF9DRpH/BP28pSy', '孙七', '孙悦', '110105200005051234', FALSE, 1);
 
 -- 2. 插入 roles (5条)
 INSERT INTO roles (role_name) VALUES
