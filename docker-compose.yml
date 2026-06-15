@@ -1,15 +1,13 @@
 # ============================================
 # NekoCafé docker-compose.yml
 # 数据库和Redis在远程 82.157.130.254，这里只启动后端
-# 用法: docker compose up -d --build
+# 用法: docker compose up -d  （直接拉取远程镜像，不需要本地构建）
 # ============================================
 
 services:
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: yuuui2026/nekocafe:latest
     container_name: nekocafe-backend
     restart: unless-stopped
     environment:
