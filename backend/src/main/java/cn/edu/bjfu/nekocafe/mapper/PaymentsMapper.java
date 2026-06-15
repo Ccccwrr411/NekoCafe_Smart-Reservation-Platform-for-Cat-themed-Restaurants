@@ -27,10 +27,4 @@ public interface PaymentsMapper {
     int updateByPrimaryKeySelective(Payments row);
 
     int updateByPrimaryKey(Payments row);
-
-    /**
-     * 总部运营：按门店统计今日实收金额。
-     * JOIN reservations 获取 store_id，筛选 payments.status='PAID' 且 paid_at 为今日。
-     */
-    Long sumTodayPaidByStoreId(@Param("storeId") Integer storeId);
 }

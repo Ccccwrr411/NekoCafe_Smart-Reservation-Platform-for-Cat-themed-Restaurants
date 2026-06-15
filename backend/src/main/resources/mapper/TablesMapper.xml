@@ -326,30 +326,4 @@
     LIMIT #{limit}
   </select>
 
-  <!-- ========== 总部运营自定义 SQL ========== -->
-
-  <!--
-    统计某门店活跃桌位数（is_active=true）
-  -->
-  <select id="countActiveByStoreId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
-    SELECT COUNT(*)
-    FROM public.tables
-    WHERE store_id = #{storeId,jdbcType=INTEGER}
-      AND is_active = true
-  </select>
-
-  <!--
-    统计某门店入座桌位数
-    JOIN table_status 取实时占用状态
-    status_enum 枚举需 ::status_enum CAST
-  -->
-  <select id="countOccupiedByStoreId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
-    SELECT COUNT(*)
-    FROM public.tables t
-    JOIN public.table_status ts ON t.table_id = ts.table_id
-    WHERE t.store_id = #{storeId,jdbcType=INTEGER}
-      AND t.is_active = true
-      AND ts.status = 'OCCUPIED'::status_enum
-  </select>
-
 </mapper>

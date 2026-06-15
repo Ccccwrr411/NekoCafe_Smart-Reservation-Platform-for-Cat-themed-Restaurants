@@ -333,15 +333,4 @@
       updated_at = #{updatedAt,jdbcType=TIMESTAMP}
     where user_id = #{userId,jdbcType=BIGINT}
   </update>
-
-  <!-- ══ 总部运营：按门店查询店长信息 ══ -->
-  <select id="selectManagerByStoreId" parameterType="java.lang.Integer" resultType="map">
-    SELECT u.real_name, u.phone
-    FROM public.users u
-    JOIN public.user_roles ur ON u.user_id = ur.user_id
-    WHERE ur.role_id = 3
-      AND ur.store_id = #{storeId,jdbcType=INTEGER}
-    LIMIT 1
-  </select>
-
 </mapper>

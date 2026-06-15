@@ -107,8 +107,8 @@
       rule_json, start_time, end_time, 
       applicable_stores, is_active)
     values (#{promoId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{type,jdbcType=VARCHAR}, 
-      #{ruleJson}::jsonb, #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
-      #{applicableStores}::jsonb, #{isActive,jdbcType=BIT})
+      #{ruleJson,jdbcType=OTHER}, #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, 
+      #{applicableStores,jdbcType=OTHER}, #{isActive,jdbcType=BIT})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Promotions">
     insert into public.promotions
@@ -149,7 +149,7 @@
         #{type,jdbcType=VARCHAR},
       </if>
       <if test="ruleJson != null">
-        #{ruleJson}::jsonb,
+        #{ruleJson,jdbcType=OTHER},
       </if>
       <if test="startTime != null">
         #{startTime,jdbcType=TIMESTAMP},
@@ -158,7 +158,7 @@
         #{endTime,jdbcType=TIMESTAMP},
       </if>
       <if test="applicableStores != null">
-        #{applicableStores}::jsonb,
+        #{applicableStores,jdbcType=OTHER},
       </if>
       <if test="isActive != null">
         #{isActive,jdbcType=BIT},
@@ -184,7 +184,7 @@
         type = #{row.type,jdbcType=VARCHAR},
       </if>
       <if test="row.ruleJson != null">
-        rule_json = #{row.ruleJson}::jsonb,
+        rule_json = #{row.ruleJson,jdbcType=OTHER},
       </if>
       <if test="row.startTime != null">
         start_time = #{row.startTime,jdbcType=TIMESTAMP},
@@ -193,7 +193,7 @@
         end_time = #{row.endTime,jdbcType=TIMESTAMP},
       </if>
       <if test="row.applicableStores != null">
-        applicable_stores = #{row.applicableStores}::jsonb,
+        applicable_stores = #{row.applicableStores,jdbcType=OTHER},
       </if>
       <if test="row.isActive != null">
         is_active = #{row.isActive,jdbcType=BIT},
@@ -208,10 +208,10 @@
     set promo_id = #{row.promoId,jdbcType=INTEGER},
       name = #{row.name,jdbcType=VARCHAR},
       type = #{row.type,jdbcType=VARCHAR},
-      rule_json = #{row.ruleJson}::jsonb,
+      rule_json = #{row.ruleJson,jdbcType=OTHER},
       start_time = #{row.startTime,jdbcType=TIMESTAMP},
       end_time = #{row.endTime,jdbcType=TIMESTAMP},
-      applicable_stores = #{row.applicableStores}::jsonb,
+      applicable_stores = #{row.applicableStores,jdbcType=OTHER},
       is_active = #{row.isActive,jdbcType=BIT}
     <if test="example != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -227,7 +227,7 @@
         type = #{type,jdbcType=VARCHAR},
       </if>
       <if test="ruleJson != null">
-        rule_json = #{ruleJson}::jsonb,
+        rule_json = #{ruleJson,jdbcType=OTHER},
       </if>
       <if test="startTime != null">
         start_time = #{startTime,jdbcType=TIMESTAMP},
@@ -236,7 +236,7 @@
         end_time = #{endTime,jdbcType=TIMESTAMP},
       </if>
       <if test="applicableStores != null">
-        applicable_stores = #{applicableStores}::jsonb,
+        applicable_stores = #{applicableStores,jdbcType=OTHER},
       </if>
       <if test="isActive != null">
         is_active = #{isActive,jdbcType=BIT},
@@ -248,10 +248,10 @@
     update public.promotions
     set name = #{name,jdbcType=VARCHAR},
       type = #{type,jdbcType=VARCHAR},
-      rule_json = #{ruleJson}::jsonb,
+      rule_json = #{ruleJson,jdbcType=OTHER},
       start_time = #{startTime,jdbcType=TIMESTAMP},
       end_time = #{endTime,jdbcType=TIMESTAMP},
-      applicable_stores = #{applicableStores}::jsonb,
+      applicable_stores = #{applicableStores,jdbcType=OTHER},
       is_active = #{isActive,jdbcType=BIT}
     where promo_id = #{promoId,jdbcType=INTEGER}
   </update>
