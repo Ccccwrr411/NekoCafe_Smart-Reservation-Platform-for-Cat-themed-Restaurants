@@ -1,5 +1,6 @@
 package cn.edu.bjfu.nekocafe.service;
 
+import cn.edu.bjfu.nekocafe.dto.ShiftExceptionDTO;
 import cn.edu.bjfu.nekocafe.vo.DashboardMetricsVO;
 import java.util.List;
 import java.util.Map;
@@ -39,4 +40,15 @@ public interface StaffService {
     Map<String, Object> acknowledgeAlert(Long exceptionId, Long operatorId);
     
     Map<String, Object> resolveAlert(Long exceptionId, String resolution, Long operatorId);
+
+    /**
+     * 店员提交考勤异常申请（请假/加班/调班）
+     * 状态初始为 PENDING，等待店长/管理员审批
+     */
+    Map<String, Object> submitMyException(ShiftExceptionDTO dto);
+
+    /**
+     * 查询店员的考勤申请历史
+     */
+    List<Map<String, Object>> getMyExceptions(Integer storeId, Long staffId);
 }
