@@ -310,6 +310,34 @@
 .rec-dish-hot { font-size: 20rpx; background: #FFF3E0; color: #E65100; padding: 2rpx 8rpx; border-radius: 6rpx; }
 .rec-dish-reason { font-size: 22rpx; color: var(--color-text-sub); white-space: normal; }
 
+/* 推荐折叠/展开 */
+.recommend-preview {
+  padding: 16rpx 0;
+  border-top: 1rpx dashed #F0D5C9;
+  margin-top: 8rpx;
+}
+.recommend-preview-text {
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+  line-height: 1.6;
+}
+.recommend-toggle {
+  display: flex;
+  justify-content: center;
+  padding: 16rpx 0 4rpx;
+}
+.recommend-toggle-text {
+  font-size: 24rpx;
+  color: var(--color-primary);
+  font-weight: 500;
+  padding: 8rpx 32rpx;
+  border-radius: 24rpx;
+  background: rgba(201,126,90,0.08);
+}
+.recommend-toggle:active .recommend-toggle-text {
+  background: rgba(201,126,90,0.18);
+}
+
 /* ── 门店选择器 ── */
 .store-picker-btn {
   display: inline-flex;

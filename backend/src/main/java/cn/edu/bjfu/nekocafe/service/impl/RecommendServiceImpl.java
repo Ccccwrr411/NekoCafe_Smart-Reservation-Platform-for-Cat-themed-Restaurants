@@ -5,6 +5,7 @@ import cn.edu.bjfu.nekocafe.mapper.DishesMapper;
 import cn.edu.bjfu.nekocafe.mapper.MemberExtMapper;
 import cn.edu.bjfu.nekocafe.mapper.OrderItemsMapper;
 import cn.edu.bjfu.nekocafe.mapper.ReservationsMapper;
+import cn.edu.bjfu.nekocafe.mapper.StoreDishesMapper;
 import cn.edu.bjfu.nekocafe.mapper.TablesMapper;
 import cn.edu.bjfu.nekocafe.service.RecommendService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -95,6 +96,9 @@ public class RecommendServiceImpl implements RecommendService {
     private ReservationsMapper reservationsMapper;
 
     @Autowired
+    private StoreDishesMapper storeDishesMapper;
+
+    @Autowired
     private TablesMapper tablesMapper;
 
     @Autowired(required = false)
@@ -128,7 +132,7 @@ public class RecommendServiceImpl implements RecommendService {
         List<Map<String, Object>> cats = recommendCats(profile, hasChild, storeId);
 
         // ---- Step3: 菜品推荐（维度 B-R2/R4/R16 + C-R8/R9）----
-        List<Map<String, Object>> dishes = recommendDishes(profile);
+        List<Map<String, Object>> dishes = recommendDishes(profile, storeId);
 
         // ---- Step4: 桌位推荐（维度 C-R7/R10 + D-R13）----
         List<Map<String, Object>> tables = recommendTables(profile, companionCount, storeId);
@@ -414,11 +418,11 @@ public class RecommendServiceImpl implements RecommendService {
     //  Step3: 菜品推荐（R2 + R4 + R5 + R8 + R9 + R16 + R17）
     // ================================================================
 
-    private List<Map<String, Object>> recommendDishes(MemberProfile p) {
+    private List<Map<String, Object>> recommendDishes(MemberProfile p, Integer storeId) {
         List<Map<String, Object>> candidates = new ArrayList<>();
 
         // ---- R4: 用户历史点餐频次 ----
-        List<Map<String, Object>> userFreq = orderItemsMapper.selectDishFrequencyByUserId(p.userId);
+        List<Map<String, Object>> userFreq = orderItemsMapper.selectDishFrequencyByUserId(p.userId, storeId);
         if (userFreq != null && !userFreq.isEmpty()) {
             for (Map<String, Object> row : userFreq) {
                 candidates.add(buildDishCandidate(
@@ -432,7 +436,7 @@ public class RecommendServiceImpl implements RecommendService {
         // ---- R16: 同偏好协同过滤 ----
         if (p.flavorPreference != null && !p.flavorPreference.isEmpty()) {
             List<Map<String, Object>> collabDishes = orderItemsMapper.selectCollaborativeFilterDishes(
-                    p.userId, p.flavorPreference, 5);
+                    p.userId, p.flavorPreference, 5, storeId);
             if (collabDishes != null) {
                 for (Map<String, Object> row : collabDishes) {
                     addOrUpdateDishCandidate(candidates,
@@ -518,6 +522,17 @@ public class RecommendServiceImpl implements RecommendService {
             candidates.add(promoItem);
         }
 
+        // ---- 门店过滤: 确保推荐的菜品属于当前门店 ----
+        if (storeId != null) {
+            List<Integer> storeDishIds = storeDishesMapper.selectDishIdsByStore(storeId);
+            Set<Integer> storeDishSet = new HashSet<>(storeDishIds);
+            candidates.removeIf(cand -> {
+                int dishId = ((Number) cand.get("dishId")).intValue();
+                // dishId < 0 是特殊促销项（如"回归特惠套餐"），跳过过滤
+                return dishId >= 0 && !storeDishSet.contains(dishId);
+            });
+        }
+
         // ---- 排序 & 截取 Top-N ----
         candidates.sort((a, b) -> Double.compare(
                 ((Number) b.getOrDefault("_score", 0.0)).doubleValue(),
@@ -531,7 +546,7 @@ public class RecommendServiceImpl implements RecommendService {
 
         // ---- R17 兜底: 如果还是空的 ----
         if (finalDishes.isEmpty()) {
-            finalDishes = fallbackGlobalDishes();
+            finalDishes = fallbackGlobalDishes(storeId);
         }
 
         return finalDishes;
@@ -599,23 +614,33 @@ public class RecommendServiceImpl implements RecommendService {
         return cand;
     }
 
-    /** R17: 全店销量兜底 */
-    private List<Map<String, Object>> fallbackGlobalDishes() {
+    /** R17: 全店销量兜底（可选按门店过滤）*/
+    private List<Map<String, Object>> fallbackGlobalDishes(Integer storeId) {
         List<Map<String, Object>> result = new ArrayList<>();
-        List<Map<String, Object>> ranking = orderItemsMapper.selectGlobalDishRanking(5);
+        // 有门店时预加载门店菜品 ID 集合用于过滤
+        Set<Integer> storeDishSet = null;
+        if (storeId != null) {
+            storeDishSet = new HashSet<>(storeDishesMapper.selectDishIdsByStore(storeId));
+        }
+        List<Map<String, Object>> ranking = orderItemsMapper.selectGlobalDishRanking(10);
         if (ranking != null) {
             for (int i = 0; i < ranking.size(); i++) {
                 Map<String, Object> row = ranking.get(i);
                 int dishId = ((Number) row.get("dishid")).intValue();
+                // 按门店过滤
+                if (storeDishSet != null && !storeDishSet.contains(dishId)) {
+                    continue;
+                }
                 cn.edu.bjfu.nekocafe.entity.Dishes dish = dishesMapper.selectByPrimaryKey(dishId);
                 Map<String, Object> vo = new LinkedHashMap<>();
                 vo.put("dishId", dishId);
                 vo.put("name", dish != null ? dish.getName() : "(未知)");
                 vo.put("category", dish != null ? dish.getCategory() : "未知");
                 vo.put("price", dish != null ? dish.getPrice() : 0);
-                vo.put("score", 50 - i * 5);  // 递减分值
+                vo.put("score", 50 - result.size() * 5);  // 递减分值
                 vo.put("reason", "全店热销");
                 result.add(vo);
+                if (result.size() >= 5) break;  // 凑够 5 道就停
             }
         }
         return result;
