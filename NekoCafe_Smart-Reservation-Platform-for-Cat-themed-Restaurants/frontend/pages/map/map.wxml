@@ -1,0 +1,88 @@
+<!-- pages/map/map.wxml — 门店可视化地图 -->
+<view class="page">
+
+  <!-- ══ 加载中 ══ -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="loading-spinner"></view>
+    <text>加载中...</text>
+  </view>
+  <block wx:else>
+    <!-- ══ 加载完成：地图 + 门店列表 ══ -->
+    <view class="map-section">
+      <map
+        id="storeMap"
+        class="store-map"
+        latitude="{{mapLat}}"
+        longitude="{{mapLng}}"
+        scale="{{mapScale}}"
+        markers="{{markers}}"
+        show-location="{{false}}"
+        bindmarkertap="onMarkerTap"
+      >
+        <cover-view class="map-controls">
+          <cover-view class="map-btn" bindtap="onLocateMe">
+            <cover-view class="map-btn-text">📍 定位</cover-view>
+          </cover-view>
+          <cover-view class="map-btn map-btn-overview" bindtap="onOverview">
+            <cover-view class="map-btn-text">🔍 全览</cover-view>
+          </cover-view>
+        </cover-view>
+      </map>
+    </view>
+
+    <!-- 门店列表区域（占下部约 45% 屏幕） -->
+    <view class="list-section">
+      <view class="list-header">
+        <text class="list-title">附近门店</text>
+        <text class="list-count">共 {{stores.length}} 家</text>
+      </view>
+
+      <scroll-view
+        class="store-list"
+        scroll-y
+        enhanced
+        show-scrollbar="{{false}}"
+        scroll-into-view="store-{{activeStoreId}}"
+      >
+        <view
+          wx:for="{{stores}}"
+          wx:key="id"
+          id="store-{{item.id}}"
+          class="store-item {{activeStoreId === item.id ? 'store-item-active' : ''}}"
+          data-store="{{item}}"
+          bindtap="onStoreTap"
+        >
+          <view class="store-rank">
+            <text class="rank-num">{{index + 1}}</text>
+            <text class="rank-dist">{{item.distanceText}}</text>
+          </view>
+
+          <view class="store-main">
+            <view class="store-name-row">
+              <text class="store-name">{{item.name}}</text>
+              <view class="store-status {{item.status === 'open' ? 'status-open' : 'status-closed'}}">
+                {{item.status === 'open' ? '营业中' : '打烊'}}
+              </view>
+            </view>
+            <text class="store-addr">📍 {{item.address}}</text>
+            <view class="store-meta">
+              <text>⭐ {{item.rating}}</text>
+              <text>🐾 {{item.catCount}}只猫</text>
+              <text>💰 ¥{{item.avgPrice}}/人</text>
+            </view>
+          </view>
+
+          <view class="store-nav" catchtap="onNavigate" data-store="{{item}}">
+            <text class="nav-icon">🧭</text>
+            <text class="nav-text">导航</text>
+          </view>
+        </view>
+
+        <view wx:if="{{stores.length === 0}}" class="empty-state">
+          <text>😿 暂无门店数据</text>
+        </view>
+      </scroll-view>
+    </view>
+  </block>
+
+</view>

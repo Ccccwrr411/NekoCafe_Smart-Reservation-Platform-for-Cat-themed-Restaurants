@@ -1,0 +1,146 @@
+<!--pages/login/login.wxml-->
+<view class="login-container">
+
+  <!-- Logo -->
+  <view class="login-logo">
+    <text class="logo-cat">🐱</text>
+    <text class="logo-name">NekoCafé</text>
+    <text class="logo-sub">猫咪与咖啡的温馨相遇</text>
+  </view>
+
+  <!-- 登录方式 Tab -->
+  <view class="login-tabs">
+    <view class="tab-item {{loginTab === 'wx' ? 'tab-active' : ''}}" bindtap="switchTab" data-tab="wx">
+      <text>快捷登录</text>
+    </view>
+    <view class="tab-item {{loginTab === 'phone' ? 'tab-active' : ''}}" bindtap="switchTab" data-tab="phone">
+      <text>手机号登录</text>
+    </view>
+  </view>
+
+  <!-- 微信登录面板 -->
+  <view class="login-panel" wx:if="{{loginTab === 'wx'}}">
+
+    <!-- 手机号输入 -->
+    <view class="phone-form">
+      <view class="form-item">
+        <text class="form-label">手机号</text>
+        <input
+          class="form-input"
+          type="number"
+          maxlength="11"
+          placeholder="请输入手机号"
+          value="{{wxPhone}}"
+          bindinput="onWxPhoneInput"
+        />
+      </view>
+      <view class="form-item code-item">
+        <text class="form-label">验证码</text>
+        <input
+          class="form-input"
+          type="number"
+          maxlength="6"
+          placeholder="请输入验证码"
+          value="{{wxCode}}"
+          bindinput="onWxCodeInput"
+        />
+        <view class="send-code-btn {{wxCountdown > 0 ? 'countdown' : ''}}" bindtap="onWxSendCode">
+          <text>{{wxCountdown > 0 ? wxCountdown + 's' : '获取验证码'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 角色选择 -->
+    <view class="role-section">
+      <text class="role-title">请选择您的身份</text>
+      <view class="role-grid">
+        <view
+          wx:for="{{roles}}"
+          wx:key="id"
+          class="role-card {{selectedRole === item.id ? 'role-card-active' : ''}}"
+          bindtap="onSelectRole"
+          data-role="{{item.id}}"
+        >
+          <text class="role-icon">{{item.icon}}</text>
+          <text class="role-name">{{item.name}}</text>
+          <text class="role-name-en">{{item.nameEn}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 验证码登录按钮 -->
+    <button
+      class="btn-wx-login {{canWxLogin ? '' : 'btn-disabled'}}"
+      bindtap="onWxLogin"
+      loading="{{loading}}"
+      disabled="{{!canWxLogin}}"
+    >
+      验证并登录
+    </button>
+
+    <view class="register-link" bindtap="goRegister">
+      <text>还没有账号？立即注册</text>
+    </view>
+  </view>
+
+  <!-- 手机号登录面板 -->
+  <view class="login-panel" wx:if="{{loginTab === 'phone'}}">
+    <view class="phone-form">
+      <view class="form-item">
+        <text class="form-label">手机号</text>
+        <input
+          class="form-input"
+          type="number"
+          maxlength="11"
+          placeholder="请输入手机号"
+          value="{{phone}}"
+          bindinput="onPhoneInput"
+        />
+      </view>
+      <view class="form-item">
+        <text class="form-label">密码</text>
+        <input
+          class="form-input"
+          password="true"
+          placeholder="请输入密码"
+          value="{{password}}"
+          bindinput="onPasswordInput"
+        />
+      </view>
+    </view>
+
+    <!-- 角色选择 -->
+    <view class="role-section">
+      <text class="role-title">请选择您的身份</text>
+      <view class="role-grid">
+        <view
+          wx:for="{{roles}}"
+          wx:key="id"
+          class="role-card {{selectedRole === item.id ? 'role-card-active' : ''}}"
+          bindtap="onSelectRole"
+          data-role="{{item.id}}"
+        >
+          <text class="role-icon">{{item.icon}}</text>
+          <text class="role-name">{{item.name}}</text>
+          <text class="role-name-en">{{item.nameEn}}</text>
+        </view>
+      </view>
+    </view>
+
+    <button
+      class="btn-wx-login {{phone && password && selectedRole ? '' : 'btn-disabled'}}"
+      bindtap="onPhoneLogin"
+      loading="{{loading}}"
+      disabled="{{!phone || !password || !selectedRole}}"
+    >
+      手机号登录
+    </button>
+
+    <view class="register-link" bindtap="goRegister">
+      <text>还没有账号？立即注册</text>
+    </view>
+  </view>
+
+  <text class="login-hint">登录即代表同意《用户协议》及《隐私政策》</text>
+
+</view>

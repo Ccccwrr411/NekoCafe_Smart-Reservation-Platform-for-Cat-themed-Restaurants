@@ -1,0 +1,26 @@
+<!--pages/review/review.wxml-->
+<view class="container">
+  <view class="card">
+    <view class="section-label">整体评分</view>
+    <view class="star-row">
+      <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+        class="star {{rating >= item ? 'star-on' : 'star-off'}}"
+        bindtap="onRatingChange" data-value="{{item}}">★</text>
+    </view>
+  </view>
+  <view class="card">
+    <view class="section-label">选择标签</view>
+    <view class="tag-wrap">
+      <view wx:for="{{tags}}" wx:key="*this"
+        class="tag-btn {{selectedTags.indexOf(item) >= 0 ? 'tag-btn-active' : ''}}"
+        bindtap="onTagClick" data-tag="{{item}}">{{item}}</view>
+    </view>
+  </view>
+  <view class="card">
+    <view class="section-label">写下你的体验</view>
+    <textarea class="review-textarea" placeholder="分享你与猫咪的温馨时刻..." bindinput="onContentInput" maxlength="200" />
+  </view>
+  <view style="padding: 0 24rpx;">
+    <button class="btn-primary" style="width:100%;" bindtap="onSubmit">提交评价</button>
+  </view>
+</view>

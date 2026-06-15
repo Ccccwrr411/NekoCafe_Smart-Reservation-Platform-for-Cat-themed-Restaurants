@@ -1,0 +1,244 @@
+/* pages/login/login.wxss */
+
+/* ============================================
+   设计系统
+   主色: #C97E5A (温暖陶土色)
+   辅色: #F5EDE6 (奶油底色)
+   卡片: #FFFFFF
+   文字: #2D2420 (深棕) / #8B7355 (浅棕)
+   ============================================ */
+
+/* ── 容器 ── */
+.login-container {
+  min-height: 100vh;
+  background: #F5EDE6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 40rpx 60rpx;
+  box-sizing: border-box;
+}
+
+/* ── Logo ── */
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 56rpx;
+}
+.logo-cat {
+  font-size: 96rpx;
+  margin-bottom: 16rpx;
+}
+.logo-name {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #C97E5A;
+  letter-spacing: 6rpx;
+}
+.logo-sub {
+  font-size: 24rpx;
+  color: #A0897A;
+  margin-top: 12rpx;
+  letter-spacing: 2rpx;
+}
+
+/* ── Tab 切换 ── */
+.login-tabs {
+  width: 100%;
+  display: flex;
+  background: #FFF;
+  border-radius: 48rpx;
+  padding: 6rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 2rpx 16rpx rgba(201, 126, 90, 0.08);
+}
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  font-size: 28rpx;
+  color: #8B7355;
+  border-radius: 44rpx;
+  transition: all 0.25s;
+  font-weight: 500;
+}
+.tab-active {
+  background: #C97E5A;
+  color: #FFF;
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(201, 126, 90, 0.35);
+}
+
+/* ── 登录面板 ── */
+.login-panel {
+  width: 100%;
+}
+
+/* ── 表单卡片 ── */
+.phone-form {
+  width: 100%;
+  background: #FFF;
+  border-radius: 24rpx;
+  padding: 32rpx 28rpx;
+  box-sizing: border-box;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 20rpx rgba(0, 0, 0, 0.04);
+}
+
+.form-item {
+  margin-bottom: 24rpx;
+  position: relative;
+}
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  font-size: 26rpx;
+  color: #8B7355;
+  margin-bottom: 12rpx;
+  display: block;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  height: 88rpx;
+  background: #F8F4F0;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #2D2420;
+  box-sizing: border-box;
+  border: 2rpx solid transparent;
+  transition: border-color 0.2s, background 0.2s;
+}
+.form-input:focus {
+  border-color: #C97E5A;
+  background: #FFF8F4;
+}
+
+/* 验证码输入框留出按钮空间 */
+.form-item.code-item .form-input {
+  padding-right: 180rpx;
+}
+
+/* ── 发送验证码按钮 ── */
+.send-code-btn {
+  position: absolute;
+  right: 8rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #C97E5A;
+  color: #FFF;
+  font-size: 24rpx;
+  padding: 14rpx 28rpx;
+  border-radius: 12rpx;
+  z-index: 2;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.send-code-btn.countdown {
+  background: #D4C5B9;
+  color: #FFF;
+}
+
+/* ── 角色选择 ── */
+.role-section {
+  width: 100%;
+  background: #FFF;
+  border-radius: 24rpx;
+  padding: 32rpx 24rpx 24rpx;
+  box-sizing: border-box;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 20rpx rgba(0, 0, 0, 0.04);
+}
+.role-title {
+  font-size: 26rpx;
+  color: #8B7355;
+  text-align: center;
+  display: block;
+  margin-bottom: 24rpx;
+  font-weight: 500;
+}
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12rpx;
+}
+.role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 4rpx 16rpx;
+  background: #F8F4F0;
+  border-radius: 16rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+.role-card-active {
+  background: #FFF5F0;
+  border-color: #C97E5A;
+  box-shadow: 0 0 0 3rpx rgba(201, 126, 90, 0.12);
+}
+.role-icon {
+  font-size: 40rpx;
+  margin-bottom: 8rpx;
+}
+.role-name {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #2D2420;
+}
+.role-name-en {
+  font-size: 18rpx;
+  color: #B8A390;
+  margin-top: 2rpx;
+}
+.role-card-active .role-name {
+  color: #C97E5A;
+}
+
+/* ── 主按钮 ── */
+.btn-wx-login {
+  width: 100%;
+  background: #C97E5A;
+  color: #FFF;
+  border-radius: 48rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  margin-bottom: 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(201, 126, 90, 0.3);
+  transition: all 0.2s;
+}
+.btn-wx-login::after { border: none; }
+.btn-wx-login:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+.btn-disabled {
+  background: #D4C5B9 !important;
+  box-shadow: none !important;
+}
+
+/* ── 注册链接 ── */
+.register-link {
+  text-align: center;
+  font-size: 28rpx;
+  color: #C97E5A;
+  padding: 8rpx 0;
+}
+
+/* ── 底部提示 ── */
+.login-hint {
+  font-size: 22rpx;
+  color: #B8A390;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 40rpx;
+}

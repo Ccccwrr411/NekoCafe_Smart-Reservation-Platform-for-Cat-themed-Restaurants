@@ -1,0 +1,155 @@
+<!--pages/register/register.wxml-->
+<scroll-view scroll-y="true" class="register-container" enhanced="{{true}}" show-scrollbar="{{false}}">
+<view class="register-inner">
+
+  <!-- Logo -->
+  <view class="register-logo">
+    <text class="logo-cat">🐱</text>
+    <text class="logo-name">注册 NekoCafé</text>
+    <text class="logo-sub">加入猫咪与咖啡的温馨世界</text>
+  </view>
+
+  <!-- 角色选择 -->
+  <view class="role-section">
+    <text class="role-title">请选择您的身份</text>
+    <view class="role-grid">
+      <view
+        wx:for="{{roles}}"
+        wx:key="id"
+        class="role-card {{selectedRole === item.id ? 'role-card-active' : ''}}"
+        bindtap="onSelectRole"
+        data-role="{{item.id}}"
+      >
+        <text class="role-icon">{{item.icon}}</text>
+        <text class="role-name">{{item.name}}</text>
+        <text class="role-name-en">{{item.nameEn}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 门店选择（非顾客且非总部运营时显示） -->
+  <view class="store-section" wx:if="{{selectedRole !== '1' && selectedRole !== '4'}}">
+    <text class="store-title">请选择所属门店</text>
+    <picker
+      mode="selector"
+      range="{{stores}}"
+      range-key="name"
+      value="{{selectedStoreIndex >= 0 ? selectedStoreIndex : 0}}"
+      bindchange="onStorePick"
+    >
+      <view class="store-picker">
+        <text class="store-picker-text {{selectedStoreIndex >= 0 ? '' : 'placeholder'}}">
+          {{selectedStoreIndex >= 0 ? stores[selectedStoreIndex].name : '请选择门店'}}
+        </text>
+        <text class="store-picker-arrow">▼</text>
+      </view>
+    </picker>
+    <text class="field-error" wx:if="{{errors.store}}">{{errors.store}}</text>
+  </view>
+
+  <!-- 注册表单 -->
+  <view class="form-card">
+    <view class="form-item">
+      <text class="form-label">昵称</text>
+      <input
+        class="form-input {{errors.nickname ? 'input-error' : ''}}"
+        placeholder="给自己起个名字吧"
+        value="{{nickname}}"
+        bindinput="onNicknameInput"
+      />
+      <text class="field-error" wx:if="{{errors.nickname}}">{{errors.nickname}}</text>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">手机号</text>
+      <input
+        class="form-input {{errors.phone ? 'input-error' : ''}}"
+        type="number"
+        maxlength="11"
+        placeholder="请输入手机号"
+        value="{{phone}}"
+        bindinput="onPhoneInput"
+      />
+      <text class="field-error" wx:if="{{errors.phone}}">{{errors.phone}}</text>
+    </view>
+
+    <view class="form-item code-row">
+      <view class="code-input-wrap">
+        <text class="form-label">验证码</text>
+        <input
+          class="form-input {{errors.code ? 'input-error' : ''}}"
+          type="number"
+          maxlength="6"
+          placeholder="请输入验证码"
+          value="{{code}}"
+          bindinput="onCodeInput"
+        />
+        <text class="field-error" wx:if="{{errors.code}}">{{errors.code}}</text>
+        <!-- 沙箱模式：验证码直接显示在输入框下方 -->
+        <view class="sandbox-hint" wx:if="{{sandboxCode}}">
+          <text>🔑 沙箱验证码：{{sandboxCode}}</text>
+        </view>
+      </view>
+      <button
+        class="btn-send-code {{countdown > 0 ? 'btn-code-disabled' : ''}}"
+        bindtap="onSendCode"
+        disabled="{{countdown > 0}}"
+      >
+        {{countdown > 0 ? countdown + 's后重发' : '获取验证码'}}
+      </button>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">邮箱（选填）</text>
+      <input
+        class="form-input {{errors.email ? 'input-error' : ''}}"
+        type="text"
+        placeholder="方便接收优惠信息"
+        value="{{email}}"
+        bindinput="onEmailInput"
+      />
+      <text class="field-error" wx:if="{{errors.email}}">{{errors.email}}</text>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">密码</text>
+      <input
+        class="form-input {{errors.password ? 'input-error' : ''}}"
+        password="true"
+        placeholder="至少6位密码"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+      />
+      <text class="field-error" wx:if="{{errors.password}}">{{errors.password}}</text>
+    </view>
+
+    <view class="form-item">
+      <text class="form-label">确认密码</text>
+      <input
+        class="form-input {{errors.confirmPassword ? 'input-error' : ''}}"
+        password="true"
+        placeholder="请再次输入密码"
+        value="{{confirmPassword}}"
+        bindinput="onConfirmPasswordInput"
+      />
+      <text class="field-error" wx:if="{{errors.confirmPassword}}">{{errors.confirmPassword}}</text>
+    </view>
+  </view>
+
+  <!-- 注册按钮 -->
+  <button
+    class="btn-register {{canSubmit ? '' : 'btn-disabled'}}"
+    bindtap="onRegister"
+    loading="{{loading}}"
+    disabled="{{!canSubmit}}"
+  >
+    注册
+  </button>
+
+  <!-- 返回登录 -->
+  <view class="back-login" bindtap="goLogin">
+    <text>已有账号？返回登录</text>
+  </view>
+
+</view>
+</scroll-view>

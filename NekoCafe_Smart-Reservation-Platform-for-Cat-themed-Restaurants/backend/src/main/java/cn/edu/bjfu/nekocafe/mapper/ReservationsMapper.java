@@ -1,0 +1,91 @@
+package cn.edu.bjfu.nekocafe.mapper;
+
+import cn.edu.bjfu.nekocafe.entity.Reservations;
+import cn.edu.bjfu.nekocafe.entity.ReservationsExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+
+public interface ReservationsMapper {
+    long countByExample(ReservationsExample example);
+
+    int deleteByExample(ReservationsExample example);
+
+    int deleteByPrimaryKey(Long reservationId);
+
+    int insert(Reservations row);
+
+    int insertSelective(Reservations row);
+
+    List<Reservations> selectByExample(ReservationsExample example);
+
+    Reservations selectByPrimaryKey(Long reservationId);
+
+    int updateByExampleSelective(@Param("row") Reservations row, @Param("example") ReservationsExample example);
+
+    int updateByExample(@Param("row") Reservations row, @Param("example") ReservationsExample example);
+
+    int updateByPrimaryKeySelective(Reservations row);
+
+    int updateByPrimaryKey(Reservations row);
+
+    /**
+     * 按用户ID和状态列表查询预约记录。
+     * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换，
+     * 解决 PostgreSQL 自定义枚举类型无法与 character varying 直接比较的问题。
+     */
+    List<Reservations> selectByUserIdAndStatuses(
+            @Param("userId") Long userId,
+            @Param("statuses") List<String> statuses);
+
+    /**
+     * 按门店ID和状态列表查询预约记录。
+     * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换。
+     */
+    List<Reservations> selectByStoreIdAndStatuses(
+            @Param("storeId") Integer storeId,
+            @Param("statuses") List<String> statuses);
+
+    /**
+     * 按门店ID查询全部预约记录（店员工作台用）。
+     * 对 status 字段使用 ::reservation_status 显式类型转换。
+     */
+    List<Reservations> selectByStoreId(@Param("storeId") Integer storeId);
+
+    /**
+     * 按用户ID查询全部预约记录（用于"全部"标签）。
+     */
+    List<Reservations> selectByUserId(@Param("userId") Long userId);
+
+    /**
+     * 按用户ID + 桌位ID + 单个状态查询预约（用于改约等场景）。
+     */
+    List<Reservations> selectByUserIdAndTableIdAndStatus(
+            @Param("userId") Long userId,
+            @Param("tableId") Integer tableId,
+            @Param("status") String status);
+
+    /**
+     * 按 tableId + status 列表查询活跃预约（用于时间段冲突判断）。
+     */
+    List<Reservations> selectByTableIdAndStatuses(
+            @Param("tableId") Integer tableId,
+            @Param("statuses") List<String> statuses);
+
+    /**
+     * 统计某桌位除指定预约外的活跃预约数量（用于判断取消/改约时是否应释放桌位）。
+     */
+    int countActiveByTableIdExcluding(
+            @Param("tableId") Integer tableId,
+            @Param("statuses") List<String> statuses,
+            @Param("excludeId") Long excludeId);
+
+    /**
+     * 总部运营：统计某门店今日 COMPLETED 订单数。
+     */
+    Long countTodayCompletedByStoreId(@Param("storeId") Integer storeId);
+
+    /**
+     * 总部运营：统计某门店累计去重用户数（有过预约记录的用户）。
+     */
+    Long countDistinctUsersByStoreId(@Param("storeId") Integer storeId);
+}

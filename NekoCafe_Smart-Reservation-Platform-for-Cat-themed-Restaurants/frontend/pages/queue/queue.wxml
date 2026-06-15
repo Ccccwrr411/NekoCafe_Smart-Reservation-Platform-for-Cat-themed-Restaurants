@@ -1,0 +1,166 @@
+<!--pages/queue/queue.wxml-->
+<view class="container">
+
+  <!-- ══ 门店选择头部 ══ -->
+  <view class="store-header" bindtap="onStoreHeaderTap">
+    <text class="store-title">📍 {{storeName || '请选择门店'}}</text>
+    <text class="store-sub">{{storeId ? '点击切换门店 ▾' : '请先选择一家门店'}}</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-wrap"><text>加载中...</text></view>
+
+  <block wx:if="{{!loading}}">
+
+    <!-- 当前叫号 -->
+    <view class="now-serving">
+      <text class="now-label">当前叫号</text>
+      <text class="now-number">{{queue.currentNumber || '-'}}</text>
+      <text class="now-hint">共 {{queue.waitingCount || 0}} 桌等待 · 预计等待 {{queue.avgWaitMinutes || 0}} 分钟</text>
+    </view>
+
+    <!-- 我的号码（仅取号成功后才显示） -->
+    <view class="my-number-card" wx:if="{{hasTakenNumber && queue.myNumber}}">
+      <view class="my-number-left">
+        <text class="my-label">我的号码</text>
+        <text class="my-num">{{queue.myNumber}}</text>
+      </view>
+      <view class="my-number-right">
+        <text class="my-wait">{{myWaitText}}</text>
+        <text class="my-hint">请留意叫号，过号需重新排队</text>
+      </view>
+    </view>
+
+    <!-- ══ 当前等待队列 ══ -->
+    <view class="section-title">📋 当前排队</view>
+    <view class="queue-list">
+      <block wx:if="{{queue.queueList && queue.queueList.length > 0}}">
+        <view wx:for="{{queue.queueList}}" wx:key="queueId" class="queue-item {{item.isMine ? 'queue-item-mine' : ''}}">
+          <view class="queue-num {{item.isMine ? 'queue-num-mine' : ''}}">{{item.number}}</view>
+          <view class="queue-info">
+            <text>{{item.persons}}人 · {{item.typeDisplay}}</text>
+            <text class="queue-ahead">前面 {{item.ahead}} 桌</text>
+          </view>
+          <view wx:if="{{item.isMine}}" class="queue-mine-tag">我的</view>
+        </view>
+      </block>
+      <view wx:else class="queue-empty-hint">
+        <text class="queue-empty-text">暂无排队顾客</text>
+        <text class="queue-empty-sub">点击下方按钮立即取号</text>
+      </view>
+    </view>
+
+    <!-- 取号按钮（始终显示） -->
+    <view class="btn-primary" bindtap="openTakeForm">
+      立即取号
+    </view>
+
+  </block>
+
+  <!-- 未选门店时提示 -->
+  <view wx:if="{{!loading && !queue && !storeId}}" class="no-store-hint">
+    <text class="no-store-icon">🏪</text>
+    <text class="no-store-text">请先选择一家门店</text>
+    <text class="no-store-sub">点击上方选择您所在的门店</text>
+  </view>
+
+  <!-- ══ 取号弹窗 ══ -->
+  <view class="modal-mask" wx:if="{{showTakeForm}}" bindtap="closeTakeForm"></view>
+  <view class="take-form-modal" wx:if="{{showTakeForm}}">
+    <view class="modal-title">排队取号</view>
+
+    <!-- 选择人数 -->
+    <view class="form-group">
+      <view class="form-label">用餐人数</view>
+      <view class="persons-row">
+        <view
+          wx:for="{{personsRange}}"
+          wx:key="*this"
+          class="person-tag {{persons === item ? 'active' : ''}}"
+          data-persons="{{item}}"
+          bindtap="onSelectPersons"
+        >{{item}}人</view>
+      </view>
+    </view>
+
+    <!-- 选择桌型 -->
+    <view class="form-group">
+      <view class="form-label">桌型偏好</view>
+      <view class="table-type-row">
+        <view
+          wx:for="{{tableTypes}}"
+          wx:key="*this"
+          class="type-tag {{tableTypeIndex === index ? 'active' : ''}}"
+          data-index="{{index}}"
+          bindtap="onSelectTableType"
+        >{{item}}</view>
+      </view>
+    </view>
+
+    <view class="form-btns">
+      <view class="btn-cancel" bindtap="closeTakeForm">取消</view>
+      <view class="btn-confirm {{taking ? 'disabled' : ''}}" bindtap="onTakeNumber">
+        {{taking ? '取号中...' : '确认取号'}}
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 门店选择弹窗 ══ -->
+  <view wx:if="{{showStorePicker}}" class="picker-mask" bindtap="hideStorePicker"></view>
+  <view wx:if="{{showStorePicker}}" class="store-picker-panel">
+    <view class="picker-header">
+      <text class="picker-header-title">选择门店</text>
+      <text class="picker-header-close" bindtap="hideStorePicker">✕</text>
+    </view>
+    <scroll-view scroll-y class="picker-list">
+      <view
+        wx:for="{{stores}}"
+        wx:key="id"
+        class="picker-store-item {{storeId === item.id ? 'picker-store-active' : ''}}"
+        bindtap="onStoreSelect"
+        data-store="{{item}}"
+      >
+        <view class="picker-store-left">
+          <image class="picker-store-img" src="{{item.imageUrl}}" mode="aspectFill" />
+          <view class="picker-store-info">
+            <text class="picker-store-name">{{item.name}}</text>
+            <text class="picker-store-addr">{{item.address}}</text>
+            <view class="picker-store-tags">
+              <text wx:for="{{item.tags}}" wx:key="*this" wx:for-item="t" class="picker-tag">{{t}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="picker-store-right">
+          <text class="picker-store-dist">{{item.distanceText}}</text>
+          <text wx:if="{{storeId === item.id}}" class="picker-check">✓</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- ══ 叫号提示弹窗 ══ -->
+  <view wx:if="{{showCalledModal}}" class="called-mask"></view>
+  <view wx:if="{{showCalledModal}}" class="called-modal">
+    <!-- 顶部装饰条 -->
+    <view class="called-top-bar"></view>
+    <!-- 图标区域 -->
+    <view class="called-icon-wrap">
+      <view class="called-icon-ring">
+        <text class="called-icon">🔔</text>
+      </view>
+      <view class="called-icon-dot dot-1"></view>
+      <view class="called-icon-dot dot-2"></view>
+      <view class="called-icon-dot dot-3"></view>
+    </view>
+    <!-- 标题区 -->
+    <view class="called-title">叫到你的号了！</view>
+    <view class="called-number-badge">NO. {{calledNumber || '—'}}</view>
+    <view class="called-desc">请尽快确认并预约，5分钟内未确认将自动过号</view>
+    <!-- 按钮组 -->
+    <view class="called-btns">
+      <view class="called-btn-confirm {{confirming ? 'disabled' : ''}}" bindtap="onConfirmCalled">
+        {{confirming ? '确认中...' : '已知晓'}}
+      </view>
+    </view>
+  </view>
+
+</view>

@@ -1,0 +1,90 @@
+<!--pages/profile/profile.wxml-->
+<view class="container">
+
+  <!-- ══ 用户卡片 ══ -->
+  <view class="user-hero">
+    <view class="user-hero-bg"></view>
+    <view class="user-info-row">
+      <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+      <view class="user-detail">
+        <text class="user-name">{{userInfo.nickName || '猫咖爱好者'}}</text>
+        <view class="user-member-badge">
+          {{userInfo.memberLevelIcon}} {{userInfo.memberLevel}}
+        </view>
+        <text class="user-phone">{{userInfo.phone}}</text>
+      </view>
+    </view>
+
+    <!-- 积分进度条 -->
+    <view class="points-section">
+      <view class="points-header">
+        <view class="points-left">
+          <text class="points-val">{{userInfo.points}}</text>
+          <text class="points-unit">积分</text>
+        </view>
+        <view class="points-right" wx:if="{{userInfo.pointsToNext > 0}}">
+          <text class="points-hint">再积 {{userInfo.pointsToNext}} 分升级 {{userInfo.nextLevel}}</text>
+        </view>
+        <view class="points-right" wx:else>
+          <text class="points-hint points-max">{{userInfo.nextLevel}}</text>
+        </view>
+      </view>
+      <view class="progress-bar" wx:if="{{userInfo.pointsToNext > 0}}">
+        <view
+          class="progress-fill"
+          style="width: {{(userInfo.points - (userInfo.levelStartPoints || 0)) * 100 / ((userInfo.nextLevelThreshold || 1) - (userInfo.levelStartPoints || 0))}}%"
+        ></view>
+      </view>
+    </view>
+
+    <!-- 数据概览 -->
+    <view class="stats-row">
+      <view class="stat-item">
+        <text class="stat-num">{{userInfo.totalOrders}}</text>
+        <text class="stat-label">消费次数</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-num">¥{{userInfo.totalSpent}}</text>
+        <text class="stat-label">累计消费</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-num">{{userInfo.couponCount}}</text>
+        <text class="stat-label">可用券</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 我的订单 ══ -->
+  <view class="menu-section card">
+    <view class="menu-row" bindtap="goAllOrders">
+      <view class="menu-icon">📋</view>
+      <text class="menu-label">我的订单</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- ══ 功能菜单 ══ -->
+  <view class="menu-section card">
+    <view
+      wx:for="{{menuItems}}"
+      wx:key="label"
+      class="menu-row"
+      bindtap="onMenuItemClick"
+      data-label="{{item.label}}"
+      data-path="{{item.path}}"
+    >
+      <view class="menu-icon">{{item.icon}}</view>
+      <text class="menu-label">{{item.label}}</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 版本号 -->
+  <view class="app-version">NekoCafé v1.0.0 · 🐱 爱猫人的专属咖啡馆</view>
+
+  <!-- 退出登录 -->
+  <view class="logout-btn" bindtap="onLogout">退出登录</view>
+
+</view>

@@ -1,0 +1,32 @@
+# ============================================
+# NekoCafé docker-compose.yml
+# 数据库和Redis在远程 82.157.130.254，这里只启动后端
+# 用法: docker compose up -d  （直接拉取远程镜像，不需要本地构建）
+# ============================================
+
+services:
+
+  backend:
+    image: yuuui2026/nekocafe:latest
+    container_name: nekocafe-backend
+    restart: unless-stopped
+    environment:
+      # 数据库和Redis都在远程服务器 82.157.130.254
+      SPRING_DATASOURCE_URL: jdbc:postgresql://82.157.130.254:5432/postgres
+      SPRING_DATASOURCE_USERNAME: admin_user
+      SPRING_DATASOURCE_PASSWORD: 123456789
+      SPRING_DATA_REDIS_HOST: 82.157.130.254
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: 123456789
+      SERVER_PORT: 8081
+      JWT_SECRET: nekocafe-secret-key-change-me-before-deploy
+      WX_APPID: YOUR_APPID_HERE
+      WX_SECRET: YOUR_SECRET_HERE
+    ports:
+      - "8081:8081"
+    volumes:
+      - backend_uploads:/app/uploads
+
+volumes:
+  backend_uploads:
+    driver: local

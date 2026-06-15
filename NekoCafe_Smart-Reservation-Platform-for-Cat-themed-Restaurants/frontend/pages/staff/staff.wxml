@@ -1,0 +1,545 @@
+<!--pages/staff/staff.wxml—店员工作台（4Tab底部导航）-->
+<view class="staff-page">
+
+  <!-- ═══════ 顶部 Banner ═══════ -->
+  <view class="staff-banner">
+    <view class="banner-left">
+      <text class="banner-title">🏪 猫咖店员工作台</text>
+      <text class="banner-sub">{{storeName}} · {{userName}}</text>
+    </view>
+    <view class="banner-right">
+      <!-- 总部运营门店切换 -->
+      <picker wx:if="{{showStorePicker}}" class="store-picker" mode="selector"
+        range="{{allStores}}" range-key="name" value="{{storePickerIndex}}" bindchange="onStoreChange">
+        <text class="picker-text">切换门店 ▼</text>
+      </picker>
+    </view>
+  </view>
+
+  <!-- ═══════ 今日概览（仅订单/桌位页显示）═══════ -->
+  <view wx:if="{{activeTab === 'orders' || activeTab === 'tables'}}" class="overview-bar">
+    <view class="ov-item">
+      <text class="ov-val">{{todayOrderCount}}</text>
+      <text class="ov-label">订单数</text>
+    </view>
+    <view class="ov-divider"></view>
+    <view class="ov-item" bindtap="onFilterPending">
+      <text class="ov-val ov-pending">{{pendingCount}}</text>
+      <text class="ov-label">待处理</text>
+    </view>
+    <view class="ov-divider"></view>
+    <view class="ov-item" bindtap="onViewRefund">
+      <text class="ov-val ov-refund">{{refundCount}}</text>
+      <text class="ov-label">退款审核</text>
+    </view>
+    <view class="ov-divider"></view>
+    <view class="ov-item">
+      <text class="ov-val">{{occupancyRate}}</text>
+      <text class="ov-label">上座率</text>
+    </view>
+  </view>
+
+  <!-- ═══════ 主内容区 ═══════ -->
+  <view class="main-content">
+
+    <!-- 加载中 -->
+    <view wx:if="{{loading}}" class="loading-wrap">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- ────── Tab: 订单处理 ────── -->
+    <block wx:if="{{!loading && activeTab === 'orders'}}">
+      <!-- 订单状态筛选 -->
+      <view class="filter-area">
+        <scroll-view class="order-filter" scroll-x enable-flex>
+          <view class="filter-item filter-item-all {{orderFilter === 'all' ? 'filter-active' : ''}}" bindtap="onToggleAllDropdown">
+            全部<text class="arrow-down">{{showAllDropdown ? '▲' : '▼'}}</text>
+          </view>
+          <view class="filter-item {{orderFilter === 'booked' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="booked">
+            待下单<text wx:if="{{countByStatus.booked}}" class="filter-badge">{{countByStatus.booked}}</text>
+          </view>
+          <view class="filter-item {{orderFilter === 'confirmed' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="confirmed">已确认</view>
+          <view class="filter-item {{orderFilter === 'making' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="making">制作中</view>
+          <view class="filter-item {{orderFilter === 'serving' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="serving">已上菜</view>
+          <view class="filter-item {{orderFilter === 'completed' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="completed">已完成</view>
+          <view class="filter-item {{orderFilter === 'refunding' ? 'filter-active' : ''}}" bindtap="onFilterOrder" data-filter="refunding">待退款</view>
+        </scroll-view>
+        <!-- 全部下拉菜单 -->
+        <view wx:if="{{showAllDropdown}}" class="all-dropdown-overlay" bindtap="onCloseAllDropdown">
+          <view class="all-dropdown-menu" catchtap="">
+            <view class="drop-item {{orderFilter === 'all' ? 'drop-active' : ''}}" bindtap="onFilterOrder" data-filter="all">全部</view>
+            <view class="drop-item {{orderFilter === 'booked' ? 'drop-active' : ''}}" bindtap="onFilterOrder" data-filter="booked">待接单</view>
+            <view class="drop-item {{orderFilter === 'confirmed' ? 'drop-active' : ''}}" bindtap="onFilterOrder" data-filter="confirmed">已确认</view>
+            <view class="drop-item {{orderFilter === 'making' ? 'drop-active' : ''}}" bindtap="onFilterOrder" data-filter="making">制作中</view>
+            <view class="drop-item {{orderFilter === 'serving' ? 'drop-active' : ''}}" bindtap="onFilterOrder" data-filter="serving">已上菜</view>
+            <view class="drop-item {{orderFilter === 'completed' ? 'drop-active' : ''}}" bindtap="onFilterOrder" data-filter="completed">已完成</view>
+            <view class="drop-item {{orderFilter === 'refunding' ? 'drop-active' : ''}}" bindtap="onFilterOrder" data-filter="refunding">待退款</view>
+            <view class="drop-item {{orderFilter === 'cancelled' ? 'drop-active' : ''}}" bindtap="onFilterOrder" data-filter="cancelled">已取消</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 订单列表 -->
+      <view wx:if="{{filteredOrders.length === 0}}" class="empty-state">
+        <text class="empty-icon">📋</text>
+        <text class="empty-text">暂无{{orderFilter === 'all' ? '' : orderFilter === 'pending' ? '待处理' : ORDER_STATUS_LABEL[orderFilter] || ''}}订单</text>
+      </view>
+      <view class="order-list">
+        <view wx:for="{{filteredOrders}}" wx:key="id" class="order-card">
+          <view class="order-card-top">
+            <view class="order-id-row">
+              <text class="order-id">#{{item.id}}</text>
+              <view class="order-status-tag tag-{{item.status}}">{{item.statusLabel}}</view>
+            </view>
+            <text class="order-time">{{item.reservationTime}}</text>
+          </view>
+          <view class="order-card-body">
+            <view class="order-info-row">
+              <text class="info-item">🪑 {{item.tableNo || ('桌' + item.tableId)}}</text>
+              <text class="info-item">👤 {{item.customerName || ('用户#' + item.userId)}}</text>
+            </view>
+            <view class="order-info-row">
+              <text class="info-item">👥 {{item.partySize}}人</text>
+              <text wx:if="{{item.specialRequest}}" class="info-item memo">📝 {{item.specialRequest}}</text>
+            </view>
+          </view>
+          <view class="order-card-bottom">
+            <text class="order-amount">¥{{item.totalAmount}}</text>
+            <view class="order-actions">
+              <!-- 待下单（顾客已预约但未点菜 → 自动变 CONFIRMED） -->
+              <block wx:if="{{item.status === 'booked'}}">
+                <text class="waiting-label">等待顾客下单</text>
+              </block>
+              <!-- 已确认 → 开始制作 -->
+              <block wx:elif="{{item.status === 'confirmed'}}">
+                <view class="btn btn-primary" bindtap="onProgressOrder" data-order="{{item}}" data-target="MAKING">开始制作</view>
+              </block>
+              <!-- 制作中 → 上菜 -->
+              <block wx:elif="{{item.status === 'making'}}">
+                <view class="btn btn-primary" bindtap="onProgressOrder" data-order="{{item}}" data-target="SERVING">上菜</view>
+              </block>
+              <!-- 已上菜 → 完成用餐 -->
+              <block wx:elif="{{item.status === 'serving'}}">
+                <view class="btn btn-primary" bindtap="onProgressOrder" data-order="{{item}}" data-target="COMPLETED">完成用餐</view>
+              </block>
+              <!-- 退款中 -->
+              <block wx:elif="{{item.status === 'refunding'}}">
+                <view class="btn btn-warn" bindtap="onViewRefundDetail" data-order="{{item}}">审核退款</view>
+              </block>
+              <!-- 已退款（审核通过的退款）— 无操作 -->
+              <block wx:elif="{{item.status === 'refunded'}}">
+                <text class="waiting-label">已退款</text>
+              </block>
+              <!-- 已完成/已取消 — 无操作 -->
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- ────── Tab: 桌位管理 ────── -->
+    <block wx:if="{{!loading && activeTab === 'tables'}}">
+      <!-- 桌位统计条 -->
+      <view class="table-stats">
+        <view class="ts-chip ts-avail">🟢 空闲 {{countAvailable}}</view>
+        <view class="ts-chip ts-book">⚪ 已预定 {{countBooked}}</view>
+        <view class="ts-chip ts-occ">🔴 用餐中 {{countOccupied}}</view>
+        <view class="ts-chip ts-clean">🟡 待清洁 {{countCleaning}}</view>
+      </view>
+      <!-- 视图切换 -->
+      <view class="view-toggle">
+        <view class="toggle-btn {{tableViewMode === 'map' ? 'toggle-active' : ''}}" bindtap="onSwitchTableView" data-mode="map">地图</view>
+        <view class="toggle-btn {{tableViewMode === 'list' ? 'toggle-active' : ''}}" bindtap="onSwitchTableView" data-mode="list">列表</view>
+      </view>
+      <!-- 桌型筛选 -->
+      <scroll-view class="table-filter" scroll-x enable-flex>
+        <view
+          wx:for="{{tableTypes}}"
+          wx:key="*this"
+          class="filter-item {{tableFilter === item ? 'filter-active' : ''}}"
+          bindtap="onTableFilterChange"
+          data-type="{{item}}"
+        >{{tableTypeLabels[item] || item}}</view>
+      </scroll-view>
+      <!-- 地图视图（实景平面图） -->
+      <view wx:if="{{tableViewMode === 'map'}}" class="map-container-staff">
+        <block wx:for="{{filteredTables}}" wx:key="id">
+          <view
+            class="floor-table-staff status-{{item.status}}"
+            style="top: {{item.top}}rpx; left: {{item.left}}rpx; width: {{item.width}}rpx; height: {{item.height}}rpx;"
+            bindtap="onDispatch"
+            data-table="{{item}}"
+          >
+            <text class="fts-name">{{item.name || item.tableNo}}</text>
+            <text class="fts-state" wx:if="{{item.status === 'available'}}">空闲</text>
+            <text class="fts-state fts-booked" wx:if="{{item.status === 'booked'}}">已预约</text>
+            <text class="fts-state fts-occupied" wx:if="{{item.status === 'occupied'}}">用餐中</text>
+            <text class="fts-state fts-cleaning" wx:if="{{item.status === 'cleaning'}}">待清洁</text>
+            <text wx:if="{{item.customer}}" class="fts-customer">👤 {{item.customer}}</text>
+          </view>
+        </block>
+      </view>
+      <!-- 列表视图 -->
+      <view wx:if="{{tableViewMode === 'list'}}" class="table-list">
+        <view wx:for="{{filteredTables}}" wx:key="id" class="table-list-item" bindtap="onDispatch" data-table="{{item}}">
+          <view class="tli-left">
+            <view class="tli-dot tli-dot-{{item.status}}"></view>
+            <view class="tli-info">
+              <text class="tli-name">{{item.name || item.tableNo}}</text>
+              <text class="tli-detail">{{item.tableType}} · {{item.capacity}}人</text>
+            </view>
+          </view>
+          <view class="tli-right">
+            <view class="tli-status tag-{{item.status}}">{{item.statusLabel}}</view>
+            <text wx:if="{{item.customer}}" class="tli-customer">👤 {{item.customer}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- ────── Tab: 告警中心 ────── -->
+    <block wx:if="{{!loading && activeTab === 'alerts'}}">
+      <view class="alert-filter">
+        <view class="af-item {{alertFilter === 'all' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="all">全部</view>
+        <view class="af-item {{alertFilter === 'pending' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="pending">待处理</view>
+        <view class="af-item {{alertFilter === 'acknowledged' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="acknowledged">已知晓</view>
+        <view class="af-item {{alertFilter === 'resolved' ? 'af-active' : ''}}" bindtap="onFilterAlert" data-filter="resolved">已处理</view>
+      </view>
+      <view wx:if="{{filteredAlerts.length === 0}}" class="empty-state">
+        <text class="empty-icon">✅</text>
+        <text class="empty-text">暂无异常告警</text>
+      </view>
+      <view class="alert-list">
+        <view wx:for="{{filteredAlerts}}" wx:key="alertId" class="alert-card alert-{{item.level}}" catchtap="">
+          <view class="alert-card-top">
+            <view class="alert-level-badge level-{{item.level}}">{{item.levelLabel}}</view>
+            <view class="alert-status-badge status-{{item.status}}">{{item.statusLabel || item.status}}</view>
+          </view>
+          <view class="alert-card-body">
+            <view class="alert-type-row">
+              <text class="alert-type-icon">{{item.level === 'high' ? '🔴' : item.level === 'medium' ? '🟡' : '🔵'}}</text>
+              <text class="alert-type-text">{{item.type}}</text>
+            </view>
+            <text class="alert-reason">{{item.reason}}</text>
+            <view class="alert-meta-row">
+              <text class="alert-date">📅 {{item.exceptionDate}}</text>
+              <text class="alert-time-created">⏰ {{item.createdAt}}</text>
+            </view>
+          </view>
+          <view class="alert-actions">
+            <block wx:if="{{item.status === 'PENDING' || item.status === 'pending'}}">
+              <view class="btn btn-sm btn-outline" bindtap="onAcknowledgeAlert" data-alert="{{item}}">已知晓</view>
+            </block>
+            <block wx:elif="{{item.status === 'ACKNOWLEDGED' || item.status === 'acknowledged' || item.status === 'PROCESSING'}}">
+              <view class="btn btn-sm btn-success" bindtap="onResolveAlert" data-alert="{{item}}">✅ 解决</view>
+            </block>
+            <block wx:elif="{{item.status === 'RESOLVED' || item.status === 'resolved' || item.status === 'APPROVED' || item.status === 'approved'}}">
+              <text class="resolved-tag">✓ 已处理</text>
+            </block>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- ────── Tab: 考勤申请 ────── -->
+    <block wx:if="{{!loading && activeTab === 'attendance'}}">
+      <!-- 提交按钮 -->
+      <view class="att-header">
+        <text class="att-header-title">我的考勤</text>
+        <view class="att-submit-btn" bindtap="onOpenExceptionModal">+ 提交申请</view>
+      </view>
+
+      <!-- 状态筛选 -->
+      <view class="alert-filter">
+        <view class="af-item {{exceptionFilter === 'all' ? 'af-active' : ''}}" bindtap="onFilterException" data-filter="all">全部</view>
+        <view class="af-item {{exceptionFilter === 'pending' ? 'af-active' : ''}}" bindtap="onFilterException" data-filter="pending">待审批</view>
+        <view class="af-item {{exceptionFilter === 'approved' ? 'af-active' : ''}}" bindtap="onFilterException" data-filter="approved">已通过</view>
+        <view class="af-item {{exceptionFilter === 'rejected' ? 'af-active' : ''}}" bindtap="onFilterException" data-filter="rejected">已驳回</view>
+      </view>
+
+      <!-- 申请列表 -->
+      <view wx:if="{{filteredMyExceptions.length === 0}}" class="empty-state">
+        <text class="empty-icon">📅</text>
+        <text class="empty-text">{{exceptionFilter === 'all' ? '暂无考勤记录' : exceptionFilter === 'pending' ? '没有待审批的申请' : exceptionFilter === 'approved' ? '没有已通过的申请' : '没有被驳回的申请'}}</text>
+      </view>
+      <view class="alert-list" wx:else>
+        <view wx:for="{{filteredMyExceptions}}" wx:key="exceptionId" class="alert-card exc-card">
+          <view class="alert-card-top">
+            <view class="exc-type-icon">{{EXCEPTION_TYPE_LABEL[item.type] || item.typeLabel}}</view>
+            <view class="alert-status-badge status-{{item.status}}">{{item.statusLabel || item.status}}</view>
+          </view>
+          <view class="alert-card-body">
+            <text class="alert-reason">{{item.reason || '无备注'}}</text>
+            <view class="alert-meta-row">
+              <text class="alert-date">📅 {{item.exceptionDate}}</text>
+              <text class="alert-time-created">⏰ {{item.createdAt}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- ────── Tab: 排队叫号 ────── -->
+    <block wx:if="{{!loading && activeTab === 'queue'}}">
+      <!-- 排队概览 -->
+      <view class="queue-overview">
+        <view class="qo-card qo-waiting">
+          <text class="qo-val">{{queueStatus.waitingCount || 0}}</text>
+          <text class="qo-label">等待中</text>
+        </view>
+        <view class="qo-card qo-serving">
+          <text class="qo-val">{{queueStatus.currentNumber}}</text>
+          <text class="qo-label">当前叫号</text>
+        </view>
+        <view class="qo-card qo-time">
+          <text class="qo-val">{{queueStatus.avgWaitMinutes || 0}}分钟</text>
+          <text class="qo-label">预计等待</text>
+        </view>
+      </view>
+
+      <!-- 三分区切换标签 -->
+      <view class="queue-section-tabs">
+        <view class="qst-item {{queueSection === 'waiting' ? 'qst-active' : ''}}" bindtap="onSwitchQueueSection" data-section="waiting">
+          等待队列
+          <text wx:if="{{queueStatus.queueList.length > 0}}" class="qst-badge">{{queueStatus.queueList.length}}</text>
+        </view>
+        <view class="qst-item {{queueSection === 'called' ? 'qst-active' : ''}}" bindtap="onSwitchQueueSection" data-section="called">
+          已叫号
+          <text wx:if="{{calledList.length > 0}}" class="qst-badge">{{calledList.length}}</text>
+        </view>
+        <view class="qst-item {{queueSection === 'missed' ? 'qst-active' : ''}}" bindtap="onSwitchQueueSection" data-section="missed">
+          过号
+          <text wx:if="{{missedList.length > 0}}" class="qst-badge qst-badge-gray">{{missedList.length}}</text>
+        </view>
+      </view>
+
+      <!-- ── 分区1: 等待队列 ── -->
+      <block wx:if="{{queueSection === 'waiting'}}">
+        <view wx:if="{{queueStatus.queueList.length === 0}}" class="empty-state">
+          <text class="empty-icon">✅</text>
+          <text class="empty-text">暂无等待顾客</text>
+        </view>
+        <view class="staff-queue-list" wx:else>
+          <view class="section-title">点击号码即可叫号</view>
+          <view
+            wx:for="{{queueStatus.queueList}}"
+            wx:key="number"
+            class="sq-item"
+            bindtap="onCallNumber"
+            data-item="{{item}}"
+          >
+            <view class="sq-num">Q{{item.number}}</view>
+            <view class="sq-info">
+              <text class="sq-detail">{{item.persons}}人 · {{item.typeDisplay}}</text>
+              <text wx:if="{{item.userName}}" class="sq-user">{{item.userName}}</text>
+              <text class="sq-ahead">前方还有 {{item.ahead}} 桌</text>
+            </view>
+            <view class="sq-action">叫号</view>
+          </view>
+        </view>
+      </block>
+
+      <!-- ── 分区2: 已叫号列表（CALLED 待确认 + KNOWN 已确认）── -->
+      <block wx:if="{{queueSection === 'called'}}">
+        <view wx:if="{{calledList.length === 0}}" class="empty-state">
+          <text class="empty-icon">📢</text>
+          <text class="empty-text">暂无已叫号记录</text>
+        </view>
+        <view class="staff-called-list" wx:else>
+          <view class="section-title">
+            已叫号（{{calledKnownCount}} 已确认
+            <block wx:if="{{hasCalledPending}}"> · {{calledPendingCount}} 待确认</block>）
+          </view>
+          <view wx:for="{{calledList}}" wx:key="queueId" class="sc-item sc-{{item.status}}">
+            <text class="sc-num">Q{{item.number}}</text>
+            <text class="sc-detail">{{item.persons}}人 · {{item.typeDisplay}}</text>
+            <text wx:if="{{item.userName}}" class="sc-user">{{item.userName}}</text>
+            <text class="sc-tag tag-{{item.status}}">{{item.status === 'KNOWN' ? '已确认' : '待确认'}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ── 分区3: 过号列表（MISSED）── -->
+      <block wx:if="{{queueSection === 'missed'}}">
+        <view wx:if="{{missedList.length === 0}}" class="empty-state">
+          <text class="empty-icon">⏰</text>
+          <text class="empty-text">暂无过号记录</text>
+        </view>
+        <view class="staff-missed-list" wx:else>
+          <view class="section-title">过号队列（叫号后5分钟未确认自动过号）</view>
+          <view wx:for="{{missedList}}" wx:key="queueId" class="sm-item">
+            <text class="sm-num">Q{{item.number}}</text>
+            <text class="sm-detail">{{item.persons}}人 · {{item.typeDisplay}}</text>
+            <text wx:if="{{item.userName}}" class="sm-user">{{item.userName}}</text>
+            <text class="sm-tag">过号</text>
+          </view>
+        </view>
+      </block>
+    </block>
+
+    <!-- ────── Tab: 通知中心 ────── -->
+    <block wx:if="{{!loading && activeTab === 'notification'}}">
+      <view class="notif-header">
+        <text class="notif-header-title">消息中心</text>
+        <view wx:if="{{notifications.length > 0}}" class="notif-read-all-btn" bindtap="onMarkAllRead">全部已读</view>
+      </view>
+      <view wx:if="{{notifications.length === 0}}" class="empty-state">
+        <text class="empty-icon">🔔</text>
+        <text class="empty-text">暂无消息通知</text>
+      </view>
+      <view class="notif-list">
+        <view wx:for="{{notifications}}" wx:key="notificationId" class="notif-card {{item.isRead ? 'notif-card-read' : 'notif-card-unread'}}">
+          <view class="notif-card-left">
+            <view class="notif-dot {{item.isRead ? '' : 'notif-unread-dot'}}"></view>
+          </view>
+          <view class="notif-card-body">
+            <view class="notif-top">
+              <text class="notif-type-badge">{{item.type === 'order_new' ? '新订单' : item.type === 'order_progress' ? '订单进度' : item.type === 'refund_result' ? '退款结果' : item.type === 'alert_created' ? '系统告警' : item.type}}</text>
+              <text class="notif-time">{{item.createdAt}}</text>
+            </view>
+            <text class="notif-title-text">{{item.title}}</text>
+            <text class="notif-content">{{item.content}}</text>
+            <view wx:if="{{!item.isRead}}" class="notif-actions">
+              <view class="btn btn-sm btn-outline" bindtap="onMarkNotificationRead" data-notif="{{item}}">标记已读</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+  </view><!-- /main-content -->
+
+  <!-- ═══════ 退款审核弹层（订单页内直接操作）═══════ -->
+  <view wx:if="{{showRefundModal}}" class="modal-mask" bindtap="onCloseRefundModal">
+    <view class="modal-panel" catchtap="">
+      <text class="modal-title">💰 审核退款</text>
+      <view class="refund-detail">
+        <view class="rd-row">
+          <text class="rd-label">退款类型</text>
+          <text class="rd-value rd-type">{{refundModalData.status === 'REQUEST_CANCEL' ? '🔄 取消重下单' : '🚪 全单退款'}}</text>
+        </view>
+        <view class="rd-row">
+          <text class="rd-label">退款金额</text>
+          <text class="rd-value rd-amount">¥{{refundModalData.refundAmount}}</text>
+        </view>
+        <view class="rd-row">
+          <text class="rd-label">退款原因</text>
+          <text class="rd-value">{{refundModalData.refundReason || '—'}}</text>
+        </view>
+        <view class="rd-row">
+          <text class="rd-label">关联订单</text>
+          <text class="rd-value">#{{refundModalData.reservationId}} · {{refundModalOrder.tableNo || '桌' + refundModalOrder.tableId}}</text>
+        </view>
+        <view class="rd-row">
+          <text class="rd-label">申请时间</text>
+          <text class="rd-value">{{refundModalData.createdAt || '—'}}</text>
+        </view>
+      </view>
+      <view class="rd-actions">
+        <view class="btn btn-block btn-danger-outline" bindtap="onRejectRefund">拒绝退款</view>
+        <view class="btn btn-block btn-primary" bindtap="onApproveRefund">通过退款</view>
+      </view>
+      <view class="modal-cancel" bindtap="onCloseRefundModal">取消</view>
+    </view>
+  </view>
+
+  <!-- ═══════ 调度弹层 ═══════ -->
+  <view wx:if="{{showDispatchModal}}" class="modal-mask" bindtap="onCloseDispatch">
+    <view class="modal-panel" catchtap="">
+      <text class="modal-title">调度 {{dispatchTable.name || dispatchTable.tableNo}}</text>
+      <text class="modal-sub">当前状态：{{dispatchTable.statusLabel}}</text>
+      <view class="dispatch-grid">
+        <view wx:for="{{dispatchOptions}}" wx:key="key"
+          class="dispatch-btn dispatch-{{item.key}}"
+          bindtap="onSetStatus" data-status="{{item.key}}">
+          {{item.label}}
+        </view>
+      </view>
+      <view class="modal-cancel" bindtap="onCloseDispatch">取消</view>
+    </view>
+  </view>
+
+  <!-- ═══════ 拒单弹层 ═══════ -->
+  <view wx:if="{{showRejectModal}}" class="modal-mask" bindtap="onCloseReject">
+    <view class="modal-panel" catchtap="">
+      <text class="modal-title">拒单原因</text>
+      <textarea class="reject-textarea" placeholder="请输入拒单原因..." value="{{rejectReason}}" bindinput="onInputRejectReason" maxlength="200" />
+      <view class="modal-btns">
+        <view class="btn btn-block btn-outline" bindtap="onCloseReject">取消</view>
+        <view class="btn btn-block btn-danger" bindtap="onConfirmReject">确认拒单</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ═══════ 底部导航栏（5Tab）═══════ -->
+  <view class="bottom-nav">
+    <view class="nav-item {{activeTab === 'orders' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="orders">
+      <text class="nav-icon">📋</text>
+      <text class="nav-label">订单</text>
+      <text wx:if="{{pendingCount > 0}}" class="nav-badge">{{pendingCount}}</text>
+    </view>
+    <view class="nav-item {{activeTab === 'tables' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="tables">
+      <text class="nav-icon">🪑</text>
+      <text class="nav-label">桌位</text>
+    </view>
+    <view class="nav-item {{activeTab === 'notification' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="notification">
+      <text class="nav-icon">🔔</text>
+      <text class="nav-label">消息</text>
+      <text wx:if="{{unreadCount > 0}}" class="nav-badge">{{unreadCount > 99 ? '99+' : unreadCount}}</text>
+    </view>
+    <view class="nav-item {{activeTab === 'queue' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="queue">
+      <text class="nav-icon">🎟️</text>
+      <text class="nav-label">叫号</text>
+      <text wx:if="{{queueStatus.waitingCount > 0}}" class="nav-badge">{{queueStatus.waitingCount}}</text>
+    </view>
+    <view class="nav-item {{activeTab === 'alerts' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="alerts">
+      <text class="nav-icon">⚠️</text>
+      <text class="nav-label">告警</text>
+      <text wx:if="{{pendingAlertCount > 0}}" class="nav-badge nav-badge-red">{{pendingAlertCount}}</text>
+    </view>
+    <view class="nav-item {{activeTab === 'attendance' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="attendance">
+      <text class="nav-icon">📅</text>
+      <text class="nav-label">考勤</text>
+    </view>
+  </view>
+
+  <!-- ═══════ 考勤申请弹层 ═══════ -->
+  <view wx:if="{{showExceptionModal}}" class="modal-mask" bindtap="onCloseExceptionModal">
+    <view class="modal-panel" catchtap="preventClose">
+      <text class="modal-title">📅 提交考勤申请</text>
+
+      <!-- 类型选择 -->
+      <text class="exc-label">申请类型</text>
+      <view class="exc-type-grid">
+        <view wx:for="{{exceptionTypeOptions}}" wx:key="key"
+          class="exc-type-item {{exceptionForm.type === item.key ? 'exc-type-active' : ''}}"
+          catchtap="onSelectExceptionType" data-type="{{item.key}}">
+          <text class="exc-type-label">{{item.label}}</text>
+          <text class="exc-type-desc">{{item.desc}}</text>
+        </view>
+      </view>
+
+      <!-- 日期选择 -->
+      <text class="exc-label">日期</text>
+      <picker mode="date" value="{{exceptionForm.date}}" bindchange="onExceptionDateChange">
+        <view class="exc-date-picker">
+          <text wx:if="{{exceptionForm.date}}">📅 {{exceptionForm.date}}</text>
+          <text wx:else class="exc-placeholder">请选择日期</text>
+          <text class="exc-date-arrow">▼</text>
+        </view>
+      </picker>
+
+      <!-- 原因 -->
+      <text class="exc-label">申请原因</text>
+      <textarea class="reject-textarea" placeholder="请详细说明申请原因..." value="{{exceptionForm.reason}}" bindinput="onExceptionReasonInput" maxlength="500" />
+
+      <view class="modal-btns">
+        <view class="btn btn-block btn-outline" catchtap="onCloseExceptionModal">取消</view>
+        <view class="btn btn-block btn-primary" catchtap="onSubmitException">提交申请</view>
+      </view>
+      <view class="modal-cancel" catchtap="onCloseExceptionModal">取消</view>
+    </view>
+  </view>
+
+</view><!-- /staff-page -->
