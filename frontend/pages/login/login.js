@@ -177,12 +177,13 @@ Page({
         post('/api/auth/wx-login', { code: loginRes.code }).then(res => {
           that.setData({ wechatLoading: false })
           if (res.code === 0 && res.data) {
-            // 登录成功
+            // 登录成功（后端返回的 roleId → 前端角色标识）
+            // 数据库: 1=顾客, 2=店员, 3=店长, 4=总部运营, 5=猫咪管家
             const roleMap = {
-              1: { role: 'customer', label: '顾客' },
-              2: { role: 'staff', label: '店员' },
-              3: { role: 'manager', label: '店长' },
-              4: { role: 'hq_ops', label: '总部运营' },
+              1: { role: 'customer',   label: '顾客' },
+              2: { role: 'staff',      label: '店员' },
+              3: { role: 'manager',    label: '店长' },
+              4: { role: 'hq_ops',     label: '总部运营' },
               5: { role: 'cat_keeper', label: '猫咪管家' }
             }
             const roleId = res.data.userInfo.roleId || 1
@@ -437,6 +438,8 @@ Page({
   },
 
   // ── 角色 ID 映射（前端字符串 → 数据库 roleId） ──
+  // ── 角色 ID 映射（前端字符串 → 数据库 roleId） ──
+  // 数据库: 1=顾客, 2=店员, 3=店长, 4=总部运营, 5=猫咪管家
   roleToId(role) {
     const map = { customer: 1, staff: 2, manager: 3, hq_ops: 4, cat_keeper: 5 }
     return map[role] || 1
@@ -475,7 +478,7 @@ Page({
       customer:   '/pages/index/index',
       staff:      '/pages/staff/staff',
       manager:    '/pages/staffDashboard/staffDashboard',
-      hq_ops:     '/pages/staffDashboard/staffDashboard',
+      hq_ops:     '/pages/hq/workspace',
       cat_keeper: '/pages/cats/cats'
     }
     const targetUrl = routeMap[role]

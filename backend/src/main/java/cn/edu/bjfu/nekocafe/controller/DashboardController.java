@@ -13,10 +13,5 @@ public class DashboardController {
     @Autowired
     private DashboardService dashboardService;
 
-//    @GetMapping("/metrics")
-//    public Result<DashboardMetricsVO> getMetrics(
-//            @RequestParam Integer storeId,
-//            @RequestParam(defaultValue = "7d") String range) {
-//        return Result.success(dashboardService.getMetrics(storeId, range));
-//    }
+    // K-1 接口在 StaffController 中实现（GET /api/dashboard/metrics），此处不重复定义
 }

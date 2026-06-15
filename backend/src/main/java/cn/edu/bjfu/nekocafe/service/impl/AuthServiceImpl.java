@@ -286,12 +286,12 @@ public class AuthServiceImpl implements AuthService {
         ur.setRoleId(roleId);
 
         // 总部运营（roleId=4）：storeId 为 null，表示全门店权限
-        // 顾客（roleId=1）：storeId 可为 null
+        // 顾客（roleId=1）/ 猫咪管家（roleId=5）：storeId 可为 null
         // 其他非顾客角色：优先用传入的 storeId，没传则默认门店 1
         if (roleId != null && roleId == 4) {
-            ur.setStoreId(null);  // 全门店权限
-        } else if (roleId != null && roleId > 1 && storeId == null) {
-            ur.setStoreId(1);  // 课设兜底
+            ur.setStoreId(null);  // 总部运营（roleId=4）全门店权限，不绑定具体门店
+        } else if (roleId != null && roleId != 1 && roleId != 5 && storeId == null) {
+            ur.setStoreId(1);  // 店员/店长/猫咪管家未传 storeId 时，课设兜底默认门店 1
         } else {
             ur.setStoreId(storeId);
         }
@@ -338,7 +338,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 签发 JWT（token 仅返回给前端，不再写入数据库 openid 字段）
-        String token = JwtUtil.generateToken(user.getUserId());
+        String token = JwtUtil.generateToken(user.getUserId(), roleId, storeId);
 
         // 组装响应
         LoginVO result = new LoginVO();

@@ -28,22 +28,26 @@ Page({
 
   onLoad() {
     if (!app.requireRole(['manager', 'hq_ops'])) return
-    const userInfo = app.globalData.userInfo || {}
-    const userRole = app.globalData.userRole || ''
-    const isHqOps = (userRole === 'hq_ops')
-    const storeId = isHqOps ? 1 : (userInfo.storeId || 1)
-    const storeName = isHqOps ? '总部视角 · 朝阳店' : (userInfo.storeName || 'NekoCafé 朝阳店')
-    const pickerIndex = isHqOps ? 0 : ALL_STORES.findIndex(s => s.id === storeId)
-    this.setData({
-      userRole: userInfo.roleLabel || '',
-      userRoleId: userRole,
-      userName: userInfo.nickName || '',
-      storeId: storeId,
-      storeName: storeName,
-      showStorePicker: isHqOps,
-      storePickerIndex: pickerIndex >= 0 ? pickerIndex : 0
+    console.log('[Dashboard] onLoad, fetching userInfo...')
+    // 从后端数据库获取最新用户信息（含 storeId/storeName）
+    app.fetchAndSyncUserInfo().then((userInfo) => {
+      console.log('[Dashboard] userInfo fetched:', userInfo)
+      const role = wx.getStorageSync('userRole') || app.globalData.userRole || ''
+      const isHqOps = (role === 'hq_ops')
+      const storeId = isHqOps ? 1 : ((userInfo && userInfo.storeId) || 1)
+      const storeName = isHqOps ? ('总部视角 · ' + ((userInfo && userInfo.storeName) || '朝阳店')) : ((userInfo && userInfo.storeName) || '')
+      const pickerIndex = isHqOps ? 0 : ALL_STORES.findIndex(s => s.id === storeId)
+      this.setData({
+        userRole: (userInfo && userInfo.roleLabel) || '',
+        userRoleId: role,
+        userName: (userInfo && userInfo.nickName) || '',
+        storeId: storeId,
+        storeName: storeName,
+        showStorePicker: isHqOps,
+        storePickerIndex: pickerIndex >= 0 ? pickerIndex : 0
+      })
+      this.loadAll()
     })
-    this.loadAll()
   },
 
   // ── 门店切换（仅总部运营） ──────────────────────────────
@@ -72,9 +76,20 @@ Page({
 
   loadMetrics() {
     this.setData({ loading: true })
+    console.log('[Dashboard] loadMetrics start, storeId=', this.data.storeId, 'range=', this.data.range)
     get('/api/dashboard/metrics?storeId=' + this.data.storeId + '&range=' + this.data.range).then(res => {
+      console.log('[Dashboard] loadMetrics response:', JSON.stringify(res).substring(0, 200))
       if (res.code === 0) {
-        this.setData({ metrics: res.data, loading: false })
+        const raw = res.data
+        const cd = (raw && raw.chartData) || {}
+        const labels = cd.labels || []
+        // 后端 chartData 字段映射为绘图函数期望的 {labels, values} 结构
+        const metrics = Object.assign({}, raw, {
+          spaceEfficiency: { labels: labels, values: cd.revenuePerSeat || [] },
+          turnoverRate:    { labels: labels, values: cd.tableTurnoverRate || [] },
+          repurchaseRate:  { labels: ['普卡', '银卡', '金卡', '钻石'], values: cd.repurchaseRate && cd.repurchaseRate.length >= 4 ? cd.repurchaseRate.slice(0, 4) : [0, 0, 0, 0] }
+        })
+        this.setData({ metrics: metrics, loading: false })
         setTimeout(() => {
           this.drawSpaceEfficiencyChart()
           this.drawTurnoverRateChart()
@@ -89,6 +104,7 @@ Page({
   // ========== 坪效折线图 ==========
   drawSpaceEfficiencyChart() {
     const data = this.data.metrics.spaceEfficiency
+    if (!data || !data.values || data.values.length === 0) return
     const query = wx.createSelectorQuery()
     query.select('#chartLine').fields({ node: true, size: true }).exec((res) => {
       if (!res[0] || !res[0].node) return
@@ -165,6 +181,7 @@ Page({
   // ========== 翻台率柱状图 ==========
   drawTurnoverRateChart() {
     const data = this.data.metrics.turnoverRate
+    if (!data || !data.values || data.values.length === 0) return
     const query = wx.createSelectorQuery()
     query.select('#chartBar').fields({ node: true, size: true }).exec((res) => {
       if (!res[0] || !res[0].node) return
@@ -240,6 +257,7 @@ Page({
   // ========== 会员复购率饼图 ==========
   drawRepurchaseRateChart() {
     const data = this.data.metrics.repurchaseRate
+    if (!data || !data.values || data.values.length === 0) return
     const query = wx.createSelectorQuery()
     query.select('#chartPie').fields({ node: true, size: true }).exec((res) => {
       if (!res[0] || !res[0].node) return

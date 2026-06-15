@@ -25,8 +25,10 @@
 
     "pages/contact/contact",
     "pages/settings/settings",
-    "pages/staffDashboard/staffDashboard"
-
+    "pages/staffDashboard/staffDashboard",
+    "pages/hq/workspace",
+    "pages/hq/marketing",
+    "pages/hq/promo-form/promo-form"
   ],
   "tabBar": {
     "color": "#999999",

@@ -95,59 +95,116 @@ Page({
   loadAll() {
     var self = this
     this.setData({ loading: true })
-    var storeId = this.data.storeId
-    Promise.all([
-      get('/api/dashboard/metrics?storeId=' + storeId + '&range=7d'),
-      get('/api/manager/schedules?storeId=' + storeId),
-      get('/api/manager/shifts'),
-      get('/api/manager/exceptions?storeId=' + storeId)
-    ]).then(function(res) {
-      var metricsRes = res[0]
-      var schedRes = res[1]
-      var shiftRes = res[2]
-      var exRes = res[3]
-      var metrics = metricsRes.code === 0 ? metricsRes.data : null
-      var schedules = schedRes.code === 0 ? schedRes.data : []
-      var shifts = shiftRes.code === 0 ? shiftRes.data : []
-      var exceptions = exRes.code === 0 ? exRes.data : []
+    // 各接口独立请求，一个失败不影响其他
+    var metricsData = null
+    var schedules = []
+    var shifts = []
+    var exceptions = []
 
-      var todayStr = self.formatToday()
-      var todayOnDuty = 0
-      var i
-      for (i = 0; i < schedules.length; i++) {
-        if (schedules[i].workDate === todayStr && schedules[i].startTime) todayOnDuty++
-      }
-      var pendingReview = 0
-      for (i = 0; i < exceptions.length; i++) {
-        if (exceptions[i].status === 'PENDING') pendingReview++
-      }
-      var onLeave = 0
-      for (i = 0; i < exceptions.length; i++) {
-        var e = exceptions[i]
-        if (e.status === 'APPROVED' && e.type === 'LEAVE' && e.exceptionDate === todayStr) onLeave++
-      }
-      var shiftDefCount = shifts.length
-
-      var teamIds = new Set()
-      for (i = 0; i < schedules.length; i++) {
-        teamIds.add(schedules[i].staffId)
-      }
-
+    function tryFinish() {
       self.setData({
-        metrics: metrics,
+        metrics: metricsData,
         schedules: schedules,
         shifts: shifts,
         exceptions: exceptions,
-        scheduleStat: { todayOnDuty: todayOnDuty, pendingReview: pendingReview, onLeave: onLeave, shiftDefCount: shiftDefCount },
+        scheduleStat: {
+          todayOnDuty: self.calcTodayOnDuty(schedules),
+          pendingReview: self.calcPendingReview(exceptions),
+          onLeave: self.calcOnLeave(exceptions),
+          shiftDefCount: shifts.length
+        },
         mineStat: {
           managedStores: self.data.mineStat.managedStores,
-          teamSize: teamIds.size,
-          pendingReview: pendingReview
+          teamSize: self.calcTeamSize(schedules),
+          pendingReview: self.calcPendingReview(exceptions)
         },
         loading: false
       })
-    }).catch(function() {
-      self.setData({ loading: false })
+    }
+
+    var pending = 4
+
+    function done() {
+      pending--
+      if (pending <= 0) tryFinish()
+    }
+
+    get('/api/dashboard/metrics?storeId=' + storeId + '&range=7d').then(function(res) {
+
+    // 各接口独立请求，一个失败不影响其他
+    var metricsData = null
+    var schedules = []
+    var shifts = []
+    var exceptions = []
+
+    function tryFinish() {
+      self.setData({
+        metrics: metricsData,
+        schedules: schedules,
+        shifts: shifts,
+        exceptions: exceptions,
+        scheduleStat: {
+          todayOnDuty: self.calcTodayOnDuty(schedules),
+          pendingReview: self.calcPendingReview(exceptions),
+          onLeave: self.calcOnLeave(exceptions),
+          shiftDefCount: shifts.length
+        },
+        mineStat: {
+          managedStores: self.data.mineStat.managedStores,
+          teamSize: self.calcTeamSize(schedules),
+          pendingReview: self.calcPendingReview(exceptions)
+        },
+        loading: false
+      })
+    }
+
+    var pending = 4
+
+    function done() {
+      pending--
+      if (pending <= 0) tryFinish()
+    }
+
+    get('/api/dashboard/metrics?storeId=' + storeId + '&range=7d').then(function(res) {
+      if (res.code === 0 && res.data) {
+        var raw = res.data
+        var cd = raw.chartData || {}
+        var labels = cd.labels || []
+        // 将后端 chartData 字段映射为模板期望的 spaceEfficiency/turnoverRate/repurchaseRate 结构
+        metricsData = Object.assign({}, raw, {
+          spaceEfficiency: { labels: labels, values: cd.revenuePerSeat || [] },
+          turnoverRate:    { labels: labels, values: cd.tableTurnoverRate || [] },
+          repurchaseRate:  { labels: labels, values: cd.repurchaseRate || [] }
+        })
+      }
+      done()
+    }).catch(function(err) {
+      console.warn('[staffDashboard] metrics failed:', err)
+      done()
+    })
+
+    get('/api/manager/schedules?storeId=' + storeId).then(function(res) {
+      if (res.code === 0) schedules = res.data || []
+      done()
+    }).catch(function(err) {
+      console.warn('[staffDashboard] schedules failed:', err)
+      done()
+    })
+
+    get('/api/manager/shifts').then(function(res) {
+      if (res.code === 0) shifts = res.data || []
+      done()
+    }).catch(function(err) {
+      console.warn('[staffDashboard] shifts failed:', err)
+      done()
+    })
+
+    get('/api/manager/exceptions?storeId=' + storeId).then(function(res) {
+      if (res.code === 0) exceptions = res.data || []
+      done()
+    }).catch(function(err) {
+      console.warn('[staffDashboard] exceptions failed:', err)
+      done()
     })
   },
 
@@ -157,6 +214,41 @@ Page({
     var m = String(d.getMonth() + 1).padStart(2, '0')
     var day = String(d.getDate()).padStart(2, '0')
     return y + '-' + m + '-' + day
+  },
+
+  calcTodayOnDuty(schedules) {
+    var todayStr = this.formatToday()
+    var count = 0
+    for (var i = 0; i < schedules.length; i++) {
+      if (schedules[i].workDate === todayStr && schedules[i].startTime) count++
+    }
+    return count
+  },
+
+  calcPendingReview(exceptions) {
+    var count = 0
+    for (var i = 0; i < exceptions.length; i++) {
+      if (exceptions[i].status === 'PENDING') count++
+    }
+    return count
+  },
+
+  calcOnLeave(exceptions) {
+    var todayStr = this.formatToday()
+    var count = 0
+    for (var i = 0; i < exceptions.length; i++) {
+      var e = exceptions[i]
+      if (e.status === 'APPROVED' && e.type === 'LEAVE' && e.exceptionDate === todayStr) count++
+    }
+    return count
+  },
+
+  calcTeamSize(schedules) {
+    var ids = new Set()
+    for (var i = 0; i < schedules.length; i++) {
+      ids.add(schedules[i].staffId)
+    }
+    return ids.size
   },
 
   onSwitchTab(e) {

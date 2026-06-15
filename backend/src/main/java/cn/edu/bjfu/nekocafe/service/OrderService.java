@@ -39,6 +39,13 @@ public interface OrderService {
     Map<String, Object> cancelOrder(Long userId, String orderId);
 
     /**
+     * 改约（E-5）
+     * 将当前预约状态改为 CANCELLED，前端引导用户重新预约
+     * 返回 status + orderId
+     */
+    Map<String, Object> reschedule(Long userId, RescheduleDTO dto);
+
+    /**
      * 申请退款（E-6）
      * @param refundReason 退款理由（用户填写）
      * 返回 refundId + refundAmount + status
