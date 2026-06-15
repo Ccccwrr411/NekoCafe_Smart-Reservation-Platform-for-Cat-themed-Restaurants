@@ -461,4 +461,17 @@
     from public.reservations
     where store_id = #{storeId,jdbcType=INTEGER}
   </select>
+
+  <!--
+    按用户ID + 桌位ID + 单个状态查询预约（用于改约等场景）。
+  -->
+  <select id="selectByUserIdAndTableIdAndStatus" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+      and table_id = #{tableId,jdbcType=INTEGER}
+      and status = #{status}::reservation_status
+    order by reservation_time DESC
+  </select>
 </mapper>
