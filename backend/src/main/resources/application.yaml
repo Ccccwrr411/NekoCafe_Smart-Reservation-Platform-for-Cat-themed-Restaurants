@@ -38,6 +38,19 @@ logging:
   level:
     cn.edu.bjfu.nekocafe.mapper: debug
 
+# Actuator + Prometheus 监控端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: nekocafe
+
 # JWT 配置（实现 JwtUtil 时读取）
 jwt:
   secret: nekocafe-secret-key-change-me-before-deploy
