@@ -242,6 +242,44 @@
       </view>
     </block>
 
+    <!-- ────── Tab: 考勤申请 ────── -->
+    <block wx:if="{{!loading && activeTab === 'attendance'}}">
+      <!-- 提交按钮 -->
+      <view class="att-header">
+        <text class="att-header-title">我的考勤</text>
+        <view class="att-submit-btn" bindtap="onOpenExceptionModal">+ 提交申请</view>
+      </view>
+
+      <!-- 状态筛选 -->
+      <view class="alert-filter">
+        <view class="af-item {{exceptionFilter === 'all' ? 'af-active' : ''}}" bindtap="onFilterException" data-filter="all">全部</view>
+        <view class="af-item {{exceptionFilter === 'pending' ? 'af-active' : ''}}" bindtap="onFilterException" data-filter="pending">待审批</view>
+        <view class="af-item {{exceptionFilter === 'approved' ? 'af-active' : ''}}" bindtap="onFilterException" data-filter="approved">已通过</view>
+        <view class="af-item {{exceptionFilter === 'rejected' ? 'af-active' : ''}}" bindtap="onFilterException" data-filter="rejected">已驳回</view>
+      </view>
+
+      <!-- 申请列表 -->
+      <view wx:if="{{filteredMyExceptions.length === 0}}" class="empty-state">
+        <text class="empty-icon">📅</text>
+        <text class="empty-text">{{exceptionFilter === 'all' ? '暂无考勤记录' : exceptionFilter === 'pending' ? '没有待审批的申请' : exceptionFilter === 'approved' ? '没有已通过的申请' : '没有被驳回的申请'}}</text>
+      </view>
+      <view class="alert-list" wx:else>
+        <view wx:for="{{filteredMyExceptions}}" wx:key="exceptionId" class="alert-card exc-card">
+          <view class="alert-card-top">
+            <view class="exc-type-icon">{{EXCEPTION_TYPE_LABEL[item.type] || item.typeLabel}}</view>
+            <view class="alert-status-badge status-{{item.status}}">{{item.statusLabel || item.status}}</view>
+          </view>
+          <view class="alert-card-body">
+            <text class="alert-reason">{{item.reason || '无备注'}}</text>
+            <view class="alert-meta-row">
+              <text class="alert-date">📅 {{item.exceptionDate}}</text>
+              <text class="alert-time-created">⏰ {{item.createdAt}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
     <!-- ────── Tab: 排队叫号 ────── -->
     <block wx:if="{{!loading && activeTab === 'queue'}}">
       <!-- 排队概览 -->
@@ -459,6 +497,48 @@
       <text class="nav-icon">⚠️</text>
       <text class="nav-label">告警</text>
       <text wx:if="{{pendingAlertCount > 0}}" class="nav-badge nav-badge-red">{{pendingAlertCount}}</text>
+    </view>
+    <view class="nav-item {{activeTab === 'attendance' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="attendance">
+      <text class="nav-icon">📅</text>
+      <text class="nav-label">考勤</text>
+    </view>
+  </view>
+
+  <!-- ═══════ 考勤申请弹层 ═══════ -->
+  <view wx:if="{{showExceptionModal}}" class="modal-mask" bindtap="onCloseExceptionModal">
+    <view class="modal-panel" catchtap="preventClose">
+      <text class="modal-title">📅 提交考勤申请</text>
+
+      <!-- 类型选择 -->
+      <text class="exc-label">申请类型</text>
+      <view class="exc-type-grid">
+        <view wx:for="{{exceptionTypeOptions}}" wx:key="key"
+          class="exc-type-item {{exceptionForm.type === item.key ? 'exc-type-active' : ''}}"
+          catchtap="onSelectExceptionType" data-type="{{item.key}}">
+          <text class="exc-type-label">{{item.label}}</text>
+          <text class="exc-type-desc">{{item.desc}}</text>
+        </view>
+      </view>
+
+      <!-- 日期选择 -->
+      <text class="exc-label">日期</text>
+      <picker mode="date" value="{{exceptionForm.date}}" bindchange="onExceptionDateChange">
+        <view class="exc-date-picker">
+          <text wx:if="{{exceptionForm.date}}">📅 {{exceptionForm.date}}</text>
+          <text wx:else class="exc-placeholder">请选择日期</text>
+          <text class="exc-date-arrow">▼</text>
+        </view>
+      </picker>
+
+      <!-- 原因 -->
+      <text class="exc-label">申请原因</text>
+      <textarea class="reject-textarea" placeholder="请详细说明申请原因..." value="{{exceptionForm.reason}}" bindinput="onExceptionReasonInput" maxlength="500" />
+
+      <view class="modal-btns">
+        <view class="btn btn-block btn-outline" catchtap="onCloseExceptionModal">取消</view>
+        <view class="btn btn-block btn-primary" catchtap="onSubmitException">提交申请</view>
+      </view>
+      <view class="modal-cancel" catchtap="onCloseExceptionModal">取消</view>
     </view>
   </view>
 

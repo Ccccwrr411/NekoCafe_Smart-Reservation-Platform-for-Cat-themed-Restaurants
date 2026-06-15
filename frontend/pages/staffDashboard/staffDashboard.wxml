@@ -192,7 +192,6 @@
             <text class="shift-name">{{item.shiftName}}</text>
             <text class="shift-time">{{item.startTime}} - {{item.endTime}}</text>
           </view>
-          <text class="shift-id">#{{item.shiftId}}</text>
         </view>
       </view>
     </block>

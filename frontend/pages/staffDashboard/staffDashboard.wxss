@@ -471,7 +471,6 @@
 .shift-info { flex: 1; display: flex; flex-direction: column; gap: 6rpx; }
 .shift-name { font-size: 30rpx; font-weight: 700; color: #C97E5A; }
 .shift-time { font-size: 24rpx; color: #888; }
-.shift-id   { font-size: 22rpx; color: #ccc; }
 
 /* ── 异常申请卡片 ── */
 .exception-list { padding: 16rpx 24rpx 40rpx; }
