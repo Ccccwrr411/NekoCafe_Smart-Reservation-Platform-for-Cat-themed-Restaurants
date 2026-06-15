@@ -7,8 +7,10 @@ import cn.edu.bjfu.nekocafe.entity.MemberExt;
 import cn.edu.bjfu.nekocafe.entity.UserRoles;
 import cn.edu.bjfu.nekocafe.entity.UserRolesExample;
 import cn.edu.bjfu.nekocafe.entity.Users;
+import cn.edu.bjfu.nekocafe.entity.Stores;
 import cn.edu.bjfu.nekocafe.entity.UsersExample;
 import cn.edu.bjfu.nekocafe.mapper.MemberExtMapper;
+import cn.edu.bjfu.nekocafe.mapper.StoresMapper;
 import cn.edu.bjfu.nekocafe.mapper.UserRolesMapper;
 import cn.edu.bjfu.nekocafe.mapper.UsersMapper;
 import cn.edu.bjfu.nekocafe.service.AuthService;
@@ -48,6 +50,9 @@ public class AuthServiceImpl implements AuthService {
     private UserRolesMapper userRolesMapper;
 
     @Autowired
+    private StoresMapper storesMapper;
+
+    @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
     /** 验证码在 Redis 中的 key 前缀 */
@@ -55,8 +60,8 @@ public class AuthServiceImpl implements AuthService {
     /** 验证码有效期（分钟） */
     private static final int CODE_EXPIRE_MINUTES = 5;
 
-    /** 默认角色 ID（顾客） */
-    private static final int DEFAULT_ROLE_ID = 1;
+    /** 默认角色 ID（普通顾客=5） */
+    private static final int DEFAULT_ROLE_ID = 5;
 
     // ==================== 微信快捷登录 ====================
 
@@ -354,6 +359,14 @@ public class AuthServiceImpl implements AuthService {
         userInfo.setPoints(points);
         userInfo.setRoleId(roleId);
         userInfo.setStoreId(storeId);
+
+        // 查询门店名称
+        if (storeId != null) {
+            Stores store = storesMapper.selectByPrimaryKey(storeId);
+            if (store != null) {
+                userInfo.setStoreName(store.getName());
+            }
+        }
         result.setUserInfo(userInfo);
 
         return result;

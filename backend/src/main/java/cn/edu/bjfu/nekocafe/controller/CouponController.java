@@ -51,20 +51,4 @@ public class CouponController {
         Long userId = (Long) request.getAttribute("userId");
         return Result.success(couponService.calculatePromotion(userId, dto));
     }
-
-    /** E-10 首页活跃活动列表（无需鉴权） */
-    @GetMapping("/promotions/active")
-    public Result<List<Map<String, Object>>> getActivePromotions() {
-        return Result.success(couponService.getActivePromotions());
-    }
-
-    /** E-11 用户主动领取优惠券 */
-    @PostMapping("/coupons/claim")
-    public Result<Map<String, Object>> claimCoupon(@RequestBody Map<String, Integer> body,
-                                                     HttpServletRequest request) {
-        Long userId = (Long) request.getAttribute("userId");
-        Integer promoId = body.get("promoId");
-        if (promoId == null) throw new RuntimeException("promoId 不能为空");
-        return Result.success(couponService.claimCoupon(userId, promoId));
-    }
 }

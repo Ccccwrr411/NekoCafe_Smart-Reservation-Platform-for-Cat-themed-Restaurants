@@ -33,7 +33,14 @@ Page({
   },
 
   onShow() {
-    // 允许未登录用户浏览首页
+    // 从后端数据库获取最新用户信息（含 storeId/storeName），确保编译后也是正确的
+    const app = getApp()
+    app.fetchAndSyncUserInfo().then((dbUserInfo) => {
+      let userInfo = dbUserInfo || wx.getStorageSync('userInfo') || null
+      userInfo = this.fixAvatarUrl(userInfo)
+      this.setData({ userInfo })
+    })
+    // 同步也读一次 Storage，不等接口返回先展示（接口返回后会再更新）
     let userInfo = wx.getStorageSync('userInfo') || null
     userInfo = this.fixAvatarUrl(userInfo)
     this.setData({ userInfo })
@@ -136,6 +143,7 @@ Page({
   },
 
   goReservation() { wx.switchTab({ url: '/pages/reservation/reservation' }) },
+  goQueue()       { wx.navigateTo({ url: '/pages/queue/queue' }) },
   goMenu()        { wx.switchTab({ url: '/pages/menu/menu' }) },
   goCats()        { wx.navigateTo({ url: '/pages/cats/cats' }) },
   goCoupons()     { wx.navigateTo({ url: '/pages/coupons/coupons' }) },
@@ -143,6 +151,14 @@ Page({
   goMap()         { wx.navigateTo({ url: '/pages/map/map' }) },
 
   // ── AI 推荐 ──
+  // loadRecommend() {
+  //   get('/api/recommend').then(res => {
+  //     if (res.code === 0) {
+  //       this.setData({ recommend: res.data })
+  //     }
+  //   }).catch(() => {})
+  // },
+
   loadRecommend() {
     const userInfo = wx.getStorageSync('userInfo')
     const userId = userInfo?.id || userInfo?.userId
@@ -155,20 +171,26 @@ Page({
     }).catch(() => {})
   },
 
-  // 点击推荐桌位 → 跳预约页
+  // 点击推荐桌位 → 跳预约页（使用 userInfo 中的 storeId）
   onRecommendTableTap(e) {
     const table = e.currentTarget.dataset.table
     const app = getApp()
-    const storeId = table.id < 200 ? 1 : 2
-    app.globalData.currentStore = { id: storeId, name: 'NekoCafé 朝阳店' }
-    wx.navigateTo({ url: `/pages/reservation/reservation?storeId=${storeId}` })
+    const userInfo = app.globalData.userInfo || {}
+    // 优先使用推荐数据中的 storeId，其次 userInfo.storeId，最后兜底
+    const storeId = table.storeId || userInfo.storeId || (table.id < 200 ? 1 : 2)
+    const storeName = table.storeName || userInfo.storeName || ''
+    app.globalData.currentStore = { id: storeId, name: storeName }
+    wx.navigateTo({ url: `/pages/reservation/reservation?storeId=${storeId}&storeName=${storeName}` })
   },
 
-  // 点击推荐菜品 → 跳点单页
+  // 点击推荐菜品 → 跳点单页（使用 userInfo 中的 storeId）
   onRecommendDishTap(e) {
     const app = getApp()
-    app.globalData.currentStore = { id: 1, name: 'NekoCafé 朝阳店' }
-    wx.navigateTo({ url: '/pages/menu/menu?storeId=1' })
+    const userInfo = app.globalData.userInfo || {}
+    const storeId = userInfo.storeId || 1
+    const storeName = userInfo.storeName || ''
+    app.globalData.currentStore = { id: storeId, name: storeName }
+    wx.navigateTo({ url: `/pages/menu/menu?storeId=${storeId}` })
   },
 
   // 关闭推荐

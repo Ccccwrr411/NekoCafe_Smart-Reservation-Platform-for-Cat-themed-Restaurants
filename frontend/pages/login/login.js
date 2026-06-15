@@ -1,7 +1,7 @@
 // pages/login/login.js
 const { post, isUseMock } = require('../../utils/request')
 
-// 每种角色的模拟用户数据
+// 每种角色的模拟用户数据（仅 mock 模式使用，storeId/storeName 应从后端动态获取）
 const ROLE_USERS = {
   customer: {
     id: 1001,
@@ -23,35 +23,28 @@ const ROLE_USERS = {
     nickName: '李小明',
     avatarUrl: 'https://placehold.co/200x200/C97E5A/white?text=Avatar',
     role: 'staff',
-    roleLabel: '店员',
-    storeId: 1,
-    storeName: 'NekoCafé 朝阳店'
+    roleLabel: '店员'
   },
   manager: {
     id: 2002,
     nickName: '王店长',
     avatarUrl: 'https://placehold.co/200x200/C97E5A/white?text=Avatar',
     role: 'manager',
-    roleLabel: '店长',
-    storeId: 1,
-    storeName: 'NekoCafé 朝阳店'
+    roleLabel: '店长'
   },
   hq_ops: {
     id: 3001,
     nickName: '总部运营',
     avatarUrl: 'https://placehold.co/200x200/C97E5A/white?text=Avatar',
     role: 'hq_ops',
-    roleLabel: '总部运营',
-    storeIds: [1, 2, 3, 4, 5]
+    roleLabel: '总部运营'
   },
   cat_keeper: {
     id: 2003,
     nickName: '猫咪管家陈云',
     avatarUrl: 'https://placehold.co/200x200/C97E5A/white?text=Avatar',
     role: 'cat_keeper',
-    roleLabel: '猫咪管家',
-    storeId: 1,
-    storeName: 'NekoCafé 朝阳店'
+    roleLabel: '猫咪管家'
   }
 }
 
@@ -441,8 +434,8 @@ Page({
   // ── 角色 ID 映射（前端字符串 → 数据库 roleId） ──
   // 数据库: 1=顾客, 2=店员, 3=店长, 4=总部运营, 5=猫咪管家
   roleToId(role) {
-    const map = { customer: 1, staff: 2, manager: 3, hq_ops: 4, cat_keeper: 5 }
-    return map[role] || 1
+    const map = { customer: 5, staff: 3, manager: 2, hq_ops: 1, cat_keeper: 4 }
+    return map[role] || 5
   },
 
   // ── 补全头像 URL（相对路径 → 完整 URL）──
@@ -481,9 +474,14 @@ Page({
       hq_ops:     '/pages/hq/workspace',
       cat_keeper: '/pages/cats/cats'
     }
-    const targetUrl = routeMap[role]
+    const targetUrl = routeMap[role] || '/pages/index/index'
     const tabBarPages = ['/pages/index/index', '/pages/reservation/reservation', '/pages/menu/menu', '/pages/profile/profile']
 
-
+    // 根据目标页面类型选择跳转方式
+    if (tabBarPages.includes(targetUrl)) {
+      wx.switchTab({ url: targetUrl })
+    } else {
+      wx.redirectTo({ url: targetUrl })
+    }
   }
 })

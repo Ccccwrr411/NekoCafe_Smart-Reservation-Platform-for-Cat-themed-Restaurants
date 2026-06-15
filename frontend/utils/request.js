@@ -22,7 +22,8 @@ const PUBLIC_PATHS = [
   '/api/stores',      // 门店列表
   '/api/tables',      // 桌位列表（只读）
   '/api/menu',        // 菜品列表（只读）
-  '/api/cats'         // 猫咪列表/详情（只读）
+  '/api/cats',        // 猫咪列表/详情（只读）
+  '/api/queue/status' // 排队状态（允许未登录查看，myNumber 为空）
 ]
 
 /**
@@ -95,18 +96,16 @@ function realRequest(url, method, data) {
       'Content-Type': 'application/json'
     }
 
-    // 非登录、非公开接口：必须有 token 才放行
-    if (!isLoginRequest && !isPublicPath(url)) {
-      if (!token) {
-        wx.reLaunch({ url: '/pages/login/login' })
-        // 用 resolve 返回安全响应（而非 reject），避免未捕获异常导致页面白屏
-        // reLaunch 会异步执行跳转，页面在此期间收到 { code: -1 } 可安全渲染
-        resolve({ code: -1, message: '未登录', data: null })
-        return
-      }
+    // 非登录接口：有 token 就带上（公开接口也带，让后端识别已登录用户）
+    if (!isLoginRequest && token) {
       header['Authorization'] = `Bearer ${token}`
     }
-    // 公开接口（如 /api/stores）：无需 token，直接放行
+    // 非登录、非公开接口：没 token 则拒绝
+    if (!isLoginRequest && !isPublicPath(url) && !token) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      resolve({ code: -1, message: '未登录', data: null })
+      return
+    }
 
     wx.request({
       url: baseUrl + url,
@@ -149,7 +148,6 @@ function realRequest(url, method, data) {
 const get  = (url, data) => request(url, 'GET', data)
 const post = (url, data) => request(url, 'POST', data)
 const put  = (url, data) => request(url, 'PUT', data)
-const del   = (url, data) => request(url, 'DELETE', data)
-const patch = (url, data) => request(url, 'PATCH', data)
+const del  = (url, data) => request(url, 'DELETE', data)
 
-module.exports = { request, get, post, put, del, patch, isUseMock }
+module.exports = { request, get, post, put, del, isUseMock }

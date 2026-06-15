@@ -33,17 +33,4 @@ public interface CouponService {
      * 返回 originalAmount + appliedPromotions + totalDiscount + finalAmount + breakdown
      */
     Map<String, Object> calculatePromotion(Long userId, PromotionCalcDTO dto);
-
-    /**
-     * 获取当前活跃活动列表，供首页 Banner 动态加载（E-10）
-     * 无需鉴权
-     */
-    List<Map<String, Object>> getActivePromotions();
-
-    /**
-     * 用户主动领取优惠券（E-11）
-     * @param userId 当前用户ID
-     * @param promoId 活动ID
-     */
-    Map<String, Object> claimCoupon(Long userId, Integer promoId);
 }

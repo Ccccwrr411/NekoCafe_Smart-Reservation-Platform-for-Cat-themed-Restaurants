@@ -78,8 +78,8 @@
     </where>
   </sql>
   <sql id="Base_Column_List">
-    reservation_id, user_id, store_id, table_id, cat_profile_id, reservation_time, duration_min,
-    party_size, special_request, order_amount, total_amount, status, points_used, points_earned,
+    reservation_id, user_id, store_id, table_id, cat_profile_id, reservation_time, duration_min, 
+    party_size, special_request, order_amount, total_amount, status, points_used, points_earned, 
     created_at, updated_at
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.ReservationsExample" resultMap="BaseResultMap">
@@ -97,7 +97,7 @@
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
-    select
+    select 
     <include refid="Base_Column_List" />
     from public.reservations
     where reservation_id = #{reservationId,jdbcType=BIGINT}
@@ -113,17 +113,17 @@
     </if>
   </delete>
   <insert id="insert" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations">
-    insert into public.reservations (reservation_id, user_id, store_id,
-      table_id, cat_profile_id, reservation_time,
-      duration_min, party_size, special_request,
-      order_amount, total_amount, status,
-      points_used, points_earned, created_at,
+    insert into public.reservations (reservation_id, user_id, store_id, 
+      table_id, cat_profile_id, reservation_time, 
+      duration_min, party_size, special_request, 
+      order_amount, total_amount, status, 
+      points_used, points_earned, created_at, 
       updated_at)
-    values (#{reservationId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, #{storeId,jdbcType=INTEGER},
-      #{tableId,jdbcType=INTEGER}, #{catProfileId,jdbcType=INTEGER}, #{reservationTime,jdbcType=TIMESTAMP},
-      #{durationMin,jdbcType=INTEGER}, #{partySize,jdbcType=INTEGER}, #{specialRequest,jdbcType=VARCHAR},
-      #{orderAmount,jdbcType=NUMERIC}, #{totalAmount,jdbcType=NUMERIC}, #{status}::reservation_status,
-      #{pointsUsed,jdbcType=INTEGER}, #{pointsEarned,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP},
+    values (#{reservationId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, #{storeId,jdbcType=INTEGER}, 
+      #{tableId,jdbcType=INTEGER}, #{catProfileId,jdbcType=INTEGER}, #{reservationTime,jdbcType=TIMESTAMP}, 
+      #{durationMin,jdbcType=INTEGER}, #{partySize,jdbcType=INTEGER}, #{specialRequest,jdbcType=VARCHAR}, 
+      #{orderAmount,jdbcType=NUMERIC}, #{totalAmount,jdbcType=NUMERIC}, #{status}::reservation_status, 
+      #{pointsUsed,jdbcType=INTEGER}, #{pointsEarned,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP}, 
       #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations"
@@ -496,5 +496,6 @@
     from public.reservations
     where store_id = #{storeId,jdbcType=INTEGER}
   </select>
+
 
 </mapper>

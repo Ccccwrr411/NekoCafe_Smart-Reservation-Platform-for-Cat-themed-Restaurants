@@ -29,21 +29,28 @@ Page({
       { icon: '📞', label: '联系客服', path: '/pages/contact/contact' },
       { icon: '⚙️', label: '设置', path: '/pages/settings/settings' }
     ]
-    // 店员/店长/总部运营：在菜单顶部插入后台入口
-    if (role === 'staff' || role === 'manager') {
+    // 店员/总部运营：在菜单顶部插入后台入口
+    if (role === 'staff' || role === 'hq_ops') {
       baseMenu.unshift(
         { icon: '🏪', label: '店员工作台', path: '/pages/staff/staff' }
       )
     }
-    if (role === 'manager') {
+    // 店长/总部运营：在菜单顶部插入数据看板
+    if (role === 'hq_ops') {
       baseMenu.unshift(
         { icon: '📊', label: '数据看板', path: '/pages/dashboard/dashboard' }
       )
     }
+    // 店长：替换为店长工作台入口
+    if (role === 'manager') {
+      baseMenu.unshift(
+        { icon: '🏪', label: '店长工作台', path: '/pages/staffDashboard/staffDashboard' }
+      )
+    }
     if (role === 'hq_ops') {
       baseMenu.unshift(
-        { icon: '📊', label: '运营工作台', path: '/pages/hq/workspace' },
-        { icon: '🏪', label: '店员工作台', path: '/pages/staff/staff' }
+        { icon: '🏪', label: '店员工作台', path: '/pages/staff/staff' },
+        { icon: '📊', label: '数据看板', path: '/pages/dashboard/dashboard' }
       )
     }
     this.setData({ menuItems: baseMenu })

@@ -283,11 +283,6 @@
 
     <!-- 功能菜单 -->
     <view class="mine-menu card">
-      <view class="mine-menu-row" bindtap="onEditProfile">
-        <view class="mine-menu-icon">✏️</view>
-        <text class="mine-menu-label">编辑个人资料</text>
-        <text class="mine-menu-arrow">›</text>
-      </view>
       <view class="mine-menu-row" bindtap="onViewStoreOrders">
         <view class="mine-menu-icon">📋</view>
         <text class="mine-menu-label">查看门店订单</text>

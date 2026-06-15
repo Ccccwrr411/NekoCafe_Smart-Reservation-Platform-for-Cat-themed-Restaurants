@@ -344,4 +344,5 @@
       AND ts.status = 'OCCUPIED'::status_enum
   </select>
 
+
 </mapper>
