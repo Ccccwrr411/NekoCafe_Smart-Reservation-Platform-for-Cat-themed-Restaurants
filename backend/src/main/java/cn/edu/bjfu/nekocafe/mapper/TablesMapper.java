@@ -42,4 +42,16 @@ public interface TablesMapper {
             @Param("minCapacity") int minCapacity,
             @Param("tableType") String tableType,
             @Param("limit") int limit);
+
+    // ========== 总部运营自定义 SQL ==========
+
+    /**
+     * 统计某门店活跃桌位数（is_active=true）。
+     */
+    Integer countActiveByStoreId(@Param("storeId") Integer storeId);
+
+    /**
+     * 统计某门店入座桌位数（join table_status where status=OCCUPIED）。
+     */
+    Integer countOccupiedByStoreId(@Param("storeId") Integer storeId);
 }

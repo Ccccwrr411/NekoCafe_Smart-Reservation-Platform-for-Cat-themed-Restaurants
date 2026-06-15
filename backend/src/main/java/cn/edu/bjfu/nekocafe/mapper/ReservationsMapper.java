@@ -38,15 +38,6 @@ public interface ReservationsMapper {
             @Param("statuses") List<String> statuses);
 
     /**
-     * 按 userId + tableId + status 查询预约记录（用于确认订单等场景）。
-     * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换。
-     */
-    List<Reservations> selectByUserIdAndTableIdAndStatus(
-            @Param("userId") Long userId,
-            @Param("tableId") Integer tableId,
-            @Param("status") String status);
-
-    /**
      * 按门店ID和状态列表查询预约记录。
      * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换。
      */
@@ -66,6 +57,14 @@ public interface ReservationsMapper {
     List<Reservations> selectByUserId(@Param("userId") Long userId);
 
     /**
+     * 按用户ID + 桌位ID + 单个状态查询预约（用于改约等场景）。
+     */
+    List<Reservations> selectByUserIdAndTableIdAndStatus(
+            @Param("userId") Long userId,
+            @Param("tableId") Integer tableId,
+            @Param("status") String status);
+
+    /**
      * 按 tableId + status 列表查询活跃预约（用于时间段冲突判断）。
      */
     List<Reservations> selectByTableIdAndStatuses(
@@ -79,4 +78,14 @@ public interface ReservationsMapper {
             @Param("tableId") Integer tableId,
             @Param("statuses") List<String> statuses,
             @Param("excludeId") Long excludeId);
+
+    /**
+     * 总部运营：统计某门店今日 COMPLETED 订单数。
+     */
+    Long countTodayCompletedByStoreId(@Param("storeId") Integer storeId);
+
+    /**
+     * 总部运营：统计某门店累计去重用户数（有过预约记录的用户）。
+     */
+    Long countDistinctUsersByStoreId(@Param("storeId") Integer storeId);
 }

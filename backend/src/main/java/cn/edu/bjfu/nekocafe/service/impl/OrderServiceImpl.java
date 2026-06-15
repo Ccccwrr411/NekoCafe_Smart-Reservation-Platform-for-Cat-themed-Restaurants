@@ -1129,6 +1129,58 @@ public class OrderServiceImpl implements OrderService {
     return result;
   }
 
+  // ==================== E-5: 改约 ====================
+
+  @Override
+  @Transactional
+  public Map<String, Object> reschedule(Long userId, RescheduleDTO dto) {
+    String orderId = dto.getOrderId();
+    Long reservationId = parseOrderId(orderId);
+    if (reservationId == null) {
+      throw new BusinessException(ErrorCode.BAD_REQUEST, "订单号格式错误");
+    }
+
+    Reservations reservation = reservationsMapper.selectByPrimaryKey(reservationId);
+    if (reservation == null) {
+      throw new BusinessException(ErrorCode.NOT_FOUND, "订单不存在");
+    }
+    if (userId == null || reservation.getUserId() == null
+      || !reservation.getUserId().toString().equals(userId.toString())) {
+      throw new BusinessException(ErrorCode.FORBIDDEN, "无权操作此订单");
+    }
+
+    String status = reservation.getStatus();
+    if (!"BOOKED".equals(status) && !"PENDING".equals(status) && !"CONFIRMED".equals(status)) {
+      throw new BusinessException(ErrorCode.BAD_REQUEST, "当前订单状态不允许改约");
+    }
+
+    // 校验时间格式（如果传了新时间）
+    if (dto.getNewReserveDate() != null || dto.getNewReserveTime() != null) {
+      try {
+        String dateStr = dto.getNewReserveDate() != null ? dto.getNewReserveDate() : "2000-01-01";
+        String timeStr = dto.getNewReserveTime() != null ? dto.getNewReserveTime() : "00:00";
+        new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm")
+            .parse(dateStr + " " + timeStr);
+      } catch (java.text.ParseException e) {
+        throw new BusinessException(ErrorCode.BAD_REQUEST, "时间格式错误");
+      }
+    }
+
+    Date now = new Date();
+
+    // UPDATE reservations: 当前状态 → CANCELLED（改约本质是取消当前预约，引导用户重新选时间）
+    Reservations updateRes = new Reservations();
+    updateRes.setReservationId(reservationId);
+    updateRes.setStatus("CANCELLED");
+    updateRes.setUpdatedAt(now);
+    reservationsMapper.updateByPrimaryKeySelective(updateRes);
+
+    Map<String, Object> result = new HashMap<>();
+    result.put("status", "cancelled");
+    result.put("orderId", orderId);
+    return result;
+  }
+
   // ==================== E-6: 申请退款 ====================
 
   @Override

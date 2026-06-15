@@ -42,9 +42,18 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        // 4. 解析 userId，放入 request 属性，后续 Controller 可读取
+        // 4. 解析 userId / roleId / storeId，放入 request 属性，后续 Controller 可读取
         Long userId = JwtUtil.getUserIdFromToken(token);
         request.setAttribute("userId", userId);
+
+        Integer roleId = JwtUtil.getRoleIdFromToken(token);
+        if (roleId != null) {
+            request.setAttribute("roleId", roleId);
+        }
+        Integer storeId = JwtUtil.getStoreIdFromToken(token);
+        if (storeId != null) {
+            request.setAttribute("storeId", storeId);
+        }
 
         return true; // 放行
     }
