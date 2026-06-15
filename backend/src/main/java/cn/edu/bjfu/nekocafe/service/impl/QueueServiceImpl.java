@@ -124,12 +124,12 @@ public class QueueServiceImpl implements QueueService {
             }
         }
 
-        // --- 6b: 查已叫号列表（CALLED + KNOWN，按叫号时间倒序，最近叫的在最前） ---
+        // --- 6b: 查已叫号列表（CALLED + KNOWN，按时间倒序，最新叫的在最前） ---
         QueueExample calledOrKnownEx = new QueueExample();
         calledOrKnownEx.createCriteria()
                 .andStoreIdEqualTo(storeId)
                 .andStatusIn(Arrays.asList("CALLED", "KNOWN"));
-        calledOrKnownEx.setOrderByClause("called_at DESC");
+        calledOrKnownEx.setOrderByClause("created_at DESC");
         List<Queue> calledOrKnownRaw = queueMapper.selectByExample(calledOrKnownEx);
         List<QueueStatusVO.QueueItemVO> calledListVO = new ArrayList<>();
         for (Queue q : calledOrKnownRaw) {
@@ -144,12 +144,12 @@ public class QueueServiceImpl implements QueueService {
             calledListVO.add(item);
         }
 
-        // --- 6c: 查过号列表（MISSED，按叫号时间倒序） ---
+        // --- 6c: 查过号列表（MISSED，按时间倒序） ---
         QueueExample missedEx = new QueueExample();
         missedEx.createCriteria()
                 .andStoreIdEqualTo(storeId)
                 .andStatusEqualTo("MISSED");
-        missedEx.setOrderByClause("called_at DESC");
+        missedEx.setOrderByClause("created_at DESC");
         List<Queue> missedRaw = queueMapper.selectByExample(missedEx);
         List<QueueStatusVO.QueueItemVO> missedListVO = new ArrayList<>();
         for (Queue q : missedRaw) {
@@ -218,16 +218,14 @@ public class QueueServiceImpl implements QueueService {
      *   4. 返回取到的号码、前方人数、预计等待时间
      */
     @Override
-    @Transactional
     public Map<String, Object> takeNumber(Long userId, QueueTakeDTO dto) {
         Integer storeId = dto.getStoreId();
 
-        // --- 3a: 删除旧排队记录（只删除 WAITING 状态的，保留 CALLED/KNOWN/MISSED 历史） ---
+        // --- 3a: 删除旧排队记录（允许重复取号，覆盖旧的） ---
         QueueExample dupCheck = new QueueExample();
         dupCheck.createCriteria()
                 .andStoreIdEqualTo(storeId)
-                .andUserIdEqualTo(userId)
-                .andStatusEqualTo("WAITING");
+                .andUserIdEqualTo(userId);
         List<Queue> oldRecords = queueMapper.selectByExample(dupCheck);
         for (Queue old : oldRecords) {
             queueMapper.deleteByPrimaryKey(old.getQueueId());
@@ -264,8 +262,7 @@ public class QueueServiceImpl implements QueueService {
         // --- 3d: 查前方人数并计算预计等待 ---
         QueueExample countEx = new QueueExample();
         countEx.createCriteria()
-                .andStoreIdEqualTo(storeId)
-                .andStatusEqualTo("WAITING");
+                .andStoreIdEqualTo(storeId);
         long totalWaiting = queueMapper.countByExample(countEx);
         int ahead = (int)(totalWaiting - 1);  // 前面有几人
         int estWaitMinutes = ahead * AVG_WAIT_PER_PERSON;

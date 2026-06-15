@@ -64,13 +64,17 @@
       <view class="recommend-title-row">
         <text class="recommend-icon">🤖</text>
         <text class="recommend-title">AI 智能推荐</text>
+        <view class="store-picker-btn" bindtap="onShowStorePicker">
+          <text class="store-picker-text">{{storePickerRange[storePickerIndex] || '选择门店'}}</text>
+          <text class="store-picker-arrow">▾</text>
+        </view>
       </view>
       <text class="recommend-close" bindtap="dismissRecommend">✕</text>
     </view>
     <text class="recommend-reason">{{recommend.reason}}</text>
 
     <!-- 推荐桌位 -->
-    <view class="recommend-sub-title">🐾 推荐桌位（猫咪性格匹配）</view>
+    <view class="recommend-sub-title">🐾 推荐桌位</view>
     <scroll-view scroll-x class="recommend-scroll">
       <view
         wx:for="{{recommend.tables}}"
@@ -84,7 +88,29 @@
           <text class="rec-table-type">{{item.type}}</text>
         </view>
       
-        <text class="rec-match-reason">{{item.matchReason}}</text>
+        <text class="rec-match-reason">{{item.recommendReason}}</text>
+      </view>
+    </scroll-view>
+
+    <!-- 推荐猫咪 -->
+    <view class="recommend-sub-title">🐱 与你最匹配的猫咪</view>
+    <scroll-view scroll-x class="recommend-scroll">
+      <view
+        wx:for="{{recommend.cats}}"
+        wx:key="catId"
+        class="recommend-card rec-cat-card"
+        bindtap="onRecommendCatTap"
+        data-cat="{{item}}"
+      >
+        <image class="rec-cat-avatar" src="{{item.avatarUrl}}" mode="aspectFill" />
+        <view class="rec-cat-info">
+          <text class="rec-cat-name">{{item.name}}</text>
+          <text class="rec-cat-breed">{{item.breed}}</text>
+          <view class="rec-cat-score-bar">
+            <view class="rec-cat-score-fill" style="width:{{item.matchScore}}"></view>
+          </view>
+          <text class="rec-cat-score-text">匹配度 {{item.matchScore}}%</text>
+        </view>
       </view>
     </scroll-view>
 
@@ -185,5 +211,17 @@
       <text>😿 没有找到相关门店</text>
     </view>
   </view>
+
+  <!-- ══ 门店选择器 Picker ══ -->
+  <picker
+    wx:if="{{showStorePicker}}"
+    mode="selector"
+    range="{{storePickerRange}}"
+    value="{{storePickerIndex}}"
+    bindchange="onStorePickerChange"
+    bindcancel="onHideStorePicker"
+  >
+    <view class="picker-mask"></view>
+  </picker>
 
 </view>

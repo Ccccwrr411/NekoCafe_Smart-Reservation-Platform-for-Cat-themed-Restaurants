@@ -245,11 +245,12 @@
     where table_id = #{tableId,jdbcType=INTEGER}
   </update>
 
-  <!-- ========== 推荐模块自定义 SQL ========== -->
+  <!-- ========= 推荐模块自定义 SQL ========= -->
 
   <!--
     R10 + R13: 为推荐引擎查询可用桌位
-    按桌位类型和容量过滤在售桌位，VIP 包厢（table_type ILIKE '%vip%'）优先排序
+    按桌位类型和容量过滤在售桌位，VIP 包厢（table_type LIKE '%vip%'）优先排序
+    支持按 store_id 过滤
   -->
   <select id="selectAvailableTablesForRecommend" resultMap="BaseResultMap">
     SELECT <include refid="Base_Column_List" />
@@ -257,15 +258,18 @@
     WHERE is_active = true
       AND capacity &gt;= #{minCapacity}
       <if test="tableType != null and tableType != ''">
-        AND table_type ILIKE CONCAT('%', #{tableType}, '%')
+        AND table_type LIKE CONCAT('%', #{tableType}, '%')
+      </if>
+      <if test="storeId != null">
+        AND store_id = #{storeId}
       </if>
     ORDER BY
-      CASE WHEN table_type ILIKE '%vip%' THEN 0 ELSE 1 END ASC,
+      CASE WHEN table_type LIKE '%vip%' THEN 0 ELSE 1 END ASC,
       capacity ASC
     LIMIT #{limit}
   </select>
 
-  <!-- ========== 总部运营自定义 SQL ========== -->
+  <!-- ========= 总部运营自定义 SQL ========= -->
 
   <!--
     统计某门店活跃桌位数（is_active=true）

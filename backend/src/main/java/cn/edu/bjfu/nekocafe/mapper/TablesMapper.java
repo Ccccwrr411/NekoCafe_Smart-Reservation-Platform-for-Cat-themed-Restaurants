@@ -28,7 +28,7 @@ public interface TablesMapper {
 
     int updateByPrimaryKey(Tables row);
 
-    // ========== 推荐模块自定义 SQL ==========
+    // ========= 推荐模块自定义 SQL ==========
 
     /**
      * R10 + R13: 为推荐引擎查询可用桌位
@@ -36,14 +36,16 @@ public interface TablesMapper {
      *
      * @param minCapacity 最小可容纳人数
      * @param tableType   桌位类型关键词（null 则不过滤），如 "vip"、"standard"
+     * @param storeId     门店ID（null 则不过滤）
      * @param limit       最多返回数量
      */
     List<Tables> selectAvailableTablesForRecommend(
             @Param("minCapacity") int minCapacity,
             @Param("tableType") String tableType,
+            @Param("storeId") Integer storeId,
             @Param("limit") int limit);
 
-    // ========== 总部运营自定义 SQL ==========
+    // ========= 总部运营自定义 SQL ==========
 
     /**
      * 统计某门店活跃桌位数（is_active=true）。

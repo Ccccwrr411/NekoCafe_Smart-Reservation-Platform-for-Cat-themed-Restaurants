@@ -105,13 +105,13 @@ public class RecommendServiceImpl implements RecommendService {
     // ==================== 主入口 ====================
 
     @Override
-    public Map<String, Object> recommend(Long userId, Integer companionCount, Boolean hasChild) {
+    public Map<String, Object> recommend(Long userId, Integer companionCount, Boolean hasChild, Integer storeId) {
         if (userId == null) {
             return buildErrorResult("用户ID不能为空");
         }
 
         // ---- R6: 缓存优先（最快路径）----
-        String cacheKey = CACHE_KEY_PREFIX + userId + ":" + companionCount + ":" + hasChild;
+        String cacheKey = CACHE_KEY_PREFIX + userId + ":" + companionCount + ":" + hasChild + ":" + storeId;
         if (redisTemplate != null && Boolean.TRUE.equals(redisTemplate.hasKey(cacheKey))) {
             try {
                 String cached = (String) redisTemplate.opsForValue().get(cacheKey);
@@ -125,13 +125,13 @@ public class RecommendServiceImpl implements RecommendService {
         MemberProfile profile = loadUserProfile(userId);
 
         // ---- Step2: 猫咪推荐（维度 B-R3 + D-R11）----
-        List<Map<String, Object>> cats = recommendCats(profile, hasChild);
+        List<Map<String, Object>> cats = recommendCats(profile, hasChild, storeId);
 
         // ---- Step3: 菜品推荐（维度 B-R2/R4/R16 + C-R8/R9）----
         List<Map<String, Object>> dishes = recommendDishes(profile);
 
         // ---- Step4: 桌位推荐（维度 C-R7/R10 + D-R13）----
-        List<Map<String, Object>> tables = recommendTables(profile, companionCount);
+        List<Map<String, Object>> tables = recommendTables(profile, companionCount, storeId);
 
         // ---- Step5: 业务后处理（维度 E-R18/R19）----
         dishes = postProcessDishes(dishes);  // R18互斥 + R19搭配
@@ -287,12 +287,17 @@ public class RecommendServiceImpl implements RecommendService {
     //  Step2: 猫咪推荐（R1 + R3 + R11）
     // ================================================================
 
-    private List<Map<String, Object>> recommendCats(MemberProfile p, Boolean hasChild) {
+    private List<Map<String, Object>> recommendCats(MemberProfile p, Boolean hasChild, Integer storeId) {
         List<Map<String, Object>> results = new ArrayList<>();
 
-        // 获取全部猫咪候选池
+        // 获取猫咪候选池（按 storeId 过滤）
         var catExample = new cn.edu.bjfu.nekocafe.entity.CatProfilesExample();
-        catExample.createCriteria();  // 全部
+        if (storeId != null) {
+            // 按门店过滤
+            catExample.createCriteria().andStoreIdEqualTo(storeId);
+        } else {
+            catExample.createCriteria();  // 全部
+        }
         List<cn.edu.bjfu.nekocafe.entity.CatProfiles> allCats =
                 catProfilesMapper.selectByExample(catExample);
 
@@ -620,7 +625,7 @@ public class RecommendServiceImpl implements RecommendService {
     //  Step4: 桌位推荐（R7 + R10 + R13）
     // ================================================================
 
-    private List<Map<String, Object>> recommendTables(MemberProfile p, Integer companionCount) {
+    private List<Map<String, Object>> recommendTables(MemberProfile p, Integer companionCount, Integer storeId) {
         List<Map<String, Object>> tables = new ArrayList<>();
 
         int partySize = companionCount != null ? companionCount : 1;
@@ -644,21 +649,21 @@ public class RecommendServiceImpl implements RecommendService {
         }
 
         try {
-            // ---- 查询真实可用桌位 ----
+            // ---- 查询真实可用桌位（按 storeId 过滤）----
             // R13: VIP 用户优先查询 vip 类型桌位
             if (isVip) {
                 List<cn.edu.bjfu.nekocafe.entity.Tables> vipTables =
-                        tablesMapper.selectAvailableTablesForRecommend(partySize, "vip", 1);
+                        tablesMapper.selectAvailableTablesForRecommend(partySize, "vip", storeId, 1);
                 for (var t : vipTables) {
                     tables.add(buildRealTableVO(t, "会员专属私密空间", 95));
                 }
             }
 
-            // 查询适合当前人数的普通桌位（不限类型，容量 ≥ partySize）
+            // 查询适合当前人数的普通桌位（按 storeId 过滤）
             int remaining = TOP_TABLES - tables.size();
             if (remaining > 0) {
                 List<cn.edu.bjfu.nekocafe.entity.Tables> normalTables =
-                        tablesMapper.selectAvailableTablesForRecommend(partySize, null, remaining + 2);
+                        tablesMapper.selectAvailableTablesForRecommend(partySize, null, storeId, remaining + 2);
                 // 过滤掉已加入的 VIP 桌位，按靠窗/安静角落顺序选取
                 Set<Integer> addedIds = new HashSet<>();
                 for (var vo : tables) addedIds.add((Integer) vo.get("tableId"));
