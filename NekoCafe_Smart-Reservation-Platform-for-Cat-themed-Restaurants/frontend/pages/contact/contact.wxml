@@ -1,0 +1,126 @@
+<!--pages/contact/contact.wxml-->
+<view class="container">
+  <!-- 头部 -->
+  <view class="contact-header">
+    <view class="header-icon">💬</view>
+    <text class="header-title">客服中心</text>
+    <text class="header-desc">有问题随时找我们，喵~</text>
+  </view>
+
+  <!-- 联系渠道 -->
+  <view class="section-title">联系渠道</view>
+  <view class="contact-card card">
+    <view class="contact-item" bindtap="makePhoneCall">
+      <view class="contact-icon">📞</view>
+      <view class="contact-content">
+        <text class="contact-label">客服热线</text>
+        <text class="contact-value">{{contactInfo.phone}}</text>
+      </view>
+      <text class="contact-arrow">›</text>
+    </view>
+
+    <view class="contact-item" bindtap="copyWechat">
+      <view class="contact-icon">💚</view>
+      <view class="contact-content">
+        <text class="contact-label">微信客服</text>
+        <text class="contact-value">{{contactInfo.wechat}}</text>
+      </view>
+      <text class="contact-arrow">›</text>
+    </view>
+
+    <view class="contact-item" bindtap="sendEmail">
+      <view class="contact-icon">✉️</view>
+      <view class="contact-content">
+        <text class="contact-label">邮箱地址</text>
+        <text class="contact-value">{{contactInfo.email}}</text>
+      </view>
+      <text class="contact-arrow">›</text>
+    </view>
+
+    <view class="contact-item">
+      <view class="contact-icon">⏰</view>
+      <view class="contact-content">
+        <text class="contact-label">服务时间</text>
+        <text class="contact-value">{{contactInfo.workTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 店铺信息 -->
+  <view class="section-title">店铺信息</view>
+  <view class="info-card card" wx:if="{{storeInfo}}">
+    <view class="info-item">
+      <text class="info-label">店铺名称</text>
+      <text class="info-value">{{storeInfo.name}}</text>
+    </view>
+    <view class="info-item">
+      <text class="info-label">店铺地址</text>
+      <text class="info-value">{{storeInfo.address || '暂无'}}</text>
+    </view>
+    <view class="info-item">
+      <text class="info-label">营业时间</text>
+      <text class="info-value">{{storeInfo.openTime || '暂无'}}</text>
+    </view>
+    <view class="info-item">
+      <text class="info-label">猫咪数量</text>
+      <text class="info-value">{{storeInfo.catCount || 0}} 只猫咪等你来撸 🐱</text>
+    </view>
+  </view>
+
+  <!-- 常见问题 -->
+  <view class="section-title">常见问题</view>
+  <view class="faq-card card">
+    <view class="faq-item">
+      <view class="faq-q">
+        <text class="faq-q-icon">Q</text>
+        <text class="faq-q-text">如何预订座位？</text>
+      </view>
+      <view class="faq-a">
+        <text class="faq-a-icon">A</text>
+        <text class="faq-a-text">进入「预订」页面，选择日期、时段和桌位类型，提交后等待确认即可。</text>
+      </view>
+    </view>
+    <view class="faq-item">
+      <view class="faq-q">
+        <text class="faq-q-icon">Q</text>
+        <text class="faq-q-text">可以取消预订吗？</text>
+      </view>
+      <view class="faq-a">
+        <text class="faq-a-icon">A</text>
+        <text class="faq-a-text">可以，在订单详情页点击「取消预订」即可。请在预订时间前2小时取消，以免影响信用。</text>
+      </view>
+    </view>
+    <view class="faq-item">
+      <view class="faq-q">
+        <text class="faq-q-icon">Q</text>
+        <text class="faq-q-text">积分如何获取和使用？</text>
+      </view>
+      <view class="faq-a">
+        <text class="faq-a-icon">A</text>
+        <text class="faq-a-text">每次消费可获得相应积分，积分可兑换优惠券和会员权益。等级越高，享受的折扣越多！</text>
+      </view>
+    </view>
+    <view class="faq-item">
+      <view class="faq-q">
+        <text class="faq-q-icon">Q</text>
+        <text class="faq-q-text">可以带自己的猫咪来吗？</text>
+      </view>
+      <view class="faq-a">
+        <text class="faq-a-icon">A</text>
+        <text class="faq-a-text">出于店内猫咪健康和安全考虑，暂不支持携带外部宠物入内，感谢理解！</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 温馨提示 -->
+  <view class="tips-card card">
+    <text class="tips-title">温馨提示</text>
+    <text class="tips-content">• 在线客服工作时间：10:00 - 22:00</text>
+    <text class="tips-content">• 紧急问题请拨打客服热线</text>
+    <text class="tips-content">• 邮件回复时间：1-2个工作日</text>
+    <text class="tips-content">• 请勿随意投喂猫咪，店内提供专用零食</text>
+  </view>
+
+  <!-- 底部间距 -->
+  <view style="height: 40rpx;"></view>
+</view>

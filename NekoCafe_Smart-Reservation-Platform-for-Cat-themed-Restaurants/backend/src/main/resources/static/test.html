@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>NekoCafe API 测试面板</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f0eb; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { color: #d4a574; margin-bottom: 20px; }
+    .card {
+      background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .card h3 { color: #333; margin-bottom: 12px; }
+    .row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    .row label { width: 80px; flex-shrink: 0; color: #666; font-size: 14px; }
+    input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    button {
+      background: #d4a574; color: white; border: none; padding: 10px 20px;
+      border-radius: 6px; cursor: pointer; font-size: 14px; margin-right: 8px;
+    }
+    button:hover { background: #c08a5a; }
+    button.secondary { background: #888; }
+    button.secondary:hover { background: #666; }
+    pre {
+      background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px;
+      overflow-x: auto; font-size: 13px; max-height: 400px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    .status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .ok { background: #d4edda; color: #155724; }
+    .err { background: #f8d7da; color: #721c24; }
+    .token-display {
+      background: #fff3cd; padding: 10px; border-radius: 6px;
+      font-size: 12px; word-break: break-all; margin-top: 8px;
+    }
+    .section-title { color: #d4a574; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #d4a574; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>NekoCafe API 测试面板</h1>
+  <p style="color:#888;margin-bottom:20px;">确保后端已启动：mvnw spring-boot:run，端口 8081</p>
+
+  <!-- 当前 Token -->
+  <div class="card">
+    <h3>当前 Token</h3>
+    <div id="tokenDisplay" class="token-display">尚未登录 — 先执行"登录"获取 Token</div>
+  </div>
+
+  <!-- A-1: 登录 -->
+  <div class="card">
+    <h3>A-1: 微信登录 (POST /api/auth/login)</h3>
+    <div class="row">
+      <label>code:</label>
+      <input id="loginCode" value="test_user_001" placeholder="wx.login() code">
+    </div>
+    <button onclick="doLogin()">登录</button>
+    <pre id="loginResult">点击按钮测试...</pre>
+  </div>
+
+  <!-- F-1: 用户信息 -->
+  <div class="card">
+    <h3>F-1: 用户信息 (GET /api/user/profile)</h3>
+    <button onclick="doGetProfile()">获取用户信息</button>
+    <button class="secondary" onclick="doGetProfileNoAuth()">获取（不带Token，验证拦截器）</button>
+    <pre id="profileResult">点击按钮测试...</pre>
+  </div>
+
+  <!-- F-2: 实名认证 -->
+  <div class="card">
+    <h3>F-2: 实名认证 (POST /api/user/realname)</h3>
+    <div class="row">
+      <label>姓名:</label>
+      <input id="realName" value="张三">
+    </div>
+    <div class="row">
+      <label>身份证:</label>
+      <input id="idCard" value="110101199001011234">
+    </div>
+    <button onclick="doRealname()">提交实名认证</button>
+    <pre id="realnameResult">点击按钮测试...</pre>
+  </div>
+
+  <!-- 验证：再次登录同用户 -->
+  <div class="card">
+    <h3>验证：同 code 登录应返回同一用户</h3>
+    <button onclick="doLoginAgain()">用相同 code 再次登录</button>
+    <pre id="loginAgainResult">点击按钮测试...</pre>
+  </div>
+</div>
+
+<script>
+const BASE = 'http://localhost:8081';
+let currentToken = '';
+
+function setToken(t) { currentToken = t; document.getElementById('tokenDisplay').innerText = t ? t : '尚未登录'; }
+
+function showResult(id, status, data) {
+  const s = status >= 200 && status < 300 ? 'ok' : 'err';
+  document.getElementById(id).innerHTML = `<span class="status ${s}">HTTP ${status}</span>\n${JSON.stringify(data, null, 2)}`;
+}
+
+async function doLogin() {
+  const code = document.getElementById('loginCode').value;
+  try {
+    const resp = await fetch(`${BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await resp.json();
+    if (data.code === 0) {
+      setToken(data.data.token);
+      showResult('loginResult', resp.status, data.data);
+    } else {
+      showResult('loginResult', resp.status, data);
+    }
+  } catch(e) {
+    document.getElementById('loginResult').innerHTML = `[错误] 无法连接服务器: ${e.message}\n请确认 mvnw spring-boot:run 已启动`;
+  }
+}
+
+async function doGetProfile() {
+  if (!currentToken) { document.getElementById('profileResult').innerHTML = '[提示] 请先执行登录获取 Token'; return; }
+  try {
+    const resp = await fetch(`${BASE}/api/user/profile`, {
+      headers: { 'Authorization': `Bearer ${currentToken}` }
+    });
+    const data = await resp.json();
+    showResult('profileResult', resp.status, data);
+  } catch(e) {
+    document.getElementById('profileResult').innerHTML = `[错误] ${e.message}`;
+  }
+}
+
+async function doGetProfileNoAuth() {
+  try {
+    const resp = await fetch(`${BASE}/api/user/profile`);
+    const data = await resp.json();
+    showResult('profileResult', resp.status, data);
+  } catch(e) {
+    document.getElementById('profileResult').innerHTML = `[错误] ${e.message}`;
+  }
+}
+
+async function doRealname() {
+  if (!currentToken) { document.getElementById('realnameResult').innerHTML = '[提示] 请先执行登录获取 Token'; return; }
+  const rn = document.getElementById('realName').value;
+  const ic = document.getElementById('idCard').value;
+  try {
+    const resp = await fetch(`${BASE}/api/user/realname`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+      body: JSON.stringify({ realName: rn, idCard: ic })
+    });
+    const data = await resp.json();
+    showResult('realnameResult', resp.status, data);
+  } catch(e) {
+    document.getElementById('realnameResult').innerHTML = `[错误] ${e.message}`;
+  }
+}
+
+async function doLoginAgain() {
+  const code = document.getElementById('loginCode').value;
+  try {
+    const resp = await fetch(`${BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await resp.json();
+    if (data.code === 0) setToken(data.data.token);
+    showResult('loginAgainResult', resp.status, data.data || data);
+  } catch(e) {
+    document.getElementById('loginAgainResult').innerHTML = `[错误] ${e.message}`;
+  }
+}
+</script>
+</body>
+</html>

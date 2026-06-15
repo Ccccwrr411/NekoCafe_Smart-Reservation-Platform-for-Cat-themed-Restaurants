@@ -1,0 +1,45 @@
+/* pages/coupons/coupons.wxss */
+.coupon-card {
+  display: flex;
+  margin: 16rpx 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+}
+.coupon-left {
+  width: 200rpx;
+  background: linear-gradient(135deg, #C97E5A, #E8A87C);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
+  color: #fff;
+}
+.coupon-value { font-size: 40rpx; font-weight: 700; }
+.coupon-name { font-size: 22rpx; margin-top: 8rpx; opacity: 0.9; }
+.coupon-right {
+  flex: 1;
+  padding: 20rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6rpx;
+}
+.coupon-cond { font-size: 26rpx; color: #666; }
+.coupon-expire { font-size: 22rpx; color: #999; }
+.coupon-status {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+.status-avail {
+  background: #FFF3E0;
+  color: #C97E5A;
+}
+.status-used {
+  background: #F5F5F5;
+  color: #999;
+}

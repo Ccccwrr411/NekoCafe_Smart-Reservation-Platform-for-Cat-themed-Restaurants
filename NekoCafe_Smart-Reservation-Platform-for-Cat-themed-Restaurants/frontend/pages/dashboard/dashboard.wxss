@@ -1,0 +1,194 @@
+/* pages/dashboard/dashboard.wxss */
+
+/* ── 顶部 Banner ── */
+.dash-banner {
+  background: linear-gradient(135deg, #2C3E50, #34495E);
+  padding: 28rpx 28rpx 20rpx;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.banner-left { flex: 1; }
+.dash-title { font-size: 36rpx; font-weight: 700; display: block; }
+.dash-sub   { font-size: 22rpx; opacity: 0.8; margin-top: 8rpx; display: block; }
+.btn-logout {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.7);
+  border: 1rpx solid rgba(255,255,255,0.35);
+  border-radius: 24rpx;
+  padding: 8rpx 20rpx;
+}
+
+.loading-wrap { text-align: center; padding: 80rpx; color: #999; }
+
+.overview-section {
+  margin: 16rpx 24rpx;
+  background: linear-gradient(135deg, #2C3E50, #34495E);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  color: #fff;
+}
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+  display: block;
+}
+.overview-grid {
+  display: flex;
+  justify-content: space-between;
+}
+.ov-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ov-val { font-size: 36rpx; font-weight: 700; }
+.ov-label { font-size: 22rpx; opacity: 0.7; margin-top: 4rpx; }
+.ov-revenue { color: #F1C40F; }
+.ov-orders  { color: #3498DB; }
+.ov-members { color: #2ECC71; }
+.ov-avg     { color: #E67E22; }
+
+/* ── 店长查看订单按钮 ── */
+.btn-view-orders {
+  margin-top: 20rpx;
+  padding: 14rpx 24rpx;
+  background: rgba(255,255,255,0.15);
+  border: 1rpx solid rgba(255,255,255,0.3);
+  border-radius: 24rpx;
+  text-align: center;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #F1C40F;
+}
+
+.chart-card {
+  margin: 16rpx 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.chart-card .section-title {
+  color: #333;
+  padding: 0 8rpx;
+}
+.chart-canvas {
+  width: 100%;
+  height: 340rpx;
+}
+.chart-pie {
+  height: 480rpx;
+}
+
+/* ── 门店切换 ── */
+.store-picker-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  background: #F0F7FF;
+  border-bottom: 1rpx solid #D4E6F1;
+}
+.picker-label { font-size: 24rpx; color: #2C3E50; margin-right: 12rpx; }
+.picker { flex: 1; }
+.picker-value {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #2C3E50;
+  padding: 8rpx 20rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  border: 1rpx solid #B0C4DE;
+  text-align: center;
+}
+
+/* ── 总部运营-全部门店概览 ── */
+.hq-section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2C3E50;
+  padding: 28rpx 24rpx 12rpx;
+  display: block;
+}
+.hq-total-row {
+  display: flex;
+  margin: 0 24rpx 20rpx;
+  background: linear-gradient(135deg, #2C3E50, #34495E);
+  border-radius: 16rpx;
+  padding: 24rpx 16rpx;
+  color: #fff;
+  justify-content: space-between;
+}
+.hq-total-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hq-total-val {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #F1C40F;
+}
+.hq-total-label { font-size: 20rpx; opacity: 0.7; margin-top: 4rpx; }
+.hq-store-list {
+  margin: 0 24rpx 60rpx;
+}
+.hq-store-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  border-left: 5rpx solid #2C3E50;
+}
+.hq-store-card:active {
+  background: #F5F7FA;
+  transform: scale(0.98);
+}
+.hq-store-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+.hq-store-name { font-size: 28rpx; font-weight: 700; color: #333; }
+.hq-store-status {
+  font-size: 20rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 12rpx;
+}
+.store-status-open   { background: #EAFAF1; color: #27AE60; }
+.store-status-closed { background: #F2F3F4; color: #95A5A6; }
+.hq-store-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 22rpx;
+  color: #888;
+  margin-bottom: 16rpx;
+}
+.hq-store-metrics {
+  display: flex;
+  justify-content: space-between;
+  background: #F9F9F9;
+  border-radius: 10rpx;
+  padding: 14rpx 12rpx;
+}
+.hq-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hq-metric-val   { font-size: 26rpx; font-weight: 700; color: #C97E5A; }
+.hq-metric-label { font-size: 20rpx; color: #999; margin-top: 2rpx; }
+
+.hq-store-link {
+  text-align: right;
+  font-size: 22rpx;
+  color: #8B5A3C;
+  margin-top: 12rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx dashed #eee;
+}
+
