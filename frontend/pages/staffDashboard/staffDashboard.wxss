@@ -526,3 +526,287 @@
   border: 2rpx solid #27AE60;
 }
 .exc-btn:active { transform: scale(0.98); opacity: 0.85; }
+
+/* ════════════════════════════════════════════════════
+   排班操作栏 & 编辑按钮
+   ════════════════════════════════════════════════════ */
+.action-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16rpx 24rpx 4rpx;
+}
+
+.btn-add-schedule {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: linear-gradient(135deg, #C97E5A, #8B5A3C);
+  color: #fff;
+  padding: 16rpx 32rpx;
+  border-radius: 32rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(201,126,90,0.35);
+}
+.btn-add-schedule:active { opacity: 0.85; transform: scale(0.97); }
+.btn-add-icon { font-size: 32rpx; line-height: 1; }
+.btn-add-text { font-size: 28rpx; }
+
+/* 排班卡片头部左侧分组 */
+.sched-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+.sched-head-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+/* 编辑按钮 */
+.sched-edit-btn {
+  font-size: 24rpx;
+  color: #C97E5A;
+  border: 1rpx solid #C97E5A;
+  border-radius: 20rpx;
+  padding: 8rpx 20rpx;
+  flex-shrink: 0;
+}
+.sched-edit-btn:active { opacity: 0.75; }
+
+/* 备注行文字 */
+.sched-notes { color: #888; font-size: 24rpx; }
+
+/* ════════════════════════════════════════════════════
+   排班 创建/编辑 弹窗
+   ════════════════════════════════════════════════════ */
+.schedule-modal-card {
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 680rpx;
+  margin-left: auto;
+  margin-right: auto;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -8rpx 40rpx rgba(0,0,0,0.12);
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* 弹窗标题栏 */
+.smodal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 40rpx 20rpx;
+  border-bottom: 1rpx solid #f0e8e0;
+}
+.smodal-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #3D2B1F;
+}
+.smodal-close {
+  font-size: 36rpx;
+  color: #999;
+  padding: 8rpx 12rpx;
+  line-height: 1;
+}
+.smodal-close:active { opacity: 0.6; }
+
+/* 表单区 */
+.smodal-body {
+  padding: 20rpx 40rpx 8rpx;
+}
+
+.smodal-field {
+  margin-bottom: 24rpx;
+}
+
+.smodal-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+  display: block;
+}
+.required {
+  color: #E74C3C;
+  font-size: 26rpx;
+}
+
+.smodal-input {
+  border: 1rpx solid #e8d8cc;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 28rpx;
+  color: #333;
+  background: #faf7f5;
+  width: 100%;
+  box-sizing: border-box;
+}
+.smodal-input:focus {
+  border-color: #C97E5A;
+  background: #fff;
+}
+
+/* Picker 行 */
+.smodal-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1rpx solid #e8d8cc;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  height: 80rpx;
+  box-sizing: border-box;
+  background: #faf7f5;
+}
+.picker-val         { font-size: 28rpx; color: #333; flex: 1; }
+.picker-placeholder { font-size: 28rpx; color: #bbb; flex: 1; }
+.picker-arrow       { font-size: 22rpx; color: #bbb; flex-shrink: 0; }
+
+/* Textarea */
+.smodal-textarea {
+  border: 1rpx solid #e8d8cc;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #333;
+  background: #faf7f5;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120rpx;
+  line-height: 1.6;
+}
+
+/* 底部操作按钮 */
+.smodal-actions {
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx 40rpx 32rpx;
+  border-top: 1rpx solid #f0e8e0;
+}
+.smodal-btn {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  border-radius: 48rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.smodal-btn:active { transform: scale(0.97); opacity: 0.85; }
+
+.smodal-btn-cancel {
+  background: #f5ede6;
+  color: #8B5A3C;
+  border: 2rpx solid #e8d8cc;
+}
+.smodal-btn-confirm {
+  background: linear-gradient(135deg, #C97E5A, #8B5A3C);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(201,126,90,0.35);
+}
+.smodal-btn-disabled {
+  background: #ccc;
+  box-shadow: none;
+  color: #fff;
+}
+
+/* ════════════════════════════════════════════════════
+   员工姓名搜索 & 下拉候选
+   ════════════════════════════════════════════════════ */
+.smodal-field-staff {
+  position: relative;
+  z-index: 10;
+}
+
+.staff-search-wrap {
+  position: relative;
+}
+
+.staff-search-input {
+  padding-right: 60rpx !important;
+}
+
+.staff-selected-badge {
+  position: absolute;
+  right: 16rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #27AE60;
+  color: #fff;
+  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.staff-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4rpx;
+  background: #fff;
+  border: 1rpx solid #e8d8cc;
+  border-radius: 12rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.1);
+  max-height: 360rpx;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.staff-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 24rpx;
+  border-bottom: 1rpx solid #f5f0eb;
+}
+
+.staff-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.staff-dropdown-item:active {
+  background: #faf5f0;
+}
+
+.staff-dropdown-name {
+  font-size: 28rpx;
+  color: #3D2B1F;
+  font-weight: 500;
+}
+
+.staff-dropdown-phone {
+  font-size: 24rpx;
+  color: #aaa;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+
+.staff-dropdown-loading {
+  justify-content: center;
+}
+
+.staff-dropdown-loading text {
+  font-size: 26rpx;
+  color: #bbb;
+}
