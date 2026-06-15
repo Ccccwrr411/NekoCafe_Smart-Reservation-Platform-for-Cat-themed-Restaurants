@@ -14,13 +14,13 @@ Page({
     countdown: 0,
     canSubmit: false,
     errors: {},       // 各字段行内错误提示
-    selectedRole: '1', // 默认选中顾客（roleId）
+    selectedRole: '5', // 默认选中顾客（roleId=5）
     roles: [
-      { id: '1', icon: '🧑‍💼', name: '顾客',     nameEn: 'Customer'   },
-      { id: '2', icon: '👨‍🍳', name: '店员',     nameEn: 'Staff'      },
-      { id: '3', icon: '🏪',  name: '店长',     nameEn: 'Manager'    },
-      { id: '4', icon: '📊',  name: '总部运营', nameEn: 'HQ Ops'     },
-      { id: '5', icon: '🐱',  name: '猫咪管家', nameEn: 'Cat Keeper' }
+      { id: '5', icon: '🧑‍💼', name: '顾客',     nameEn: 'Customer'   },
+      { id: '3', icon: '👨‍🍳', name: '店员',     nameEn: 'Staff'      },
+      { id: '2', icon: '🏪',  name: '店长',     nameEn: 'Manager'    },
+      { id: '1', icon: '📊',  name: '总部运营', nameEn: 'HQ Ops'     },
+      { id: '4', icon: '🐱',  name: '猫咪管家', nameEn: 'Cat Keeper' }
     ],
     // 门店选择
     stores: [],           // 门店列表
@@ -195,9 +195,9 @@ Page({
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = '邮箱格式不正确'
     }
-    // 门店校验：非顾客且非总部运营必须选择门店
+    // 门店校验：非顾客(5)且非总部运营(1)必须选择门店
     const roleId = parseInt(selectedRole)
-    if (roleId > 1 && roleId !== 4 && !this.data.selectedStoreId) {
+    if (roleId !== 5 && roleId !== 1 && !this.data.selectedStoreId) {
       errors.store = '请选择所属门店'
     }
 
@@ -216,21 +216,21 @@ Page({
       email: email.trim() || null,
       roleId: parseInt(selectedRole)   // 角色ID传给后端写入 user_roles
     }
-    // 非总部运营且非顾客的角色，传门店ID
-    if (roleId > 1 && roleId !== 4 && this.data.selectedStoreId) {
+    // 非总部运营(1)且非顾客(5)的角色，传门店ID
+    if (roleId !== 1 && roleId !== 5 && this.data.selectedStoreId) {
       payload.storeId = this.data.selectedStoreId
     }
 
     post('/api/auth/register', payload).then(res => {
       this.setData({ loading: false })
       if (res.code === 0 && res.data) {
-        // 根据 roleId 映射角色名
+        // 根据 roleId 映射角色名（数据库: 1=超管, 2=店长, 3=店员, 4=兽医, 5=顾客）
         const roleMap = {
-          1: { role: 'customer', label: '顾客' },
-          2: { role: 'staff', label: '店员' },
-          3: { role: 'manager', label: '店长' },
-          4: { role: 'hq_ops', label: '总部运营' },
-          5: { role: 'cat_keeper', label: '猫咪管家' }
+          1: { role: 'hq_ops', label: '总部运营' },
+          2: { role: 'manager', label: '店长' },
+          3: { role: 'staff', label: '店员' },
+          4: { role: 'cat_keeper', label: '猫咪管家' },
+          5: { role: 'customer', label: '顾客' }
         }
         const roleInfo = roleMap[selectedRole] || roleMap[1]
         const userInfo = {
