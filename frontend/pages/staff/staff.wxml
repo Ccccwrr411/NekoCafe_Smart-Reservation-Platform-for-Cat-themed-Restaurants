@@ -242,6 +242,104 @@
       </view>
     </block>
 
+    <!-- ────── Tab: 排队叫号 ────── -->
+    <block wx:if="{{!loading && activeTab === 'queue'}}">
+      <!-- 排队概览 -->
+      <view class="queue-overview">
+        <view class="qo-card qo-waiting">
+          <text class="qo-val">{{queueStatus.waitingCount || 0}}</text>
+          <text class="qo-label">等待中</text>
+        </view>
+        <view class="qo-card qo-serving">
+          <text class="qo-val">{{queueStatus.currentNumber}}</text>
+          <text class="qo-label">当前叫号</text>
+        </view>
+        <view class="qo-card qo-time">
+          <text class="qo-val">{{queueStatus.avgWaitMinutes || 0}}分钟</text>
+          <text class="qo-label">预计等待</text>
+        </view>
+      </view>
+
+      <!-- 三分区切换标签 -->
+      <view class="queue-section-tabs">
+        <view class="qst-item {{queueSection === 'waiting' ? 'qst-active' : ''}}" bindtap="onSwitchQueueSection" data-section="waiting">
+          等待队列
+          <text wx:if="{{queueStatus.queueList.length > 0}}" class="qst-badge">{{queueStatus.queueList.length}}</text>
+        </view>
+        <view class="qst-item {{queueSection === 'called' ? 'qst-active' : ''}}" bindtap="onSwitchQueueSection" data-section="called">
+          已叫号
+          <text wx:if="{{calledList.length > 0}}" class="qst-badge">{{calledList.length}}</text>
+        </view>
+        <view class="qst-item {{queueSection === 'missed' ? 'qst-active' : ''}}" bindtap="onSwitchQueueSection" data-section="missed">
+          过号
+          <text wx:if="{{missedList.length > 0}}" class="qst-badge qst-badge-gray">{{missedList.length}}</text>
+        </view>
+      </view>
+
+      <!-- ── 分区1: 等待队列 ── -->
+      <block wx:if="{{queueSection === 'waiting'}}">
+        <view wx:if="{{queueStatus.queueList.length === 0}}" class="empty-state">
+          <text class="empty-icon">✅</text>
+          <text class="empty-text">暂无等待顾客</text>
+        </view>
+        <view class="staff-queue-list" wx:else>
+          <view class="section-title">点击号码即可叫号</view>
+          <view
+            wx:for="{{queueStatus.queueList}}"
+            wx:key="number"
+            class="sq-item"
+            bindtap="onCallNumber"
+            data-item="{{item}}"
+          >
+            <view class="sq-num">Q{{item.number}}</view>
+            <view class="sq-info">
+              <text class="sq-detail">{{item.persons}}人 · {{item.typeDisplay}}</text>
+              <text wx:if="{{item.userName}}" class="sq-user">{{item.userName}}</text>
+              <text class="sq-ahead">前方还有 {{item.ahead}} 桌</text>
+            </view>
+            <view class="sq-action">叫号</view>
+          </view>
+        </view>
+      </block>
+
+      <!-- ── 分区2: 已叫号列表（CALLED 待确认 + KNOWN 已确认）── -->
+      <block wx:if="{{queueSection === 'called'}}">
+        <view wx:if="{{calledList.length === 0}}" class="empty-state">
+          <text class="empty-icon">📢</text>
+          <text class="empty-text">暂无已叫号记录</text>
+        </view>
+        <view class="staff-called-list" wx:else>
+          <view class="section-title">
+            已叫号（{{calledKnownCount}} 已确认
+            <block wx:if="{{hasCalledPending}}"> · {{calledPendingCount}} 待确认</block>）
+          </view>
+          <view wx:for="{{calledList}}" wx:key="queueId" class="sc-item sc-{{item.status}}">
+            <text class="sc-num">Q{{item.number}}</text>
+            <text class="sc-detail">{{item.persons}}人 · {{item.typeDisplay}}</text>
+            <text wx:if="{{item.userName}}" class="sc-user">{{item.userName}}</text>
+            <text class="sc-tag tag-{{item.status}}">{{item.status === 'KNOWN' ? '已确认' : '待确认'}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- ── 分区3: 过号列表（MISSED）── -->
+      <block wx:if="{{queueSection === 'missed'}}">
+        <view wx:if="{{missedList.length === 0}}" class="empty-state">
+          <text class="empty-icon">⏰</text>
+          <text class="empty-text">暂无过号记录</text>
+        </view>
+        <view class="staff-missed-list" wx:else>
+          <view class="section-title">过号队列（叫号后5分钟未确认自动过号）</view>
+          <view wx:for="{{missedList}}" wx:key="queueId" class="sm-item">
+            <text class="sm-num">Q{{item.number}}</text>
+            <text class="sm-detail">{{item.persons}}人 · {{item.typeDisplay}}</text>
+            <text wx:if="{{item.userName}}" class="sm-user">{{item.userName}}</text>
+            <text class="sm-tag">过号</text>
+          </view>
+        </view>
+      </block>
+    </block>
+
     <!-- ────── Tab: 通知中心 ────── -->
     <block wx:if="{{!loading && activeTab === 'notification'}}">
       <view class="notif-header">
@@ -336,7 +434,7 @@
     </view>
   </view>
 
-  <!-- ═══════ 底部导航栏（5Tab，消息居中突出）═══════ -->
+  <!-- ═══════ 底部导航栏（5Tab）═══════ -->
   <view class="bottom-nav">
     <view class="nav-item {{activeTab === 'orders' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="orders">
       <text class="nav-icon">📋</text>
@@ -351,6 +449,11 @@
       <text class="nav-icon">🔔</text>
       <text class="nav-label">消息</text>
       <text wx:if="{{unreadCount > 0}}" class="nav-badge">{{unreadCount > 99 ? '99+' : unreadCount}}</text>
+    </view>
+    <view class="nav-item {{activeTab === 'queue' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="queue">
+      <text class="nav-icon">🎟️</text>
+      <text class="nav-label">叫号</text>
+      <text wx:if="{{queueStatus.waitingCount > 0}}" class="nav-badge">{{queueStatus.waitingCount}}</text>
     </view>
     <view class="nav-item {{activeTab === 'alerts' ? 'nav-active' : ''}}" bindtap="onSwitchTab" data-tab="alerts">
       <text class="nav-icon">⚠️</text>

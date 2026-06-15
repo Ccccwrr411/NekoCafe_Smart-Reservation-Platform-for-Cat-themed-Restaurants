@@ -102,4 +102,5 @@ public class Queue {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
 }

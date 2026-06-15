@@ -21,4 +21,22 @@ public interface QueueService {
      * 返回 number + persons + type + ahead + estWaitMinutes
      */
     Map<String, Object> takeNumber(Long userId, QueueTakeDTO dto);
+
+    /**
+     * 叫号（J-3）— 店员操作：先进先出
+     * 流程：将排队记录 status 从 WAITING 改为 CALLED
+     * 客户端轮询检测到 CALLED 状态后弹窗提示"叫到你的号了，请去及时预约"
+     * @param storeId  门店ID
+     * @param queueId  要叫号的队列记录ID（主键）
+     * @return 叫号结果信息
+     */
+    Map<String, Object> callNumber(Integer storeId, Long queueId);
+
+    /**
+     * 确认叫号（J-4）— 用户操作：被叫号后点击确认
+     * 流程：将排队记录 status 从 CALLED 改为 KNOWN
+     * @param userId   当前用户ID
+     * @param queueId  排队记录ID
+     */
+    void confirmNumber(Long userId, Long queueId);
 }
