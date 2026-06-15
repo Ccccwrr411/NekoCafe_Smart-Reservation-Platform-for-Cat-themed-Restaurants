@@ -27,6 +27,3 @@ replay_pid*
 "db/.idea/" 
 "backend/.idea/" 
 "backend/target/" 
-
-# Environment
-.env
