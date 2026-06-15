@@ -28,4 +28,12 @@ public interface StoreDishesMapper {
     int updateByPrimaryKeySelective(StoreDishes row);
 
     int updateByPrimaryKey(StoreDishes row);
+
+    // ========== 推荐模块自定义 SQL ==========
+
+    /**
+     * 查询指定门店所有在售菜品 ID 列表
+     * 用于推荐模块按门店过滤候选菜品
+     */
+    List<Integer> selectDishIdsByStore(@Param("storeId") Integer storeId);
 }

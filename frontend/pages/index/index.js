@@ -19,6 +19,7 @@ Page({
     // AI 推荐
     recommend: null,
     showRecommend: true,
+    recommendExpanded: false,
     // 门店选择器
     showStorePicker: false,
     storePickerRange: [],
@@ -259,6 +260,11 @@ Page({
   // 关闭推荐
   dismissRecommend() {
     this.setData({ showRecommend: false })
+  },
+
+  // 展开/收起推荐详情
+  onToggleRecommend() {
+    this.setData({ recommendExpanded: !this.data.recommendExpanded })
   },
 
   // ── 导航：调用微信原生 wx.openLocation ──
