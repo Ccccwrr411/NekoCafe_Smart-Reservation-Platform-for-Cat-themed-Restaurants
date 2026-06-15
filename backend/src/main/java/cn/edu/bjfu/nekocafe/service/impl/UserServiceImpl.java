@@ -4,12 +4,12 @@ import cn.edu.bjfu.nekocafe.dto.RealnameDTO;
 import cn.edu.bjfu.nekocafe.dto.UserUpdateDTO;
 import cn.edu.bjfu.nekocafe.entity.MemberExt;
 import cn.edu.bjfu.nekocafe.entity.ReservationsExample;
-import cn.edu.bjfu.nekocafe.entity.Stores;
 import cn.edu.bjfu.nekocafe.entity.UserCouponsExample;
-import cn.edu.bjfu.nekocafe.entity.UserRoles;
-import cn.edu.bjfu.nekocafe.entity.UserRolesExample;
 import cn.edu.bjfu.nekocafe.entity.Users;
-import cn.edu.bjfu.nekocafe.mapper.*;
+import cn.edu.bjfu.nekocafe.mapper.MemberExtMapper;
+import cn.edu.bjfu.nekocafe.mapper.ReservationsMapper;
+import cn.edu.bjfu.nekocafe.mapper.UserCouponsMapper;
+import cn.edu.bjfu.nekocafe.mapper.UsersMapper;
 import cn.edu.bjfu.nekocafe.service.UserService;
 import cn.edu.bjfu.nekocafe.vo.UserProfileVO;
 import org.mindrot.jbcrypt.BCrypt;
@@ -47,12 +47,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ReservationsMapper reservationsMapper;
-
-    @Autowired
-    private StoresMapper storesMapper;
-
-    @Autowired
-    private UserRolesMapper userRolesMapper;
 
     private static final SimpleDateFormat DATE_FMT = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -102,23 +96,6 @@ public class UserServiceImpl implements UserService {
         vo.setTotalSpent(cumAmount.intValue());
         vo.setCouponCount(couponCount);
         vo.setFavoriteStores(Collections.emptyList());  // TODO: 需收藏表支持
-
-        // 查询用户绑定的门店信息（从 user_roles 表获取 store_id，保证数据准确）
-        UserRolesExample ure = new UserRolesExample();
-        ure.createCriteria().andUserIdEqualTo(userId);
-        List<UserRoles> userRolesList = userRolesMapper.selectByExample(ure);
-        if (!userRolesList.isEmpty()) {
-            UserRoles ur = userRolesList.get(0);
-            Integer storeId = ur.getStoreId();
-            if (storeId != null) {
-                vo.setStoreId(storeId);
-                Stores store = storesMapper.selectByPrimaryKey(storeId);
-                if (store != null) {
-                    vo.setStoreName(store.getName());
-                }
-            }
-        }
-
         if (user.getCreatedAt() != null) {
             vo.setJoinDate(DATE_FMT.format(user.getCreatedAt()));
         }

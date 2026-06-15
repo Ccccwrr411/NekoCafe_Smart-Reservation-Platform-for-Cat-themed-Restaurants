@@ -4,93 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c61ca63b-c8bd-4585-8524-c0c039e39991" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.workbuddy/memory/2026-06-14.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/code_search_report.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/code_search_report_part1.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/scripts/insert_review_rating.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/annotation/OperationLog.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/annotation/RequireRole.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/aspect/OperationLogAspect.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/controller/DashboardController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/controller/HqController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/controller/ManagerController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/dto/BatchSendCouponDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/dto/CreatePromotionDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/dto/SendCouponDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/DashboardService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/HqService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/ManagerService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/DashboardServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/HqServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/ManagerServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/ManagerServiceImpl.java.bak" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/test.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/vo/StoreCardVO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/vo/StoresOverviewVO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/marketing.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/marketing.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/marketing.wxml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/marketing.wxss" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/promo-form/promo-form.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/promo-form/promo-form.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/promo-form/promo-form.wxml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/promo-form/promo-form.wxss" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/workspace.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/workspace.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/workspace.wxml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/hq/workspace.wxss" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/staffDashboard/staffDashboard.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/staffDashboard/staffDashboard.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/staffDashboard/staffDashboard.wxml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/pages/staffDashboard/staffDashboard.wxss" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/.workbuddy/memory/MEMORY.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/config/WebMvcConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/config/WebMvcConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/controller/CouponController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/controller/CouponController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/controller/StaffController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/controller/StaffController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/dto/PhoneLoginDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/dto/PhoneLoginDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/interceptor/AuthInterceptor.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/interceptor/AuthInterceptor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/PaymentsMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/PaymentsMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/ReservationsMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/ReservationsMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/ReviewsMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/ReviewsMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/TablesMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/TablesMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/UsersMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/mapper/UsersMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/CouponService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/CouponService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/StaffService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/StaffService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/CouponServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/CouponServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/StaffServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/service/impl/StaffServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/util/JwtUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/util/JwtUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/vo/DashboardMetricsVO.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/cn/edu/bjfu/nekocafe/vo/DashboardMetricsVO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/mapper/OperationLogsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/mapper/OperationLogsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/mapper/PaymentsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/mapper/PaymentsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/mapper/PromotionsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/mapper/PromotionsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/mapper/ReservationsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/mapper/ReservationsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/mapper/ReviewsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/mapper/ReviewsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/mapper/TablesMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/mapper/TablesMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/mapper/UsersMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/mapper/UsersMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/mapper/OperationLogsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/mapper/OperationLogsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/mapper/PaymentsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/mapper/PaymentsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/mapper/PromotionsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/mapper/PromotionsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/mapper/ReservationsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/mapper/ReservationsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/mapper/ReviewsMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/mapper/ReviewsMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/mapper/TablesMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/mapper/TablesMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/target/classes/mapper/UsersMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/mapper/UsersMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/pages/index/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/pages/index/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/pages/login/login.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/pages/login/login.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/pages/profile/profile.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/pages/profile/profile.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/utils/mock.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/utils/mock.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/utils/request.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/utils/request.js" afterDir="false" />
-    </list>
+    <list default="true" id="c61ca63b-c8bd-4585-8524-c0c039e39991" name="更改" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -111,9 +29,8 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "Spring Boot.NekocafeApplication.executor": "Run",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "正在合并 feature/wmy",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/wmy/NekoCafe_Smart-Reservation-Platform-for-Cat-themed-Restaurants/backend",
+    "last_opened_file_path": "D:/tmp/backend",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -128,10 +45,8 @@
 }]]></component>
   <component name="RunManager" selected="应用程序.NekocafeApplication">
     <configuration name="NekocafeApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="ALTERNATIVE_JRE_PATH" value="ms-17" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
       <option name="MAIN_CLASS_NAME" value="cn.edu.bjfu.nekocafe.NekocafeApplication" />
-      <module name="NekoCafe_Smart-Reservation-Platform-for-Cat-themed-Restaurants" />
+      <module name="nekocafe" />
       <extension name="coverage">
         <pattern>
           <option name="PATTERN" value="cn.edu.bjfu.nekocafe.*" />
@@ -163,7 +78,6 @@
       </set>
     </attachedChunks>
   </component>
-  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="应用程序级" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="默认任务">
       <changelist id="c61ca63b-c8bd-4585-8524-c0c039e39991" name="更改" comment="" />

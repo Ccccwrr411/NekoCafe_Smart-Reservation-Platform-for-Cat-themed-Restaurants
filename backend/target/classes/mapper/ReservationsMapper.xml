@@ -483,10 +483,9 @@
       and reservation_id != #{excludeId,jdbcType=BIGINT}
   </select>
 
-
   <!--
-    总部运营：统计某门店今日 COMPLETED 订单数
-  -->
+  总部运营：统计某门店今日 COMPLETED 订单数
+-->
   <select id="countTodayCompletedByStoreId" parameterType="java.lang.Integer" resultType="java.lang.Long">
     select count(*)
     from public.reservations
@@ -496,13 +495,12 @@
   </select>
 
   <!--
-    总部运营：统计某门店累计会员数（有过预约记录的去重用户数）
-    用于 hqOverview.totalMembers
-  -->
+  总部运营：统计某门店累计会员数（有过预约记录的去重用户数）
+  用于 hqOverview.totalMembers
+-->
   <select id="countDistinctUsersByStoreId" parameterType="java.lang.Integer" resultType="java.lang.Long">
     select count(distinct user_id)
     from public.reservations
     where store_id = #{storeId,jdbcType=INTEGER}
   </select>
-
 </mapper>

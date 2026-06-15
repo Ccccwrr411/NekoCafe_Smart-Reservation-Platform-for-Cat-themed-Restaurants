@@ -26,13 +26,10 @@ Page({
 
   onLoad(options) {
     if (!app.requireRole(['staff', 'manager', 'hq_ops'])) return
-    // 从后端数据库获取最新用户信息（含 storeId）
-    app.fetchAndSyncUserInfo().then((userInfo) => {
-      const storeId = options.storeId ? parseInt(options.storeId) : ((userInfo && userInfo.storeId) || 1)
-      const reservationId = options.reservationId ? parseInt(options.reservationId) : null
-      this.setData({ storeId, reservationId })
-      this.loadRefunds()
-    })
+    const storeId = options.storeId ? parseInt(options.storeId) : (app.globalData.userInfo && app.globalData.userInfo.storeId || 1)
+    const reservationId = options.reservationId ? parseInt(options.reservationId) : null
+    this.setData({ storeId, reservationId })
+    this.loadRefunds()
   },
 
   onShow() {
