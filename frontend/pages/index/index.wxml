@@ -83,8 +83,7 @@
           <text class="rec-table-name">{{item.name}}</text>
           <text class="rec-table-type">{{item.type}}</text>
         </view>
-        <text class="rec-cat-name">🐱 {{item.catName}}（{{item.catBreed}}）</text>
-        <text class="rec-match-score">匹配度 {{item.matchScore}}%</text>
+      
         <text class="rec-match-reason">{{item.matchReason}}</text>
       </view>
     </scroll-view>
@@ -154,13 +153,9 @@
           <view class="store-rating">⭐ {{item.rating}}</view>
         </view>
 
-        <text class="store-address">📍 {{item.address}}</text>
+        <text class="store-address">📍 {{item.address}}   🐾{{item.distanceText}}</text>
 
-        <view class="store-meta">
-          <text class="meta-item">🐾 {{item.catCount}} 只猫咪</text>
-          <text class="meta-item">💰 人均 ¥{{item.avgPrice}}</text>
-          <text class="meta-item">📍 {{item.distanceText}}</text>
-        </view>
+    
 
         <!-- 标签 -->
         <view class="tag-row">
