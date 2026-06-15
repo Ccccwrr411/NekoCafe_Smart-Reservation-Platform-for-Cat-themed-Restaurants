@@ -50,36 +50,27 @@
         </view>
       </view>
 
-      <!-- 近 7 天坪效（labels+values 直接来自 spaceEfficiency） -->
+      <!-- 近 7 天坪效 折线图 -->
       <view class="info-card">
         <text class="card-title">📈 近{{metrics.spaceEfficiency.labels.length}}天坪效（元/座/天）</text>
-        <view class="metric-row">
-          <text class="metric-label" wx:for="{{metrics.spaceEfficiency.labels}}" wx:key="*this">{{item}}</text>
-        </view>
-        <view class="metric-row">
-          <text class="metric-val-blue" wx:for="{{metrics.spaceEfficiency.values}}" wx:key="*this">{{item}}</text>
+        <view class="chart-wrap">
+          <canvas type="2d" id="chart-space" class="chart-canvas"></canvas>
         </view>
       </view>
 
-      <!-- 翻台率 -->
+      <!-- 翻台率 柱状图 -->
       <view class="info-card">
         <text class="card-title">🔄 近{{metrics.turnoverRate.labels.length}}天翻台率</text>
-        <view class="metric-row">
-          <text class="metric-label" wx:for="{{metrics.turnoverRate.labels}}" wx:key="*this">{{item}}</text>
-        </view>
-        <view class="metric-row">
-          <text class="metric-val-orange" wx:for="{{metrics.turnoverRate.values}}" wx:key="*this">{{item}}x</text>
+        <view class="chart-wrap">
+          <canvas type="2d" id="chart-turnover" class="chart-canvas"></canvas>
         </view>
       </view>
 
-      <!-- 会员复购率 -->
+      <!-- 会员复购率 饼图 -->
       <view class="info-card">
         <text class="card-title">👥 会员复购率（近{{metrics.repurchaseRate.labels.length}}天）</text>
-        <view class="metric-row">
-          <text class="metric-label" wx:for="{{metrics.repurchaseRate.labels}}" wx:key="*this">{{item}}</text>
-        </view>
-        <view class="metric-row">
-          <text class="metric-val-green" wx:for="{{metrics.repurchaseRate.values}}" wx:key="*this">{{item}}%</text>
+        <view class="chart-wrap chart-wrap-pie">
+          <canvas type="2d" id="chart-repurchase" class="chart-canvas"></canvas>
         </view>
       </view>
     </block>

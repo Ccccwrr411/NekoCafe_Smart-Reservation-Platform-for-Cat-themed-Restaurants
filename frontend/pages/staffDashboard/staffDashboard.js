@@ -4,6 +4,7 @@
 // 注意：app.json 的 tabBar 是顾客端全局配置，店长端必须自绘底部 TabBar
 // 所有数据走真实后端接口（useMock=false），从接口动态加载
 const { get, post, put } = require('../../utils/request')
+const chart = require('../../utils/chart')
 const app = getApp()
 
 const TYPE_LABEL = { LEAVE: '请假', SWAP: '调班', OVERTIME: '加班', NO_SHOW: '客人未到' }
@@ -101,6 +102,54 @@ Page({
     }
   },
 
+  /**
+   * 绘制三个 Canvas 图表：坪效折线图 / 翻台率柱状图 / 复购率饼图
+   */
+  drawCharts() {
+    var metrics = this.data.metrics
+    if (!metrics) return
+
+    var that = this
+
+    // ── 坪效 折线图 ──
+    chart.initCanvas('#chart-space', this).then(function(res) {
+      chart.drawLine(res.ctx, {
+        labels: metrics.spaceEfficiency.labels || [],
+        values: metrics.spaceEfficiency.values || [],
+        width: res.width,
+        height: res.height,
+        lineColor: '#C97E5A'
+      })
+    }).catch(function(e) {
+      console.warn('[chart] spaceEfficiency line chart failed:', e)
+    })
+
+    // ── 翻台率 柱状图 ──
+    chart.initCanvas('#chart-turnover', this).then(function(res) {
+      chart.drawBar(res.ctx, {
+        labels: metrics.turnoverRate.labels || [],
+        values: metrics.turnoverRate.values || [],
+        width: res.width,
+        height: res.height,
+        barColor: '#8B5A3C'
+      })
+    }).catch(function(e) {
+      console.warn('[chart] turnoverRate bar chart failed:', e)
+    })
+
+    // ── 会员复购率 饼图 ──
+    chart.initCanvas('#chart-repurchase', this).then(function(res) {
+      chart.drawPie(res.ctx, {
+        labels: metrics.repurchaseRate.labels || [],
+        values: metrics.repurchaseRate.values || [],
+        width: res.width,
+        height: res.height
+      })
+    }).catch(function(e) {
+      console.warn('[chart] repurchaseRate pie chart failed:', e)
+    })
+  },
+
   refreshUserInfo() {
     const userInfo = app.globalData.userInfo || {}
     const userRole = app.globalData.userRole || ''
@@ -148,6 +197,8 @@ Page({
         },
         loading: false
       })
+      // 延迟画图表，等 Canvas 渲染完成
+      setTimeout(function() { self.drawCharts() }, 300)
     }
 
     var pending = 4

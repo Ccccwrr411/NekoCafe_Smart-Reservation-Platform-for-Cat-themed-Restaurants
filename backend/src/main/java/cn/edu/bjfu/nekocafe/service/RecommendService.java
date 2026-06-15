@@ -23,7 +23,8 @@ public interface RecommendService {
      * @param userId           用户ID（从 JWT 解析）
      * @param companionCount   同行人数，用于 R10 桌位匹配（默认=1）
      * @param hasChild         是否带小孩，用于 R11 温顺猫筛选（默认=false）
+     * @param storeId         门店ID（可选），用于按门店过滤推荐结果
      * @return 推荐结果 Map{reason, cats, dishes, tables, userProfile}
      */
-    Map<String, Object> recommend(Long userId, Integer companionCount, Boolean hasChild);
+    Map<String, Object> recommend(Long userId, Integer companionCount, Boolean hasChild, Integer storeId);
 }
