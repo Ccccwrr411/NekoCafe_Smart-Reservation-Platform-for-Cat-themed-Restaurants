@@ -33,7 +33,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/cats/**",            // 猫咪列表/详情（公开浏览）
                         "/api/pay/simulate",       // 模拟支付（测试用，无需登录）
                         "/api/pay/status",          // 查询支付状态
-                        "/api/promotions/active"  // 首页活跃活动（公开浏览）
+                        "/api/queue/**",        // ⚠️ 测试用临时放行，上线前移除
+                        "/api/dashboard/**",   // ⚠️ 测试用临时放行，上线前移除
+                        "/api/staff/**",        // ⚠️ 测试用临时放行，上线前移除
+                        "/api/recommend/**"     // ⚠️ 测试用临时放行，上线前移除
                 );
     }
 

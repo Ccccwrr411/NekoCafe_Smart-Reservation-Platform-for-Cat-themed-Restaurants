@@ -256,15 +256,4 @@
       created_at = #{createdAt,jdbcType=TIMESTAMP}
     where payment_id = #{paymentId,jdbcType=BIGINT}
   </update>
-
-  <!-- ══ 总部运营：按门店统计今日实收金额 ══ -->
-  <select id="sumTodayPaidByStoreId" parameterType="java.lang.Integer" resultType="java.lang.Long">
-    SELECT COALESCE(SUM(p.amount), 0)
-    FROM public.payments p
-    JOIN public.reservations r ON p.reservation_id = r.reservation_id
-    WHERE r.store_id = #{storeId,jdbcType=INTEGER}
-      AND p.status = 'PAID'
-      AND DATE(p.paid_at) = CURRENT_DATE
-  </select>
-
 </mapper>

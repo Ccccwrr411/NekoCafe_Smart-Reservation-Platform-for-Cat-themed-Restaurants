@@ -12,10 +12,8 @@ import java.util.Date;
  * 负责生成、解析、校验 JWT Token
  *
  * 使用方式：
- *   String token = JwtUtil.generateToken(userId, roleId, storeId);
+ *   String token = JwtUtil.generateToken(userId);
  *   Long   uid   = JwtUtil.getUserIdFromToken(token);
- *   Integer rid  = JwtUtil.getRoleIdFromToken(token);
- *   Integer sid  = JwtUtil.getStoreIdFromToken(token);
  *   boolean ok   = JwtUtil.validateToken(token);
  */
 public class JwtUtil {
@@ -30,39 +28,20 @@ public class JwtUtil {
     private static final SecretKey KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
     /**
-     * 根据 userId + roleId + storeId 生成 JWT Token
-     * @param userId  用户 ID
-     * @param roleId  当前角色 ID（可为 null）
-     * @param storeId 所属门店 ID（可为 null）
+     * 根据 userId 生成 JWT Token
+     * @param userId 用户 ID
      * @return JWT 字符串
      */
-    public static String generateToken(Long userId, Integer roleId, Integer storeId) {
+    public static String generateToken(Long userId) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + EXPIRATION_MS);
 
-        Claims claims = Jwts.claims()
-                .subject(userId.toString())
-                .add("roleId", roleId)
-                .add("storeId", storeId)
-                .build();
-
         return Jwts.builder()
-                .claims(claims)
-                .issuedAt(now)
-                .expiration(expiration)
-                .signWith(KEY)
+                .subject(userId.toString())           // 把 userId 存进 sub 字段
+                .issuedAt(now)                        // 签发时间
+                .expiration(expiration)               // 过期时间
+                .signWith(KEY)                        // 签名
                 .compact();
-    }
-
-    /**
-     * 从 Token 中解析所有 claims
-     */
-    private static Claims getClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(KEY)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
     }
 
     /**
@@ -72,27 +51,12 @@ public class JwtUtil {
      * @throws JwtException Token 非法或已过期
      */
     public static Long getUserIdFromToken(String token) {
-        return Long.valueOf(getClaims(token).getSubject());
-    }
-
-    /**
-     * 从 Token 中解析 roleId（可能为 null）
-     */
-    public static Integer getRoleIdFromToken(String token) {
-        Object val = getClaims(token).get("roleId");
-        if (val instanceof Integer) return (Integer) val;
-        if (val instanceof Number) return ((Number) val).intValue();
-        return null;
-    }
-
-    /**
-     * 从 Token 中解析 storeId（可能为 null）
-     */
-    public static Integer getStoreIdFromToken(String token) {
-        Object val = getClaims(token).get("storeId");
-        if (val instanceof Integer) return (Integer) val;
-        if (val instanceof Number) return ((Number) val).intValue();
-        return null;
+        Claims claims = Jwts.parser()
+                .verifyWith(KEY)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return Long.valueOf(claims.getSubject());
     }
 
     /**
@@ -102,7 +66,10 @@ public class JwtUtil {
      */
     public static boolean validateToken(String token) {
         try {
-            getClaims(token);
+            Jwts.parser()
+                    .verifyWith(KEY)
+                    .build()
+                    .parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
