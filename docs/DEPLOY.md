@@ -58,8 +58,6 @@ docker compose ps               # 查看状态
 
 ## 五、验证
 
-```txt
+```
 http://localhost:8081
 ```
-
-ok
