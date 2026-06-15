@@ -426,8 +426,6 @@
     order by reservation_time DESC
   </select>
 
-<<<<<<< Updated upstream
-=======
   <!--
     专用查询：按 tableId + status 列表查活跃预约（用于时间段冲突判断）。
   -->
@@ -463,6 +461,4 @@
     from public.reservations
     where store_id = #{storeId,jdbcType=INTEGER}
   </select>
-
->>>>>>> Stashed changes
 </mapper>

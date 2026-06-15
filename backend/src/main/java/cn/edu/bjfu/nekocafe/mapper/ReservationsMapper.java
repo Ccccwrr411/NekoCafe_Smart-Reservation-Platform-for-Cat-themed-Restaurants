@@ -50,8 +50,6 @@ public interface ReservationsMapper {
      * 对 status 字段使用 ::reservation_status 显式类型转换。
      */
     List<Reservations> selectByStoreId(@Param("storeId") Integer storeId);
-<<<<<<< Updated upstream
-=======
 
     /**
      * 按用户ID查询全部预约记录（用于"全部"标签）。
@@ -82,5 +80,4 @@ public interface ReservationsMapper {
      * 总部运营：统计某门店累计去重用户数（有过预约记录的用户）。
      */
     Long countDistinctUsersByStoreId(@Param("storeId") Integer storeId);
->>>>>>> Stashed changes
 }
