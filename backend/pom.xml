@@ -36,6 +36,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-redis</artifactId>
     </dependency>
+    <!-- Lettuce 连接池所需（application.yaml 启用了 spring.data.redis.lettuce.pool）。
+         高并发下分布式锁的 Redis 往返较多，连接池避免单连接争用。 -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-pool2</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
@@ -43,6 +49,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+    <!-- 消息队列：RabbitMQ（订单副作用/通知异步处理、削峰、可靠投递 + 死信 + 延迟） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-amqp</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>

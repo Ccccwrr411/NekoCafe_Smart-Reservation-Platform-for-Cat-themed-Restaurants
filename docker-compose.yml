@@ -7,6 +7,10 @@
 services:
 
   backend:
+    # 引入 RabbitMQ 后镜像含新代码，需本地构建（远程旧镜像不含 MQ 逻辑）。
+    # 首次/改动后用：docker compose up -d --build
+    build:
+      context: ./backend
     image: yuuui2026/nekocafe:latest
     container_name: nekocafe-backend
     restart: unless-stopped
@@ -18,6 +22,11 @@ services:
       SPRING_DATA_REDIS_HOST: 82.157.130.254
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: 123456789
+      # RabbitMQ 跑在本 compose 内，通过服务名 rabbitmq 访问
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: nekocafe
+      SPRING_RABBITMQ_PASSWORD: nekocafe123
       SERVER_PORT: 8081
       JWT_SECRET: nekocafe-secret-key-change-me-before-deploy
       WX_APPID: YOUR_APPID_HERE
@@ -26,6 +35,29 @@ services:
       - "8081:8081"
     volumes:
       - backend_uploads:/app/uploads
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: nekocafe-rabbitmq
+    restart: unless-stopped
+    hostname: nekocafe-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: nekocafe
+      RABBITMQ_DEFAULT_PASS: nekocafe123
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # 管理控制台 http://localhost:15672 (nekocafe/nekocafe123)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   prometheus:
     image: prom/prometheus:latest
@@ -42,7 +74,8 @@ services:
     container_name: nekocafe-grafana
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      # 宿主机 3000 落在 Windows 保留端口段(2932-3631)内，无法绑定，改用 13000
+      - "13000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
@@ -51,6 +84,8 @@ services:
 
 volumes:
   backend_uploads:
+    driver: local
+  rabbitmq_data:
     driver: local
   prometheus_data:
     driver: local

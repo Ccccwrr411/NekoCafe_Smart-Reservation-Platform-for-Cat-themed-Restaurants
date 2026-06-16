@@ -11,4 +11,5 @@ public class ErrorCode {
     public static final int NOT_FOUND  = 404;    // 资源不存在
     public static final int BAD_REQUEST = 400;   // 参数错误
     public static final int SERVER_ERROR = 500;  // 服务器内部错误
+    public static final int SERVICE_BUSY = 503;  // 系统繁忙 / 限流（如分布式锁等待超时，前端可提示稍后重试）
 }

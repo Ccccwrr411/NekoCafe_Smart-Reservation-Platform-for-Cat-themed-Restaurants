@@ -5,12 +5,54 @@ spring:
     url: jdbc:postgresql://82.157.130.254:5432/postgres
     username: admin_user
     password: 123456789
+    # HikariCP 连接池：1000 并发下连接池是首要瓶颈。事务被消息队列瘦身后单次占用连接时间更短，
+    # 池子设为 30 可在不压垮远程单实例 PostgreSQL 的前提下支撑高并发；按压测结果与 DB 规格调整。
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+      connection-timeout: 3000      # 拿不到连接 3s 即快速失败，避免线程堆积拖垮 P95
+      validation-timeout: 2000
+      idle-timeout: 600000
+      max-lifetime: 1700000
+      keepalive-time: 300000
+      pool-name: NekoHikariPool
 
   data:
     redis:
       host: 82.157.130.254
       port: 6379
       password: 123456789
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 64
+          max-idle: 32
+          min-idle: 8
+          max-wait: 2000ms
+
+  # RabbitMQ：默认连本机，容器内由 docker-compose 注入 SPRING_RABBITMQ_* 覆盖
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:nekocafe}
+    password: ${SPRING_RABBITMQ_PASSWORD:nekocafe123}
+    publisher-confirm-type: simple   # 配合发件箱 waitForConfirmsOrDie 做可靠投递
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: auto       # 正常返回则 ack；抛异常按重试策略处理
+        concurrency: 4               # 每个消费者初始并发线程
+        max-concurrency: 16          # 峰值自动扩容上限
+        prefetch: 20
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 4            # 重试耗尽后进入死信队列(DLQ)
+          initial-interval: 1000ms
+          multiplier: 2.0
+          max-interval: 10000ms
 
   # 静态资源（uploads/）可被 /uploads/** 访问
   web:
@@ -25,6 +67,19 @@ server:
     multipart:
       max-file-size: 5MB
       max-request-size: 10MB
+  # Tomcat 线程池：支撑 1000 并发入口。worker 线程主要等待远程 DB/Redis I/O，
+  # 适当放大；真正的稳态吞吐由 HikariCP 连接池(30)与 MQ 削峰决定。
+  tomcat:
+    threads:
+      max: 400
+      min-spare: 50
+    accept-count: 300
+    max-connections: 2000
+
+# 业务/中间件自定义配置
+nekocafe:
+  outbox:
+    poll-interval-ms: 500   # 发件箱投递轮询周期（毫秒）
 
 # MyBatis 配置
 mybatis:

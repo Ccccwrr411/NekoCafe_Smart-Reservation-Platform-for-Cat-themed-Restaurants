@@ -6,11 +6,17 @@ import cn.edu.bjfu.nekocafe.dto.RescheduleDTO;
 import cn.edu.bjfu.nekocafe.entity.*;
 import cn.edu.bjfu.nekocafe.exception.BusinessException;
 import cn.edu.bjfu.nekocafe.mapper.*;
+import cn.edu.bjfu.nekocafe.mq.MessageOutbox;
+import cn.edu.bjfu.nekocafe.mq.MqConst;
 import cn.edu.bjfu.nekocafe.service.ReservationService;
+import cn.edu.bjfu.nekocafe.util.DistributedLock;
 import cn.edu.bjfu.nekocafe.vo.CurrentReservationVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -39,28 +45,66 @@ public class ReservationServiceImpl implements ReservationService {
     @Autowired
     private RefundRecordsMapper refundRecordsMapper;
 
+    @Autowired
+    private DistributedLock distributedLock;
+
+    @Autowired
+    private MessageOutbox messageOutbox;
+
+    /** 编程式事务：配合分布式锁，确保「锁释放在事务提交之后」，根除检查-插入竞态。 */
+    private final TransactionTemplate transactionTemplate;
+
+    public ReservationServiceImpl(PlatformTransactionManager transactionManager) {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    /** 分布式锁参数：单桌临界区很短，租约 5s 足够，等待 3s。 */
+    private static final long LOCK_LEASE_MS = 5_000L;
+    private static final long LOCK_WAIT_MS = 3_000L;
+
     // ==================== E-7: 纯预约（创建预约，无点单） ====================
 
     @Override
-    @Transactional
     public Map<String, Object> createReservation(Long userId, ReservationCreateDTO dto) {
         // 1. 参数校验
         if (dto.getStoreId() == null || dto.getTableId() == null) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "门店ID和桌位ID不能为空");
         }
 
-        // 2. 解析预约时间
-        Date reserveTime;
+        // 2. 解析预约时间（纯计算，放在锁/事务之外）
+        final Date reserveTime;
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             reserveTime = sdf.parse(dto.getReserveDate() + " " + dto.getReserveTime());
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "预约时间格式错误");
         }
+        final int durationMin = dto.getDuration() != null ? dto.getDuration() * 60 : 120; // 小时转分钟
 
-        int durationMin = dto.getDuration() != null ? dto.getDuration() * 60 : 120; // 小时转分钟
+        // 3. 关键并发控制：按【桌位】加分布式锁，把「时段冲突检查 + 插入」串行化。
+        //    锁在事务提交之后才释放（TransactionTemplate 在 lambda 内提交），
+        //    因此并发请求看到的是已提交数据，彻底消除原先「检查通过后并发插入双重预约」的竞态。
+        //    不同桌位用不同锁键，互不阻塞 → 1000 并发分散到多桌时吞吐不受影响。
+        String lockKey = "lock:table:" + dto.getTableId();
+        try {
+            return distributedLock.executeWithLock(lockKey, LOCK_LEASE_MS, LOCK_WAIT_MS,
+                    () -> transactionTemplate.execute(
+                            status -> doCreateReservation(userId, dto, reserveTime, durationMin)));
+        } catch (DataIntegrityViolationException e) {
+            // 命中 DB 时段排他约束 (btree_gist) 时给出友好提示（Redis 锁租约过期等极端情况的最终兜底）
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "该桌位在所选时段已被预约，请选择其他桌位或时段");
+        } catch (IllegalStateException e) {
+            // 锁等待超时（高峰期同桌竞争激烈）→ 友好降级为「系统繁忙」，避免冒泡成 code:500
+            throw new BusinessException(ErrorCode.SERVICE_BUSY, "当前预约人数较多，请稍后重试");
+        }
+    }
 
-        // 2.5. 时段冲突检查：查询该桌位在目标时段是否已有活跃预约
+    /**
+     * 预约创建的事务体（在分布式锁保护下、由 TransactionTemplate 调用）。
+     */
+    private Map<String, Object> doCreateReservation(Long userId, ReservationCreateDTO dto,
+                                                    Date reserveTime, int durationMin) {
+        // 3.1 时段冲突检查
         Calendar requestCal = Calendar.getInstance();
         requestCal.setTime(reserveTime);
         requestCal.add(Calendar.MINUTE, durationMin);
@@ -84,7 +128,7 @@ public class ReservationServiceImpl implements ReservationService {
             }
         }
 
-        // 3. INSERT Reservations 记录（无点单，items 为空）
+        // 3.2 INSERT Reservations 记录（无点单，items 为空）
         Date now = new Date();
         int partySize = dto.getPersons() != null ? dto.getPersons() : 1;
 
@@ -104,19 +148,22 @@ public class ReservationServiceImpl implements ReservationService {
         reservationsMapper.insertSelective(reservation);
         Long reservationId = reservation.getReservationId();
 
-        // 4. 乐观锁更新 table_status：不要求 IDLE（支持不同时段多预约），仅用 version 防并发
+        // 3.3 乐观锁更新 table_status（分布式锁下基本必成功，保留作纵深防御）
         TableStatus currentStatus = tableStatusMapper.selectByPrimaryKey(dto.getTableId());
         if (currentStatus == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态记录不存在");
         }
-
         int affected = tableStatusMapper.reserveTableOptimistic(
                 dto.getTableId(), reservationId, currentStatus.getVersion());
         if (affected == 0) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态已变更，请重试");
         }
 
-        // 5. 返回 orderId + status（前端只校验 code===0，然后用自身 state 跳转）
+        // 3.4 预约超时自动取消：随业务事务写入发件箱（延迟队列，TTL 到期后未支付则自动释放桌位）
+        messageOutbox.enqueue(MqConst.RESERVATION_DELAY_EXCHANGE, MqConst.RK_RESERVATION_DELAY,
+                "RESV_TIMEOUT", reservationId);
+
+        // 3.5 返回 orderId + status（前端只校验 code===0，然后用自身 state 跳转）
         Map<String, Object> result = new HashMap<>();
         result.put("orderId", formatOrderId(reservationId));
         result.put("status", "BOOKED");
