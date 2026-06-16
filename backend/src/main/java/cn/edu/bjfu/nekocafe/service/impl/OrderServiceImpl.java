@@ -7,6 +7,10 @@ import cn.edu.bjfu.nekocafe.dto.RescheduleDTO;
 import cn.edu.bjfu.nekocafe.entity.*;
 import cn.edu.bjfu.nekocafe.exception.BusinessException;
 import cn.edu.bjfu.nekocafe.mapper.*;
+import cn.edu.bjfu.nekocafe.mq.MessageOutbox;
+import cn.edu.bjfu.nekocafe.mq.MqConst;
+import cn.edu.bjfu.nekocafe.mq.event.NotificationMessage;
+import cn.edu.bjfu.nekocafe.mq.event.OrderSideEffectMessage;
 import cn.edu.bjfu.nekocafe.service.OrderService;
 import cn.edu.bjfu.nekocafe.vo.OrderVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +78,17 @@ public class OrderServiceImpl implements OrderService {
 
   @Autowired
   private UsersMapper usersMapper;
+
+  @Autowired
+  private MessageOutbox messageOutbox;
+
+  @Autowired
+  private MqConsumedMapper mqConsumedMapper;
+
+  /** 订单副作用消息 id：确定值，供消费幂等与「取消/异步」结算协调共用。 */
+  private static String orderSideEffectMsgId(Long reservationId) {
+    return "ORDER_SE:" + reservationId;
+  }
 
   // ==================== E-1: 订单列表 ====================
 
@@ -429,7 +444,6 @@ public class OrderServiceImpl implements OrderService {
     Long reservationId = reservation.getReservationId();
 
     // 3. 计算积分：points_used 暂不使用，points_earned = finalAmount（每元1分）
-    int pointsUsed = 0;
     int pointsEarned = finalAmount;
 
     // ==================== UPDATE 操作 ====================
@@ -446,7 +460,14 @@ public class OrderServiceImpl implements OrderService {
     if (dto.getRemark() != null && !dto.getRemark().isEmpty()) {
       updateRes.setSpecialRequest(dto.getRemark());
     }
-    reservationsMapper.updateByPrimaryKeySelective(updateRes);
+    // 状态护栏：仅当预约仍为 BOOKED 才能确认下单。affected==0 说明该预约已确认过（重复提交）
+    // 或已被「预约超时自动取消」改为 CANCEL_BOOKING/桌位已释放 —— 此时拒绝，避免重复写
+    // order_items/payments，也避免把已取消的预约「复活」占用可能已被他人预订的桌位。
+    int confirmed = reservationsMapper.confirmOrderIfBooked(updateRes);
+    if (confirmed == 0) {
+      throw new BusinessException(ErrorCode.BAD_REQUEST,
+          "该预约已处理或状态已变更（可能已超时取消），请勿重复提交");
+    }
 
     // 3a2. UPDATE table_status: RESERVED → OCCUPIED（下单确认后占用桌位）
     if (reservation.getTableId() != null) {
@@ -476,32 +497,7 @@ public class OrderServiceImpl implements OrderService {
       }
     }
 
-    // 3c. UPDATE member_ext: 更新累计金额、积分、最后访问时间
-    MemberExt memberExt = memberExtMapper.selectByPrimaryKey(userId);
-    if (memberExt == null) {
-      // 不存在则创建
-      memberExt = new MemberExt();
-      memberExt.setUserId(userId);
-      memberExt.setLevel(1);
-      memberExt.setCumulativeAmount(new BigDecimal(finalAmount));
-      memberExt.setTotalPoints(finalAmount * 2);
-      memberExt.setLastVisitTime(now);
-      memberExt.setCreatedAt(now);
-      memberExtMapper.insertSelective(memberExt);
-    } else {
-      BigDecimal oldCumulative = memberExt.getCumulativeAmount() != null
-        ? memberExt.getCumulativeAmount() : BigDecimal.ZERO;
-      BigDecimal newCumulative = oldCumulative.add(new BigDecimal(finalAmount));
-      int newTotalPoints = newCumulative.intValue() * 2;
-
-      MemberExt updateMe = new MemberExt();
-      updateMe.setUserId(userId);
-      updateMe.setCumulativeAmount(newCumulative);
-      updateMe.setTotalPoints(newTotalPoints);
-      updateMe.setLastVisitTime(now);
-      memberExtMapper.updateByPrimaryKeySelective(updateMe);
-      memberExt.setTotalPoints(newTotalPoints); // 供后续 points_log 使用
-    }
+    // 3c. 会员累计金额/积分 —— 已剥离到 MQ 异步处理（见下方发件箱），缩短同步关键路径。
 
     // ==================== INSERT 操作 ====================
 
@@ -518,35 +514,7 @@ public class OrderServiceImpl implements OrderService {
       }
     }
 
-    // 4b. INSERT coupon_usage（每条优惠券一条记录）
-    if (dto.getCouponIds() != null && !dto.getCouponIds().isEmpty()) {
-      // 简单均摊折扣（如果有多张券）
-      int perCouponDiscount = dto.getCouponIds().size() > 0
-        ? discount / dto.getCouponIds().size() : 0;
-      for (String couponIdStr : dto.getCouponIds()) {
-        CouponUsage usage = new CouponUsage();
-        usage.setCouponId(Long.parseLong(couponIdStr));
-        usage.setReservationId(reservationId);
-        usage.setDiscountAmount(new BigDecimal(perCouponDiscount));
-        usage.setUsedAt(now);
-        couponUsageMapper.insertSelective(usage);
-      }
-    }
-
-    // 4c. INSERT points_log（仅 ORDER_EARN 正数，points_used 暂不使用）
-    int balanceAfter = memberExt.getTotalPoints() != null ? memberExt.getTotalPoints() : 0;
-
-    // points_used 暂不使用，不记录 ORDER_USE 日志
-    // if (pointsUsed > 0) { ... }
-
-    PointsLog earnLog = new PointsLog();
-    earnLog.setUserId(userId);
-    earnLog.setChangeAmount(pointsEarned);
-    earnLog.setBalanceAfter(balanceAfter + pointsEarned);
-    earnLog.setSource("ORDER_EARN");
-    earnLog.setReservationId(reservationId);
-    earnLog.setCreatedAt(now);
-    pointsLogMapper.insertSelective(earnLog);
+    // 4b/4c. 优惠券使用记录 + 积分流水 —— 已剥离到 MQ 异步处理（见下方发件箱）。
 
     // 4d. INSERT payments
     String transactionId = "MOCK_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
@@ -559,6 +527,33 @@ public class OrderServiceImpl implements OrderService {
     payment.setPaidAt(now);
     payment.setCreatedAt(now);
     paymentsMapper.insertSelective(payment);
+
+    // 4e. 事务性发件箱：把「会员积分/累计、积分流水、优惠券使用记录」与「门店新订单通知」
+    //     作为消息随本事务一起落库，提交后由 OutboxPublisher 可靠投递到 RabbitMQ 异步处理。
+    //     —— 这样同步关键路径只剩：改预约状态 + 占桌 + 核销券 + 写菜品 + 写支付 + 写发件箱。
+    int perCouponDiscount = (dto.getCouponIds() != null && !dto.getCouponIds().isEmpty())
+        ? discount / dto.getCouponIds().size() : 0;
+
+    OrderSideEffectMessage seEvt = new OrderSideEffectMessage();
+    seEvt.setMessageId(orderSideEffectMsgId(reservationId));
+    seEvt.setReservationId(reservationId);
+    seEvt.setUserId(userId);
+    seEvt.setFinalAmount(finalAmount);
+    seEvt.setPointsEarned(pointsEarned);
+    seEvt.setCouponIds(dto.getCouponIds());
+    seEvt.setPerCouponDiscount(perCouponDiscount);
+    messageOutbox.enqueue(MqConst.ORDER_EXCHANGE, MqConst.RK_ORDER_SIDE_EFFECT, "ORDER_SIDE_EFFECT", seEvt);
+
+    NotificationMessage notifyEvt = new NotificationMessage();
+    notifyEvt.setMessageId("NOTIFY:ORDER:" + reservationId);
+    notifyEvt.setStoreId(dto.getStoreId());
+    notifyEvt.setTargetRole("STAFF");
+    notifyEvt.setType("ORDER");
+    notifyEvt.setTitle("新订单");
+    notifyEvt.setContent("您有一笔新订单（" + formatOrderId(reservationId) + "），实付 ¥" + finalAmount);
+    notifyEvt.setRelatedType("RESERVATION");
+    notifyEvt.setRelatedId(reservationId);
+    messageOutbox.enqueue(MqConst.ORDER_EXCHANGE, MqConst.RK_ORDER_NOTIFICATION, "ORDER_NOTIFICATION", notifyEvt);
 
     // 5. 返回（前端检查 code===0, payInfo, finalAmount）
     //    开发阶段：返回 mock 支付参数，前端识别后走模拟支付弹窗
@@ -935,11 +930,9 @@ public class OrderServiceImpl implements OrderService {
     Payments payment = (payList != null && !payList.isEmpty()) ? payList.get(0) : null;
     boolean hasPaid = payment != null && "PAID".equals(payment.getStatus());
 
-    // 查询是否有使用优惠券
+    // coupon_usage 删除条件（使用记录已改为消费者异步写入；删除按是否已结算决定）
     CouponUsageExample cuExample = new CouponUsageExample();
     cuExample.createCriteria().andReservationIdEqualTo(reservationId);
-    List<CouponUsage> couponUsageList = couponUsageMapper.selectByExample(cuExample);
-    boolean hasCoupon = couponUsageList != null && !couponUsageList.isEmpty();
 
     // 查询会员扩展信息
     MemberExt memberExt = memberExtMapper.selectByPrimaryKey(userId);
@@ -972,24 +965,32 @@ public class OrderServiceImpl implements OrderService {
       paymentsMapper.updateByPrimaryKeySelective(updatePay);
     }
 
-    // 3. UPDATE user_coupons: USED → ACTIVE（如使用优惠券）
-    if (hasCoupon) {
-      for (CouponUsage usage : couponUsageList) {
-        UserCouponsExample ucExample = new UserCouponsExample();
-        ucExample.createCriteria()
-          .andCouponIdEqualTo(usage.getCouponId())
-          .andStatusEqualTo("USED")
-          .andUsedReservationIdEqualTo(reservationId);
-        UserCoupons updateUc = new UserCoupons();
-        updateUc.setStatus("UNUSED");
-        updateUc.setUsedAt(null);
-        updateUc.setUsedReservationId(null);
-        userCouponsMapper.updateByExampleSelective(updateUc, ucExample);
-      }
+    // ★ MQ 改造：订单副作用（积分/会员统计/优惠券使用记录）已异步化。
+    //    用 mq_consumed 原子抢占来判断「副作用是否已真正落库」，决定是否需要回滚：
+    //      - 抢到墓碑(applied=false) → 消费者尚未结算且之后会跳过 → 本来就没加，无需回滚
+    //      - 抢不到且已有 applied=true → 消费者已加过 → 需要回滚
+    //    由此彻底规避「取消发生在异步加积分之前」造成的积分错乱（详见架构说明文档）。
+    String seMsgId = orderSideEffectMsgId(reservationId);
+    boolean sideEffectsApplied;
+    if (mqConsumedMapper.tryClaim(seMsgId, false) == 1) {
+      sideEffectsApplied = false;
+    } else {
+      sideEffectsApplied = Boolean.TRUE.equals(mqConsumedMapper.selectApplied(seMsgId));
     }
 
-    // 4. UPDATE member_ext: 扣除消费获得积分 + 退还已用积分 + 回滚累计消费
-    if (memberExt != null) {
+    // 3. UPDATE user_coupons: USED → UNUSED（券核销在下单时同步完成，按预约直接回滚，与异步无关）
+    UserCouponsExample revertUcExample = new UserCouponsExample();
+    revertUcExample.createCriteria()
+      .andStatusEqualTo("USED")
+      .andUsedReservationIdEqualTo(reservationId);
+    UserCoupons revertUc = new UserCoupons();
+    revertUc.setStatus("UNUSED");
+    revertUc.setUsedAt(null);
+    revertUc.setUsedReservationId(null);
+    userCouponsMapper.updateByExampleSelective(revertUc, revertUcExample);
+
+    // 4. UPDATE member_ext: 仅当副作用确已应用时才回滚积分/累计消费
+    if (sideEffectsApplied && memberExt != null) {
       int currentPoints = memberExt.getTotalPoints() != null ? memberExt.getTotalPoints() : 0;
       // 扣除消费获得积分，退还使用的积分（如有）
       int newPoints = currentPoints - pointsEarned + pointsUsed;
@@ -1020,7 +1021,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // 6a. INSERT points_log: 扣除消费获得的积分（ORDER_CANCEL_DEDUCT_EARN）
-    if (pointsEarned > 0 && memberExt != null) {
+    if (sideEffectsApplied && pointsEarned > 0 && memberExt != null) {
       int currentPoints = memberExt.getTotalPoints() != null ? memberExt.getTotalPoints() : 0;
       PointsLog deductLog = new PointsLog();
       deductLog.setUserId(userId);
@@ -1033,7 +1034,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     // 6b. INSERT points_log: 退还使用的积分（ORDER_CANCEL_RETURN_USED）
-    if (pointsUsed > 0 && memberExt != null) {
+    if (sideEffectsApplied && pointsUsed > 0 && memberExt != null) {
       int currentPoints = memberExt.getTotalPoints() != null ? memberExt.getTotalPoints() : 0;
       int afterDeduct = currentPoints - pointsEarned;
       PointsLog returnLog = new PointsLog();
@@ -1089,8 +1090,8 @@ public class OrderServiceImpl implements OrderService {
     // 8. DELETE order_items
     orderItemsMapper.deleteByExample(oiExample);
 
-    // 9. DELETE coupon_usage（如使用优惠券）
-    if (hasCoupon) {
+    // 9. DELETE coupon_usage（仅当副作用已应用：使用记录由消费者异步写入，此时才会存在）
+    if (sideEffectsApplied) {
       couponUsageMapper.deleteByExample(cuExample);
     }
 
