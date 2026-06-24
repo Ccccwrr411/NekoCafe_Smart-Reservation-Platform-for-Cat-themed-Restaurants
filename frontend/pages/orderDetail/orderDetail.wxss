@@ -550,3 +550,90 @@
   color: #E74C3C !important;
   font-weight: 600;
 }
+
+/* ============ 我的评价展示 ============ */
+.review-display-card { padding: 28rpx 24rpx; }
+.review-overall {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+.review-stars { display: flex; gap: 6rpx; }
+.review-star { font-size: 44rpx; }
+.review-star-on { color: #FFB300; }
+.review-star-off { color: #E0E0E0; }
+.review-date { font-size: 24rpx; color: var(--color-text-sub, #999); }
+
+.review-sub-ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx 32rpx;
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 2rpx solid #F5F5F5;
+}
+.review-sub-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.review-sub-label {
+  font-size: 24rpx;
+  color: var(--color-text-sub, #666);
+}
+.review-sub-stars {
+  font-size: 24rpx;
+  color: #FFB300;
+  letter-spacing: 2rpx;
+}
+
+.review-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+.review-tag {
+  padding: 6rpx 20rpx;
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  background: var(--color-primary-light, #FFF3E0);
+  color: var(--color-primary, #FF9800);
+}
+
+.review-content {
+  font-size: 28rpx;
+  color: var(--color-text, #333);
+  line-height: 1.7;
+  margin-bottom: 16rpx;
+}
+
+.review-reply {
+  background: #F9F9F9;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  border-left: 6rpx solid var(--color-primary, #FF9800);
+}
+.review-reply-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+.review-reply-icon { font-size: 28rpx; }
+.review-reply-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--color-text, #333);
+}
+.review-reply-date {
+  font-size: 22rpx;
+  color: var(--color-text-sub, #999);
+  margin-left: auto;
+}
+.review-reply-text {
+  font-size: 26rpx;
+  color: var(--color-text-sub, #555);
+  line-height: 1.6;
+}

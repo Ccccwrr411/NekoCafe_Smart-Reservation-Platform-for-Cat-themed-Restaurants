@@ -77,9 +77,39 @@ public class ReservationServiceImpl implements ReservationService {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             reserveTime = sdf.parse(dto.getReserveDate() + " " + dto.getReserveTime());
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "预约时间格式错误");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "预约时间格式错误，请选择有效的日期和时间");
         }
         final int durationMin = dto.getDuration() != null ? dto.getDuration() * 60 : 120; // 小时转分钟
+
+        // 2.1 预约时间不能是过去
+        if (reserveTime.before(new Date())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "预约时间已过，请选择未来的时间");
+        }
+
+        // 2.2 校验门店存在
+        Stores store = storesMapper.selectByPrimaryKey(dto.getStoreId());
+        if (store == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "门店不存在，请重新选择门店");
+        }
+
+        // 2.3 校验桌位存在、属于该门店、且处于可用状态
+        Tables table = tablesMapper.selectByPrimaryKey(dto.getTableId());
+        if (table == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "桌位不存在，请重新选择桌位");
+        }
+        if (table.getStoreId() == null || !table.getStoreId().equals(dto.getStoreId())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "该桌位不属于所选门店，请重新选择");
+        }
+        if (table.getIsActive() == null || !table.getIsActive()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "该桌位当前不可用（维护中），请选择其他桌位");
+        }
+
+        // 2.4 校验人数不超过桌位容量
+        int partySize = dto.getPersons() != null ? dto.getPersons() : 1;
+        if (table.getCapacity() != null && partySize > table.getCapacity()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST,
+                    "预约人数（" + partySize + "人）超过该桌位最大容量（" + table.getCapacity() + "人），请减少人数或更换桌位");
+        }
 
         // 3. 关键并发控制：按【桌位】加分布式锁，把「时段冲突检查 + 插入」串行化。
         //    锁在事务提交之后才释放（TransactionTemplate 在 lambda 内提交），
@@ -151,12 +181,12 @@ public class ReservationServiceImpl implements ReservationService {
         // 3.3 乐观锁更新 table_status（分布式锁下基本必成功，保留作纵深防御）
         TableStatus currentStatus = tableStatusMapper.selectByPrimaryKey(dto.getTableId());
         if (currentStatus == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态记录不存在");
+            throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态异常，请刷新后重试");
         }
         int affected = tableStatusMapper.reserveTableOptimistic(
                 dto.getTableId(), reservationId, currentStatus.getVersion());
         if (affected == 0) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "桌位状态已变更，请重试");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "该桌位刚被其他人预约，请选择其他桌位或时段");
         }
 
         // 3.4 预约超时自动取消：随业务事务写入发件箱（延迟队列，TTL 到期后未支付则自动释放桌位）

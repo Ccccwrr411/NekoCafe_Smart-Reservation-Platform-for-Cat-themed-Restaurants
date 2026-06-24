@@ -21,22 +21,73 @@ page { background: #F7F0EB; }
 .main-content { padding: 0 0 130rpx; }
 
 /* ── Loading ── */
-.loading-wrap { display: flex; flex-direction: column; align-items: center; padding: 120rpx 0; }
-.spinner { width: 48rpx; height: 48rpx; border: 4rpx solid #E8DDD5; border-top-color: #C97E5A; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.loading-wrap { padding: 60rpx 0; text-align: center; color: #999; font-size: 26rpx; }
 .loading-text { font-size: 26rpx; color: #999; margin-top: 16rpx; }
 
 /* ══════════════════════════════════════════════════════
-   Tab1 看板
+   Tab1 看板（与店长看板同风格）
    ══════════════════════════════════════════════════════ */
-.summary-cards { display: flex; gap: 16rpx; padding: 20rpx 24rpx; }
-.sc-card { flex: 1; background: #fff; border-radius: 12rpx; padding: 20rpx 16rpx; text-align: center; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
-.sc-val { display: block; font-size: 36rpx; font-weight: 700; color: #C97E5A; }
-.sc-label { display: block; font-size: 22rpx; color: #999; margin-top: 4rpx; }
 
+/* 看板顶部 Banner 小卡片 */
+.dash-banner-inner {
+  background: linear-gradient(135deg, #C97E5A, #8B5A3C);
+  margin: 16rpx 24rpx;
+  padding: 28rpx 24rpx;
+  border-radius: 16rpx;
+  color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(201,126,90,0.2);
+}
+.dash-banner-title { font-size: 36rpx; font-weight: 700; display: block; }
+.dash-banner-sub   { font-size: 24rpx; opacity: 0.8; margin-top: 8rpx; display: block; }
+
+/* 今日概览卡片（暖棕渐变，与店长一致） */
+.overview-card {
+  margin: 0 24rpx 16rpx;
+  background: linear-gradient(135deg, #C97E5A, #8B5A3C);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  color: #fff;
+}
+.card-title { font-size: 30rpx; font-weight: 600; margin-bottom: 18rpx; display: block; }
+.overview-grid { display: flex; justify-content: space-between; }
+.ov-item { display: flex; flex-direction: column; align-items: center; }
+.ov-val { font-size: 34rpx; font-weight: 700; }
+.ov-label { font-size: 22rpx; opacity: 0.7; margin-top: 4rpx; }
+.ov-revenue { color: #F1C40F; }
+.ov-orders  { color: #3498DB; }
+.ov-members { color: #2ECC71; }
+.ov-avg     { color: #E67E22; }
+
+/* 图表白色卡片（与 staffDashboard .info-card 一致） */
+.info-card {
+  margin: 0 24rpx 16rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.info-card .card-title { color: #333; }
+
+/* Canvas 图表容器（有固定高度，canvas 才能获取到尺寸） */
+.chart-wrap {
+  width: 100%;
+  height: 400rpx;
+  margin-top: 16rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  background: #fdfaf7;
+}
+.chart-wrap-pie {
+  height: 460rpx;
+}
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* 旧样式保留（供其他地方引用，不删除） */
 .section-title { font-size: 30rpx; font-weight: 600; color: #333; padding: 20rpx 24rpx 8rpx; }
 .section-divider { font-size: 28rpx; font-weight: 600; color: #C97E5A; padding: 28rpx 24rpx 12rpx; border-top: 12rpx solid #f0f0f0; }
-
 .store-card { margin: 12rpx 24rpx; background: #fff; border-radius: 14rpx; padding: 20rpx 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
 .sc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10rpx; }
 .sc-name { font-size: 30rpx; font-weight: 600; color: #333; }
@@ -44,43 +95,6 @@ page { background: #F7F0EB; }
 .sc-status.open { background: #E8F5E9; color: #2E7D32; }
 .sc-status.closed { background: #F5F5F5; color: #999; }
 .sc-meta { display: flex; gap: 24rpx; font-size: 24rpx; color: #666; }
-
-/* ── 今日概览 ── */
-.overview-card {
-  margin: 16rpx 24rpx;
-  background: linear-gradient(135deg, #2C3E50, #34495E);
-  border-radius: 16rpx;
-  padding: 24rpx;
-  color: #fff;
-}
-.ov-grid { display: flex; justify-content: space-between; }
-.ov-item { display: flex; flex-direction: column; align-items: center; }
-.ov-val { font-size: 36rpx; font-weight: 700; }
-.ov-label { font-size: 22rpx; opacity: 0.7; margin-top: 4rpx; }
-.ov-revenue { color: #F1C40F; }
-.ov-orders  { color: #3498DB; }
-.ov-members { color: #2ECC71; }
-.ov-avg     { color: #E67E22; }
-
-/* ── 图表卡片 ── */
-.chart-card {
-  margin: 16rpx 24rpx;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
-}
-.chart-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
-  padding: 0 8rpx 16rpx;
-  display: block;
-}
-.chart-canvas {
-  width: 100%;
-  height: 340rpx;
-}
 
 /* ══════════════════════════════════════════════════════
    Tab2 运营

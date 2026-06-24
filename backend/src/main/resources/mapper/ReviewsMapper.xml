@@ -12,6 +12,7 @@
     <result column="environment_rating" jdbcType="INTEGER" property="environmentRating" />
     <result column="cat_interaction_rating" jdbcType="INTEGER" property="catInteractionRating" />
     <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="tags" jdbcType="VARCHAR" property="tags" />
     <result column="images" jdbcType="OTHER" property="images" />
     <result column="reply" jdbcType="VARCHAR" property="reply" />
     <result column="reply_at" jdbcType="TIMESTAMP" property="replyAt" />
@@ -79,7 +80,7 @@
   </sql>
   <sql id="Base_Column_List">
     review_id, reservation_id, user_id, store_id, overall_rating, food_rating, service_rating, 
-    environment_rating, cat_interaction_rating, content, images, reply, reply_at, status, 
+    environment_rating, cat_interaction_rating, content, tags, images, reply, reply_at, status, 
     created_at, updated_at
   </sql>
   <select id="selectByExample" parameterType="cn.edu.bjfu.nekocafe.entity.ReviewsExample" resultMap="BaseResultMap">
@@ -116,13 +117,13 @@
     insert into public.reviews (review_id, reservation_id, user_id, 
       store_id, overall_rating, food_rating, 
       service_rating, environment_rating, cat_interaction_rating, 
-      content, images, reply, 
+      content, tags, images, reply, 
       reply_at, status, created_at, 
       updated_at)
     values (#{reviewId,jdbcType=BIGINT}, #{reservationId,jdbcType=BIGINT}, #{userId,jdbcType=BIGINT}, 
       #{storeId,jdbcType=INTEGER}, #{overallRating,jdbcType=INTEGER}, #{foodRating,jdbcType=INTEGER}, 
       #{serviceRating,jdbcType=INTEGER}, #{environmentRating,jdbcType=INTEGER}, #{catInteractionRating,jdbcType=INTEGER}, 
-      #{content,jdbcType=VARCHAR}, #{images,jdbcType=OTHER}, #{reply,jdbcType=VARCHAR}, 
+      #{content,jdbcType=VARCHAR}, #{tags,jdbcType=VARCHAR}::jsonb, #{images,jdbcType=OTHER}, #{reply,jdbcType=VARCHAR}, 
       #{replyAt,jdbcType=TIMESTAMP}, #{status,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP}, 
       #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
@@ -158,6 +159,9 @@
       </if>
       <if test="content != null">
         content,
+      </if>
+      <if test="tags != null">
+        tags,
       </if>
       <if test="images != null">
         images,
@@ -208,6 +212,9 @@
       </if>
       <if test="content != null">
         #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="tags != null">
+        #{tags,jdbcType=VARCHAR}::jsonb,
       </if>
       <if test="images != null">
         #{images,jdbcType=OTHER},
@@ -268,6 +275,9 @@
       <if test="row.content != null">
         content = #{row.content,jdbcType=VARCHAR},
       </if>
+      <if test="row.tags != null">
+        tags = #{row.tags,jdbcType=VARCHAR}::jsonb,
+      </if>
       <if test="row.images != null">
         images = #{row.images,jdbcType=OTHER},
       </if>
@@ -303,6 +313,7 @@
       environment_rating = #{row.environmentRating,jdbcType=INTEGER},
       cat_interaction_rating = #{row.catInteractionRating,jdbcType=INTEGER},
       content = #{row.content,jdbcType=VARCHAR},
+      tags = #{row.tags,jdbcType=VARCHAR}::jsonb,
       images = #{row.images,jdbcType=OTHER},
       reply = #{row.reply,jdbcType=VARCHAR},
       reply_at = #{row.replyAt,jdbcType=TIMESTAMP},
@@ -343,6 +354,9 @@
       <if test="content != null">
         content = #{content,jdbcType=VARCHAR},
       </if>
+      <if test="tags != null">
+        tags = #{tags,jdbcType=VARCHAR}::jsonb,
+      </if>
       <if test="images != null">
         images = #{images,jdbcType=OTHER},
       </if>
@@ -375,6 +389,7 @@
       environment_rating = #{environmentRating,jdbcType=INTEGER},
       cat_interaction_rating = #{catInteractionRating,jdbcType=INTEGER},
       content = #{content,jdbcType=VARCHAR},
+      tags = #{tags,jdbcType=VARCHAR}::jsonb,
       images = #{images,jdbcType=OTHER},
       reply = #{reply,jdbcType=VARCHAR},
       reply_at = #{replyAt,jdbcType=TIMESTAMP},

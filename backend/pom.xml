@@ -72,7 +72,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
+      <!-- 改为 compile scope，以便编译期可以引用 PGobject 等 JDBC 扩展类 -->
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>

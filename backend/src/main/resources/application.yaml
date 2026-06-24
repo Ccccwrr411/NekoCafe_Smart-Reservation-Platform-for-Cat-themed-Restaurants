@@ -78,6 +78,8 @@ server:
 
 # 业务/中间件自定义配置
 nekocafe:
+  sandbox:
+    enabled: true   # 沙箱模式：验证码直接返回前端、支付走模拟弹窗。正式环境改为 false
   outbox:
     poll-interval-ms: 500   # 发件箱投递轮询周期（毫秒）
 
@@ -85,6 +87,7 @@ nekocafe:
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: cn.edu.bjfu.nekocafe.entity
+  type-handlers-package: cn.edu.bjfu.nekocafe.config  # 注册 JsonbTypeHandler 等自定义类型处理器
   configuration:
     map-underscore-to-camel-case: true  # 驼峰映射：store_id → storeId
 

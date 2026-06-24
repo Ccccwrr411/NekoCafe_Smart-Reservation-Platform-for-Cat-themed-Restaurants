@@ -51,4 +51,10 @@ public interface OrderService {
      * 返回 refundId + refundAmount + status
      */
     Map<String, Object> applyRefund(Long userId, String orderId, String refundReason);
+
+    /**
+     * 确认支付（沙箱模式：用户点击"模拟支付成功"后调用）
+     * 将 payment 状态从 PENDING → PAID，写入 paidAt
+     */
+    Map<String, Object> confirmPayment(String orderId);
 }

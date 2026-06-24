@@ -1,5 +1,6 @@
 <!--pages/review/review.wxml-->
 <view class="container">
+  <!-- 整体评分 -->
   <view class="card">
     <view class="section-label">整体评分</view>
     <view class="star-row">
@@ -8,19 +9,62 @@
         bindtap="onRatingChange" data-value="{{item}}">★</text>
     </view>
   </view>
+
+  <!-- 细分评分 -->
+  <view class="card">
+    <view class="section-label">细分评分</view>
+    <view class="sub-rating-row">
+      <text class="sub-rating-label">菜品</text>
+      <view class="sub-rating-stars">
+        <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+          class="star-sm {{foodRating >= item ? 'star-on' : 'star-off'}}"
+          bindtap="onFoodRatingChange" data-value="{{item}}">★</text>
+      </view>
+    </view>
+    <view class="sub-rating-row">
+      <text class="sub-rating-label">服务</text>
+      <view class="sub-rating-stars">
+        <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+          class="star-sm {{serviceRating >= item ? 'star-on' : 'star-off'}}"
+          bindtap="onServiceRatingChange" data-value="{{item}}">★</text>
+      </view>
+    </view>
+    <view class="sub-rating-row">
+      <text class="sub-rating-label">环境</text>
+      <view class="sub-rating-stars">
+        <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+          class="star-sm {{environmentRating >= item ? 'star-on' : 'star-off'}}"
+          bindtap="onEnvironmentRatingChange" data-value="{{item}}">★</text>
+      </view>
+    </view>
+    <view class="sub-rating-row">
+      <text class="sub-rating-label">猫咪互动</text>
+      <view class="sub-rating-stars">
+        <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+          class="star-sm {{catInteractionRating >= item ? 'star-on' : 'star-off'}}"
+          bindtap="onCatRatingChange" data-value="{{item}}">★</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 选择标签 -->
   <view class="card">
     <view class="section-label">选择标签</view>
     <view class="tag-wrap">
-      <view wx:for="{{tags}}" wx:key="*this"
-        class="tag-btn {{selectedTags.indexOf(item) >= 0 ? 'tag-btn-active' : ''}}"
-        bindtap="onTagClick" data-tag="{{item}}">{{item}}</view>
+      <view wx:for="{{tagList}}" wx:key="label"
+        class="tag-btn {{item.selected ? 'tag-btn-active' : ''}}"
+        bindtap="onTagClick" data-index="{{index}}">{{item.label}}</view>
     </view>
   </view>
+
+  <!-- 文字评价 -->
   <view class="card">
     <view class="section-label">写下你的体验</view>
     <textarea class="review-textarea" placeholder="分享你与猫咪的温馨时刻..." bindinput="onContentInput" maxlength="200" />
   </view>
+
+  <!-- 提交按钮 -->
   <view style="padding: 0 24rpx;">
-    <button class="btn-primary" style="width:100%;" bindtap="onSubmit">提交评价</button>
+    <button class="btn-primary" style="width:100%;" bindtap="onSubmit" loading="{{submitting}}">提交评价</button>
   </view>
 </view>

@@ -1,6 +1,7 @@
 package cn.edu.bjfu.nekocafe.service.impl;
 
 import cn.edu.bjfu.nekocafe.common.ErrorCode;
+import cn.edu.bjfu.nekocafe.config.SandboxProperties;
 import cn.edu.bjfu.nekocafe.dto.OrderSubmitDTO;
 import cn.edu.bjfu.nekocafe.dto.ReservationCreateDTO;
 import cn.edu.bjfu.nekocafe.dto.RescheduleDTO;
@@ -80,10 +81,16 @@ public class OrderServiceImpl implements OrderService {
   private UsersMapper usersMapper;
 
   @Autowired
+  private ReviewsMapper reviewsMapper;
+
+  @Autowired
   private MessageOutbox messageOutbox;
 
   @Autowired
   private MqConsumedMapper mqConsumedMapper;
+
+  @Autowired
+  private SandboxProperties sandboxProperties;
 
   /** 订单副作用消息 id：确定值，供消费幂等与「取消/异步」结算协调共用。 */
   private static String orderSideEffectMsgId(Long reservationId) {
@@ -195,6 +202,15 @@ public class OrderServiceImpl implements OrderService {
       refundMap.put(ref.getReservationId(), ref);
     }
 
+    // 5.6 批量查评价（reviews - 用于判断 hasReview）
+    ReviewsExample reviewsBatchExample = new ReviewsExample();
+    reviewsBatchExample.createCriteria().andReservationIdIn(reservationIds);
+    List<Reviews> allReviews = reviewsMapper.selectByExample(reviewsBatchExample);
+    Set<Long> reviewedReservationIds = new HashSet<>();
+    for (Reviews rv : allReviews) {
+      reviewedReservationIds.add(rv.getReservationId());
+    }
+
     // 6. 拼装 OrderVO 列表
     List<OrderVO> result = new ArrayList<>();
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -273,6 +289,10 @@ public class OrderServiceImpl implements OrderService {
           if (vo.getTotalAmount() == null || vo.getTotalAmount() == 0) {
             vo.setTotalAmount(payment.getAmount().intValue());
           }
+        }
+        // 待支付：CONFIRMED + PENDING → 前端显示"待支付"
+        if ("CONFIRMED".equals(r.getStatus()) && "PENDING".equals(payment.getStatus())) {
+          vo.setStatus("pending_payment");
         }
       } else {
         vo.setPayTime("");
@@ -371,7 +391,7 @@ public class OrderServiceImpl implements OrderService {
       vo.setCanCancel(canCancelOrder(r));
       vo.setCanReschedule(canRescheduleOrder(r));
       vo.setCanRefund(canRefundOrder(r));
-      vo.setHasReview(false); // 评价由 ReviewService 处理
+      vo.setHasReview(reviewedReservationIds.contains(r.getReservationId()));
 
       result.add(vo);
     }
@@ -517,14 +537,23 @@ public class OrderServiceImpl implements OrderService {
     // 4b/4c. 优惠券使用记录 + 积分流水 —— 已剥离到 MQ 异步处理（见下方发件箱）。
 
     // 4d. INSERT payments
+    //     沙箱模式：非0金额订单支付状态为 PENDING（待用户确认模拟支付后再调 confirm-payment 改为 PAID）
+    //     0元订单：直接 PAID（无需支付）
+    //     正式模式：同样先 PENDING，等待微信支付回调改为 PAID
     String transactionId = "MOCK_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     Payments payment = new Payments();
     payment.setReservationId(reservationId);
     payment.setPaymentMethod("wechat");
     payment.setAmount(new BigDecimal(finalAmount));
     payment.setTransactionId(transactionId);
-    payment.setStatus("PAID");
-    payment.setPaidAt(now);
+    boolean isFreeOrder = (finalAmount == 0);
+    if (isFreeOrder) {
+      payment.setStatus("PAID");
+      payment.setPaidAt(now);
+    } else {
+      payment.setStatus("PENDING");
+      // paidAt 不设置，等确认支付后再写入
+    }
     payment.setCreatedAt(now);
     paymentsMapper.insertSelective(payment);
 
@@ -556,22 +585,29 @@ public class OrderServiceImpl implements OrderService {
     messageOutbox.enqueue(MqConst.ORDER_EXCHANGE, MqConst.RK_ORDER_NOTIFICATION, "ORDER_NOTIFICATION", notifyEvt);
 
     // 5. 返回（前端检查 code===0, payInfo, finalAmount）
-    //    开发阶段：返回 mock 支付参数，前端识别后走模拟支付弹窗
-    //    对接真实微信支付后：需调用统一下单API获取 timeStamp/nonceStr/package/paySign
+    //    沙箱模式：返回 mock 支付参数，前端识别后走模拟支付弹窗，用户确认后调 confirm-payment
+    //    正式模式：需调用微信统一下单API获取 timeStamp/nonceStr/package/paySign
     Map<String, Object> result = new HashMap<>();
     result.put("orderId", formatOrderId(reservationId));
     result.put("totalAmount", totalAmount);
     result.put("finalAmount", finalAmount);
-    Map<String, String> payInfo = new HashMap<>();
-    payInfo.put("transactionId", transactionId);
-    payInfo.put("method", "wechat");
-    payInfo.put("status", "PAID");
-    payInfo.put("timeStamp", String.valueOf(System.currentTimeMillis() / 1000));
-    payInfo.put("nonceStr", UUID.randomUUID().toString().replace("-", "").substring(0, 16));
-    payInfo.put("package", "prepay_id=mock_prepay_id_" + transactionId);
-    payInfo.put("signType", "RSA");
-    payInfo.put("paySign", "mock_pay_sign_20260603");
-    result.put("payInfo", payInfo);
+    result.put("needConfirm", !isFreeOrder);  // 非0元订单需要前端调确认支付接口
+    if (!isFreeOrder) {
+      Map<String, String> payInfo = new HashMap<>();
+      payInfo.put("transactionId", transactionId);
+      payInfo.put("method", "wechat");
+      payInfo.put("status", "PENDING");
+      if (sandboxProperties.isEnabled()) {
+        // 沙箱模式：返回 mock 参数，前端 isMockPayInfo() 检测后走模拟弹窗
+        payInfo.put("timeStamp", String.valueOf(System.currentTimeMillis() / 1000));
+        payInfo.put("nonceStr", UUID.randomUUID().toString().replace("-", "").substring(0, 16));
+        payInfo.put("package", "prepay_id=mock_prepay_id_" + transactionId);
+        payInfo.put("signType", "RSA");
+        payInfo.put("paySign", "mock_pay_sign_20260603");
+      }
+      // TODO 正式模式：调用微信支付统一下单 API，填入真实 payInfo
+      result.put("payInfo", payInfo);
+    }
 
     return result;
   }
@@ -733,6 +769,12 @@ public class OrderServiceImpl implements OrderService {
       vo.setStatus(mapStatusToFrontend(reservation.getStatus()));
     }
 
+    // 待支付覆盖：CONFIRMED + PENDING → "pending_payment"
+    if ("CONFIRMED".equals(reservation.getStatus()) && payment != null
+        && "PENDING".equals(payment.getStatus())) {
+      vo.setStatus("pending_payment");
+    }
+
     // ==================== 查 coupon_usage + user_coupons + promotions ====================
 
     CouponUsageExample cuExample = new CouponUsageExample();
@@ -851,7 +893,29 @@ public class OrderServiceImpl implements OrderService {
     vo.setCanCancel(canCancelOrder(reservation));
     vo.setCanReschedule(false); // 不允许改约
     vo.setCanRefund(canRefundOrder(reservation));
-    vo.setHasReview(false);
+
+    // ========== 查评价 ==========
+    ReviewsExample reviewsExample = new ReviewsExample();
+    reviewsExample.createCriteria().andReservationIdEqualTo(reservationId);
+    List<Reviews> reviewsList = reviewsMapper.selectByExample(reviewsExample);
+    if (reviewsList != null && !reviewsList.isEmpty()) {
+      Reviews review = reviewsList.get(0);
+      vo.setHasReview(true);
+      OrderVO.ReviewVO reviewVO = new OrderVO.ReviewVO();
+      reviewVO.setOverallRating(review.getOverallRating());
+      reviewVO.setFoodRating(review.getFoodRating());
+      reviewVO.setServiceRating(review.getServiceRating());
+      reviewVO.setEnvironmentRating(review.getEnvironmentRating());
+      reviewVO.setCatInteractionRating(review.getCatInteractionRating());
+      reviewVO.setContent(review.getContent());
+      reviewVO.setTags(review.getTags());
+      reviewVO.setReply(review.getReply());
+      reviewVO.setReplyAt(review.getReplyAt() != null ? sdf.format(review.getReplyAt()) : null);
+      reviewVO.setCreatedAt(review.getCreatedAt() != null ? sdf.format(review.getCreatedAt()) : null);
+      vo.setReview(reviewVO);
+    } else {
+      vo.setHasReview(false);
+    }
 
     // ==================== 前端展示字段 ====================
 
@@ -958,10 +1022,15 @@ public class OrderServiceImpl implements OrderService {
     reservationsMapper.updateByPrimaryKeySelective(updateRes);
 
     // 2. UPDATE payments: PAID → REFUNDED（取消订单直接退款，不走售后审核）
-    if (hasPaid) {
+    //    PENDING → CANCELLED（待支付订单取消，无需退款）
+    if (payment != null) {
       Payments updatePay = new Payments();
       updatePay.setPaymentId(payment.getPaymentId());
-      updatePay.setStatus("REFUNDED");
+      if (hasPaid) {
+        updatePay.setStatus("REFUNDED");
+      } else if ("PENDING".equals(payment.getStatus())) {
+        updatePay.setStatus("CANCELLED");
+      }
       paymentsMapper.updateByPrimaryKeySelective(updatePay);
     }
 
@@ -1252,6 +1321,54 @@ public class OrderServiceImpl implements OrderService {
     return result;
   }
 
+  // ==================== 确认支付（沙箱模式） ====================
+
+  @Override
+  @Transactional
+  public Map<String, Object> confirmPayment(String orderId) {
+    Long reservationId = parseOrderId(orderId);
+    if (reservationId == null) {
+      throw new BusinessException(ErrorCode.BAD_REQUEST, "订单号格式错误");
+    }
+
+    // 查支付记录
+    PaymentsExample payExample = new PaymentsExample();
+    payExample.createCriteria().andReservationIdEqualTo(reservationId);
+    List<Payments> payList = paymentsMapper.selectByExample(payExample);
+    if (payList == null || payList.isEmpty()) {
+      throw new BusinessException(ErrorCode.NOT_FOUND, "支付记录不存在");
+    }
+
+    Payments payment = payList.get(0);
+
+    // 幂等：已支付直接返回成功
+    if ("PAID".equals(payment.getStatus())) {
+      Map<String, Object> result = new HashMap<>();
+      result.put("orderId", orderId);
+      result.put("paymentStatus", "PAID");
+      return result;
+    }
+
+    // 仅 PENDING 状态可确认
+    if (!"PENDING".equals(payment.getStatus())) {
+      throw new BusinessException(ErrorCode.BAD_REQUEST,
+          "当前支付状态不允许确认（status=" + payment.getStatus() + "）");
+    }
+
+    // PENDING → PAID
+    Date now = new Date();
+    Payments updatePay = new Payments();
+    updatePay.setPaymentId(payment.getPaymentId());
+    updatePay.setStatus("PAID");
+    updatePay.setPaidAt(now);
+    paymentsMapper.updateByPrimaryKeySelective(updatePay);
+
+    Map<String, Object> result = new HashMap<>();
+    result.put("orderId", orderId);
+    result.put("paymentStatus", "PAID");
+    return result;
+  }
+
   private static final List<String> ACTIVE_STATUSES = Arrays.asList("BOOKED", "CONFIRMED");
 
   // ==================== 工具方法 ====================
@@ -1486,8 +1603,8 @@ public class OrderServiceImpl implements OrderService {
       case "booked":
         return java.util.Arrays.asList("booked");
       case "confirmed":
-        // 用餐中 tab 包含 occupied
-        return java.util.Arrays.asList("confirmed", "occupied");
+        // 用餐中 tab 包含 occupied + pending_payment（待支付也算已下单）
+        return java.util.Arrays.asList("confirmed", "occupied", "pending_payment");
       case "cancelled":
         // 已取消：cancel_booking + cancel_order（含旧数据 REFUNDING+REQUEST_CANCEL 重映射后的结果）
         return java.util.Arrays.asList("cancel_booking", "cancel_order");

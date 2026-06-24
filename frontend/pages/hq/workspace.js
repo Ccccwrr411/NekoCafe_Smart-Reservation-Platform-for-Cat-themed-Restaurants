@@ -1,6 +1,7 @@
 // pages/hq/workspace.js
 // 总部运营工作台：看板 / 运营 / 通知 / 我的 四 Tab
 const { get, post, put, del, patch } = require('../../utils/request')
+const chart = require('../../utils/chart')
 const app = getApp()
 
 const ALL_STORES = [
@@ -118,249 +119,79 @@ Page({
     get('/api/dashboard/metrics', { storeId: this.data.storeId, range: this.data.range })
       .then(res => {
         this.setData({ loading: false })
-        if (res.code === 0) {
-          this.setData({ metrics: res.data })
-          setTimeout(() => {
-            this.drawSpaceEfficiencyChart()
-            this.drawTurnoverRateChart()
-            this.drawRepurchaseRateChart()
-          }, 300)
+        if (res.code === 0 && res.data) {
+          // 与 staffDashboard 完全一致：将 chartData 转换为三个图表子对象
+          var raw = res.data
+          var cd = raw.chartData || {}
+          var labels = cd.labels || []
+          var metricsData = Object.assign({}, raw, {
+            spaceEfficiency: { labels: labels, values: cd.revenuePerSeat || [] },
+            turnoverRate:    { labels: labels, values: cd.tableTurnoverRate || [] },
+            repurchaseRate:  { labels: labels, values: cd.repurchaseRate || [] }
+          })
+          this.setData({ metrics: metricsData })
+          // 等待 setData 渲染完成后再绘图
+          setTimeout(() => { this.drawCharts() }, 300)
         }
       })
       .catch(() => { this.setData({ loading: false }) })
   },
 
-  // ========== 坪效折线图 ==========
-  drawSpaceEfficiencyChart() {
-    const data = this.data.metrics.spaceEfficiency
-    if (!data) return
-    const query = wx.createSelectorQuery()
-    query.select('#chartLine').fields({ node: true, size: true }).exec((res) => {
-      if (!res[0] || !res[0].node) return
-      const canvas = res[0].node
-      const ctx = canvas.getContext('2d')
-      const dpr = wx.getSystemInfoSync().pixelRatio
-      const w = res[0].width
-      const h = res[0].height
-      canvas.width = w * dpr
-      canvas.height = h * dpr
-      ctx.scale(dpr, dpr)
+  /**
+   * 绘制三个 Canvas 图表（与 staffDashboard 完全对应）
+   * 坪效折线图 / 翻台率柱状图 / 会员复购率饼图
+   * 内置一次重试：canvas 初始化可能因渲染时序失败
+   */
+  drawCharts() {
+    var metrics = this.data.metrics
+    if (!metrics || !metrics.spaceEfficiency) return
 
-      const pad = { top: 20, right: 20, bottom: 40, left: 50 }
-      const chartW = w - pad.left - pad.right
-      const chartH = h - pad.top - pad.bottom
-      const labels = data.labels
-      const values = data.values
-      if (!values || values.length === 0) return
-      const maxVal = Math.max(...values)
-      const minVal = Math.min(...values)
+    var that = this
 
-      ctx.fillStyle = '#FAFBFC'
-      ctx.fillRect(0, 0, w, h)
-
-      ctx.fillStyle = '#999'
-      ctx.font = '10px sans-serif'
-      ctx.textAlign = 'right'
-      for (let i = 0; i <= 4; i++) {
-        const y = pad.top + (chartH / 4) * (4 - i)
-        const val = Math.round(minVal + (maxVal - minVal) * i / 4)
-        ctx.fillText(val, pad.left - 6, y + 4)
-        ctx.strokeStyle = '#E8E8E8'
-        ctx.beginPath()
-        ctx.moveTo(pad.left, y)
-        ctx.lineTo(w - pad.right, y)
-        ctx.stroke()
-      }
-
-      ctx.strokeStyle = '#C97E5A'
-      ctx.lineWidth = 2.5
-      ctx.lineJoin = 'round'
-      ctx.beginPath()
-      const points = values.map((v, i) => ({
-        x: pad.left + (chartW / (values.length - 1)) * i,
-        y: pad.top + chartH - ((v - minVal) / (maxVal - minVal || 1)) * chartH
-      }))
-      points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y))
-      ctx.stroke()
-
-      points.forEach(p => {
-        ctx.fillStyle = '#fff'
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.strokeStyle = '#C97E5A'
-        ctx.lineWidth = 2
-        ctx.stroke()
+    /**
+     * 尝试绘制单个图表，失败后延迟重试一次
+     * @param {string} selector  canvas 选择器
+     * @param {function} drawFn  绘制函数 (ctx, options)
+     * @param {object} options   绘制参数
+     * @param {string} name      图表名称（日志用）
+     */
+    function tryDraw(selector, drawFn, options, name) {
+      chart.initCanvas(selector, that).then(function(res) {
+        var fullOpts = Object.assign({}, options, { width: res.width, height: res.height })
+        drawFn(res.ctx, fullOpts)
+      }).catch(function(e) {
+        console.warn('[hq chart] ' + name + ' first attempt failed:', e)
+        // 500ms 后重试一次
+        setTimeout(function() {
+          chart.initCanvas(selector, that).then(function(res2) {
+            var fullOpts2 = Object.assign({}, options, { width: res2.width, height: res2.height })
+            drawFn(res2.ctx, fullOpts2)
+          }).catch(function(e2) {
+            console.warn('[hq chart] ' + name + ' retry also failed:', e2)
+          })
+        }, 500)
       })
+    }
 
-      ctx.fillStyle = '#333'
-      ctx.font = 'bold 11px sans-serif'
-      ctx.textAlign = 'center'
-      points.forEach((p, i) => { ctx.fillText(values[i], p.x, p.y - 10) })
+    // ── 坪效 折线图 ──
+    tryDraw('#chart-space', chart.drawLine, {
+      labels: (metrics.spaceEfficiency && metrics.spaceEfficiency.labels) || [],
+      values: (metrics.spaceEfficiency && metrics.spaceEfficiency.values) || [],
+      lineColor: '#C97E5A'
+    }, 'spaceEfficiency')
 
-      ctx.fillStyle = '#888'
-      ctx.font = '10px sans-serif'
-      ctx.textAlign = 'center'
-      labels.forEach((l, i) => {
-        const x = pad.left + (chartW / (labels.length - 1)) * i
-        ctx.fillText(l, x, h - 8)
-      })
-    })
-  },
+    // ── 翻台率 柱状图 ──
+    tryDraw('#chart-turnover', chart.drawBar, {
+      labels: (metrics.turnoverRate && metrics.turnoverRate.labels) || [],
+      values: (metrics.turnoverRate && metrics.turnoverRate.values) || [],
+      barColor: '#8B5A3C'
+    }, 'turnoverRate')
 
-  // ========== 翻台率柱状图 ==========
-  drawTurnoverRateChart() {
-    const data = this.data.metrics.turnoverRate
-    if (!data) return
-    const query = wx.createSelectorQuery()
-    query.select('#chartBar').fields({ node: true, size: true }).exec((res) => {
-      if (!res[0] || !res[0].node) return
-      const canvas = res[0].node
-      const ctx = canvas.getContext('2d')
-      const dpr = wx.getSystemInfoSync().pixelRatio
-      const w = res[0].width
-      const h = res[0].height
-      canvas.width = w * dpr
-      canvas.height = h * dpr
-      ctx.scale(dpr, dpr)
-
-      const pad = { top: 20, right: 20, bottom: 40, left: 50 }
-      const chartW = w - pad.left - pad.right
-      const chartH = h - pad.top - pad.bottom
-      const labels = data.labels
-      const values = data.values
-      if (!values || values.length === 0) return
-      const maxVal = Math.max(...values)
-
-      ctx.fillStyle = '#FAFBFC'
-      ctx.fillRect(0, 0, w, h)
-
-      ctx.fillStyle = '#999'
-      ctx.font = '10px sans-serif'
-      ctx.textAlign = 'right'
-      for (let i = 0; i <= 4; i++) {
-        const y = pad.top + (chartH / 4) * (4 - i)
-        const val = (maxVal / 4 * i).toFixed(1)
-        ctx.fillText(val + 'x', pad.left - 6, y + 4)
-        ctx.strokeStyle = '#E8E8E8'
-        ctx.beginPath()
-        ctx.moveTo(pad.left, y)
-        ctx.lineTo(w - pad.right, y)
-        ctx.stroke()
-      }
-
-      const barCount = values.length
-      const barW = chartW / barCount * 0.6
-      const gap = chartW / barCount * 0.4
-      const colors = ['#E74C3C', '#E67E22', '#F1C40F', '#2ECC71', '#3498DB', '#9B59B6', '#1ABC9C']
-
-      values.forEach((v, i) => {
-        const barH = (v / maxVal) * chartH
-        const x = pad.left + (chartW / barCount) * i + gap / 2
-        const y = pad.top + chartH - barH
-        ctx.fillStyle = colors[i % colors.length]
-        ctx.beginPath()
-        const r = 4
-        ctx.moveTo(x + r, y)
-        ctx.lineTo(x + barW - r, y)
-        ctx.arcTo(x + barW, y, x + barW, y + r, r)
-        ctx.lineTo(x + barW, pad.top + chartH)
-        ctx.lineTo(x, pad.top + chartH)
-        ctx.lineTo(x, y + r)
-        ctx.arcTo(x, y, x + r, y, r)
-        ctx.fill()
-        ctx.fillStyle = '#333'
-        ctx.font = 'bold 11px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.fillText(v.toFixed(1) + 'x', x + barW / 2, y - 6)
-      })
-
-      ctx.fillStyle = '#888'
-      ctx.font = '10px sans-serif'
-      ctx.textAlign = 'center'
-      labels.forEach((l, i) => {
-        const x = pad.left + (chartW / barCount) * i + barW / 2 + gap / 2
-        ctx.fillText(l, x, h - 8)
-      })
-    })
-  },
-
-  // ========== 会员复购率折线图 ==========
-  drawRepurchaseRateChart() {
-    const data = this.data.metrics.repurchaseRate
-    if (!data) return
-    const query = wx.createSelectorQuery()
-    query.select('#chartLine2').fields({ node: true, size: true }).exec((res) => {
-      if (!res[0] || !res[0].node) return
-      const canvas = res[0].node
-      const ctx = canvas.getContext('2d')
-      const dpr = wx.getSystemInfoSync().pixelRatio
-      const w = res[0].width
-      const h = res[0].height
-      canvas.width = w * dpr
-      canvas.height = h * dpr
-      ctx.scale(dpr, dpr)
-
-      const pad = { top: 20, right: 20, bottom: 40, left: 50 }
-      const chartW = w - pad.left - pad.right
-      const chartH = h - pad.top - pad.bottom
-      const labels = data.labels
-      const values = data.values
-      if (!values || values.length === 0) return
-      const maxVal = Math.max(...values)
-      const minVal = 0  // 复购率从0开始
-
-      ctx.fillStyle = '#FAFBFC'
-      ctx.fillRect(0, 0, w, h)
-
-      ctx.fillStyle = '#999'
-      ctx.font = '10px sans-serif'
-      ctx.textAlign = 'right'
-      for (let i = 0; i <= 4; i++) {
-        const y = pad.top + (chartH / 4) * (4 - i)
-        const val = Math.round(maxVal * i / 4)
-        ctx.fillText(val + '%', pad.left - 6, y + 4)
-        ctx.strokeStyle = '#E8E8E8'
-        ctx.beginPath()
-        ctx.moveTo(pad.left, y)
-        ctx.lineTo(w - pad.right, y)
-        ctx.stroke()
-      }
-
-      ctx.strokeStyle = '#2ECC71'
-      ctx.lineWidth = 2.5
-      ctx.lineJoin = 'round'
-      ctx.beginPath()
-      const points = values.map((v, i) => ({
-        x: pad.left + (chartW / (values.length - 1)) * i,
-        y: pad.top + chartH - ((v - minVal) / (maxVal - minVal || 1)) * chartH
-      }))
-      points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y))
-      ctx.stroke()
-
-      points.forEach(p => {
-        ctx.fillStyle = '#fff'
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.strokeStyle = '#2ECC71'
-        ctx.lineWidth = 2
-        ctx.stroke()
-      })
-
-      ctx.fillStyle = '#333'
-      ctx.font = 'bold 11px sans-serif'
-      ctx.textAlign = 'center'
-      points.forEach((p, i) => { ctx.fillText(values[i] + '%', p.x, p.y - 10) })
-
-      ctx.fillStyle = '#888'
-      ctx.font = '10px sans-serif'
-      ctx.textAlign = 'center'
-      labels.forEach((l, i) => {
-        const x = pad.left + (chartW / (labels.length - 1)) * i
-        ctx.fillText(l, x, h - 8)
-      })
-    })
+    // ── 会员复购率 饼图 ──
+    tryDraw('#chart-repurchase', chart.drawPie, {
+      labels: (metrics.repurchaseRate && metrics.repurchaseRate.labels) || [],
+      values: (metrics.repurchaseRate && metrics.repurchaseRate.values) || []
+    }, 'repurchaseRate')
   },
 
   onStoreChange(e) {
