@@ -309,11 +309,25 @@ Page({
           wx.navigateTo({ url: `/pages/orderDetail/orderDetail?orderId=${orderId}` })
         }, 800)
       } else {
-        wx.showToast({ title: result.msg || '预约失败', icon: 'none' })
+        // 后端返回了具体的失败原因，用弹窗展示让用户看清楚
+        const errMsg = result.message || '预约失败，请稍后重试'
+        wx.showModal({
+          title: '预约失败',
+          content: errMsg,
+          showCancel: false,
+          confirmText: '我知道了'
+        })
       }
-    }).catch(() => {
+    }).catch((err) => {
       wx.hideLoading()
-      wx.showToast({ title: '网络开小差啦', icon: 'none' })
+      // 网络层错误也要展示具体信息（而非笼统的"网络开小差"）
+      const errMsg = (err && err.message) ? err.message : '网络异常，请稍后重试'
+      wx.showModal({
+        title: '预约失败',
+        content: errMsg,
+        showCancel: false,
+        confirmText: '我知道了'
+      })
     })
   }
 })

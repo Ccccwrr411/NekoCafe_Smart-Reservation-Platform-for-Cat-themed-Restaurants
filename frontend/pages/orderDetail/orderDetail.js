@@ -43,6 +43,15 @@ Page({
           this._cancelItems = null
           this._cancelRefundAmount = null
         }
+        // 解析评价标签 JSON 字符串 -> 数组
+        if (data.review && data.review.tags) {
+          try {
+            data.review.tags = typeof data.review.tags === 'string'
+              ? JSON.parse(data.review.tags) : data.review.tags
+          } catch (e) {
+            data.review.tags = []
+          }
+        }
         this.setData({ order: data, loading: false })
       }
     }).catch(() => {
@@ -132,6 +141,44 @@ Page({
   // 去评价
   goReview() {
     wx.navigateTo({ url: `/pages/review/review?orderId=${this.data.orderId}` })
+  },
+
+  // 去支付（待支付订单重新发起支付）
+  goPay() {
+    const order = this.data.order
+    if (!order) return
+    const { requestWxPayment } = require('../../utils/payment')
+    const storeName = order.storeName || 'NekoCafe'
+    const amount = order.finalAmount != null ? order.finalAmount : order.totalAmount
+    requestWxPayment({
+      package: 'prepay_id=mock_repay_' + order.id,
+      paySign: 'mock_pay_sign_20260603',
+      signType: 'RSA'
+    }, {
+      amount: amount,
+      storeName: storeName,
+      onSuccess: () => {
+        wx.showLoading({ title: '确认支付...' })
+        post('/api/order/confirm-payment', { orderId: this.data.orderId }).then(r => {
+          wx.hideLoading()
+          if (r.code === 0) {
+            wx.showToast({ title: '支付成功！', icon: 'success', duration: 1500 })
+            setTimeout(() => { this.loadDetail() }, 800)
+          } else {
+            wx.showToast({ title: r.message || '确认失败', icon: 'none' })
+          }
+        }).catch(() => {
+          wx.hideLoading()
+          wx.showToast({ title: '网络异常', icon: 'none' })
+        })
+      },
+      onCancel: () => {
+        wx.showToast({ title: '已取消支付', icon: 'none' })
+      },
+      onFail: () => {
+        wx.showToast({ title: '支付失败', icon: 'none' })
+      }
+    })
   },
 
   // 去点单（预约成功后进入点单流程）

@@ -36,21 +36,15 @@ Page({
       )
     }
     // 店长/总部运营：在菜单顶部插入数据看板
-    if (role === 'hq_ops') {
-      baseMenu.unshift(
-        { icon: '📊', label: '数据看板', path: '/pages/dashboard/dashboard' }
-      )
-    }
-    // 店长：替换为店长工作台入口
     if (role === 'manager') {
       baseMenu.unshift(
-        { icon: '🏪', label: '店长工作台', path: '/pages/staffDashboard/staffDashboard' }
+        { icon: '📊', label: '数据看板', path: '/pages/staffDashboard/staffDashboard' }
       )
     }
+    // 总部运营：在菜单最顶部插入总部运营工作台
     if (role === 'hq_ops') {
       baseMenu.unshift(
-        { icon: '🏪', label: '店员工作台', path: '/pages/staff/staff' },
-        { icon: '📊', label: '数据看板', path: '/pages/dashboard/dashboard' }
+        { icon: '🏢', label: '总部运营工作台', path: '/pages/hq/workspace' }
       )
     }
     this.setData({ menuItems: baseMenu })

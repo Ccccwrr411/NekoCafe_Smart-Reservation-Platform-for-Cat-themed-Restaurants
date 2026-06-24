@@ -53,6 +53,7 @@ const calcDistance = (lat1, lng1, lat2, lng2) => {
 const ORDER_STATUS_MAP = {
   booked:                  { text: '已预约', color: '#4CAF50', bg: '#E8F5E9' },
   pending:                 { text: '待确认', color: '#FF9800', bg: '#FFF3E0' },
+  pending_payment:         { text: '待支付', color: '#FF9800', bg: '#FFF3E0' },
   confirmed:               { text: '用餐中', color: '#4CAF50', bg: '#E8F5E9' },
   occupied:                { text: '进行中', color: '#E74C3C', bg: '#FFEBEE' },
   completed:               { text: '已完成', color: '#888888', bg: '#F5F5F5' },

@@ -1,4 +1,13 @@
 <!--pages/orderDetail/orderDetail.wxml-->
+<wxs module="starUtil">
+  var genStars = function(rating) {
+    if (!rating) return '';
+    var full = '★★★★★'.substring(0, rating);
+    var empty = '☆☆☆☆☆'.substring(0, 5 - rating);
+    return full + empty;
+  }
+  module.exports = { genStars: genStars };
+</wxs>
 <view class="container">
 
   <view wx:if="{{loading}}" class="loading-wrap">
@@ -155,6 +164,60 @@
       </view>
     </block>
 
+    <!-- ══ 我的评价（已评价时展示） ══ -->
+    <block wx:if="{{order.hasReview && order.review}}">
+      <view class="section-title">
+        <text class="st-icon">⭐</text>
+        <text>我的评价</text>
+      </view>
+      <view class="card review-display-card">
+        <!-- 整体评分 -->
+        <view class="review-overall">
+          <view class="review-stars">
+            <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+              class="review-star {{order.review.overallRating >= item ? 'review-star-on' : 'review-star-off'}}">★</text>
+          </view>
+          <text class="review-date">{{order.review.createdAt}}</text>
+        </view>
+        <!-- 细分评分 -->
+        <view class="review-sub-ratings" wx:if="{{order.review.foodRating || order.review.serviceRating || order.review.environmentRating || order.review.catInteractionRating}}">
+          <view class="review-sub-item" wx:if="{{order.review.foodRating}}">
+            <text class="review-sub-label">菜品</text>
+            <text class="review-sub-stars">{{starUtil.genStars(order.review.foodRating)}}</text>
+          </view>
+          <view class="review-sub-item" wx:if="{{order.review.serviceRating}}">
+            <text class="review-sub-label">服务</text>
+            <text class="review-sub-stars">{{starUtil.genStars(order.review.serviceRating)}}</text>
+          </view>
+          <view class="review-sub-item" wx:if="{{order.review.environmentRating}}">
+            <text class="review-sub-label">环境</text>
+            <text class="review-sub-stars">{{starUtil.genStars(order.review.environmentRating)}}</text>
+          </view>
+          <view class="review-sub-item" wx:if="{{order.review.catInteractionRating}}">
+            <text class="review-sub-label">猫咪互动</text>
+            <text class="review-sub-stars">{{starUtil.genStars(order.review.catInteractionRating)}}</text>
+          </view>
+        </view>
+        <!-- 标签 -->
+        <view class="review-tags" wx:if="{{order.review.tags && order.review.tags.length > 0}}">
+          <text wx:for="{{order.review.tags}}" wx:key="*this" class="review-tag">{{item}}</text>
+        </view>
+        <!-- 评价内容 -->
+        <view class="review-content" wx:if="{{order.review.content}}">
+          <text>{{order.review.content}}</text>
+        </view>
+        <!-- 店家回复 -->
+        <view class="review-reply" wx:if="{{order.review.reply}}">
+          <view class="review-reply-header">
+            <text class="review-reply-icon">🐱</text>
+            <text class="review-reply-title">店家回复</text>
+            <text class="review-reply-date" wx:if="{{order.review.replyAt}}">{{order.review.replyAt}}</text>
+          </view>
+          <text class="review-reply-text">{{order.review.reply}}</text>
+        </view>
+      </view>
+    </block>
+
     <!-- ══ 订单跟踪（时间线） ══ -->
     <view class="section-title">
       <text class="st-icon">📌</text>
@@ -180,7 +243,12 @@
 
     <!-- ══ 操作按钮 ══ -->
     <view class="action-bar">
-      <!-- BOOKED → 去点单 -->
+      <!-- pending_payment -> 去支付 -->
+      <view wx:if="{{order.status==='pending_payment'}}" class="action-btn action-primary" bindtap="goPay">
+        <text class="ab-icon">💳</text>
+        <text>去支付</text>
+      </view>
+      <!-- BOOKED -> 去点单 -->
       <view wx:if="{{order.status==='booked'}}" class="action-btn action-primary" bindtap="goOrder">
         <text class="ab-icon">🍽️</text>
         <text>去点单</text>
@@ -205,6 +273,11 @@
         <text>取消预约</text>
       </view>
       <view wx:if="{{order.canCancel && order.status==='confirmed'}}" class="action-btn action-danger" bindtap="onCancel">
+        <text class="ab-icon">✕</text>
+        <text>取消订单</text>
+      </view>
+      <!-- 待支付 -> 取消订单 -->
+      <view wx:if="{{order.canCancel && order.status==='pending_payment'}}" class="action-btn action-danger" bindtap="onCancel">
         <text class="ab-icon">✕</text>
         <text>取消订单</text>
       </view>

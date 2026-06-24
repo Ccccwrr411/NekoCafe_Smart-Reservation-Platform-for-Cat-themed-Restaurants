@@ -17,11 +17,9 @@ function getPixelRatio() {
  */
 function initCanvas(selector, component) {
   return new Promise(function(resolve, reject) {
-    var query = component.createSelectorQuery ? component.createSelectorQuery() : wx.createSelectorQuery()
-    if (component.selectOwnerComponent) {
-      query = query.selectOwnerComponent ? query.selectOwnerComponent().select(selector) : query.select(selector)
-    }
-    query.fields({ node: true, size: true }).exec(function(res) {
+    // 始终使用组件/页面实例的 createSelectorQuery，并调用 .select() 获取 NodesRef
+    var query = (component && component.createSelectorQuery) ? component.createSelectorQuery() : wx.createSelectorQuery()
+    query.select(selector).fields({ node: true, size: true }).exec(function(res) {
       if (!res || !res[0]) {
         reject(new Error('Canvas node not found: ' + selector))
         return

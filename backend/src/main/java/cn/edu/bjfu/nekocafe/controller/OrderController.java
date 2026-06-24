@@ -92,6 +92,12 @@ public class OrderController {
         return Result.success(reservationService.createReservation(uid, dto));
     }
 
+    /** 确认支付（沙箱模式：用户点击"模拟支付成功"后调用，PENDING → PAID） */
+    @PostMapping("/order/confirm-payment")
+    public Result<Map<String, Object>> confirmPayment(@RequestBody Map<String, String> body) {
+        return Result.success(orderService.confirmPayment(body.get("orderId")));
+    }
+
     /** 获取用户当前 BOOKED 状态的预约列表（供点单页面选择） */
     @GetMapping("/reservation/current")
     public Result<List<CurrentReservationVO>> getCurrentReservations(HttpServletRequest request,

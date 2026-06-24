@@ -11,7 +11,9 @@ import java.util.Map;
 /**
  * 评价 Controller
  * 负责人：___
- * 接口：M-1 POST /api/review/submit
+ * 接口：
+ *   M-1 POST /api/review/submit   — 提交评价
+ *   M-2 GET  /api/review/detail   — 查看某订单的已有评价
  */
 @RestController
 @RequestMapping("/api")
@@ -26,5 +28,12 @@ public class ReviewController {
                                                      HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         return Result.success(reviewService.submitReview(userId, dto));
+    }
+
+    /** M-2 查看某订单的已有评价 */
+    @GetMapping("/review/detail")
+    public Result<Map<String, Object>> getReviewDetail(@RequestParam String orderId) {
+        Map<String, Object> detail = reviewService.getReviewDetail(orderId);
+        return Result.success(detail);
     }
 }
