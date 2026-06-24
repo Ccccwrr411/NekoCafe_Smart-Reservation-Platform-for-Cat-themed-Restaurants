@@ -23,6 +23,8 @@ public class Reviews {
 
     private String content;
 
+    private String tags;
+
     private Object images;
 
     private String reply;
@@ -113,6 +115,14 @@ public class Reviews {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 
     public Object getImages() {

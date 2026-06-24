@@ -2,8 +2,32 @@
 .section-label { font-size: 28rpx; font-weight: 600; color: var(--color-text); margin-bottom: 16rpx; }
 .star-row { display: flex; gap: 16rpx; justify-content: center; padding: 10rpx 0; }
 .star { font-size: 72rpx; }
+.star-sm { font-size: 40rpx; }
 .star-on  { color: #FFB300; }
 .star-off { color: #E0E0E0; }
+
+/* 细分评分 */
+.sub-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 0;
+  border-bottom: 2rpx solid var(--color-border-light, #F5F5F5);
+}
+.sub-rating-row:last-child {
+  border-bottom: none;
+}
+.sub-rating-label {
+  font-size: 28rpx;
+  color: var(--color-text-sub, #666);
+  min-width: 140rpx;
+}
+.sub-rating-stars {
+  display: flex;
+  gap: 8rpx;
+}
+
+/* 标签 */
 .tag-wrap { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .tag-btn {
   padding: 12rpx 28rpx;
@@ -17,6 +41,8 @@
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
+
+/* 文本域 */
 .review-textarea {
   width: 100%;
   min-height: 160rpx;

@@ -538,18 +538,31 @@ Page({
   },
 
   onPaymentSuccess(orderId) {
-    this.setData({ submitting: false })
-    getApp().globalData.cartItems = []
-    wx.showToast({ title: '下单成功！', icon: 'success', duration: 1500 })
-    // 跳转到订单详情页
     const targetId = orderId || (this.data.reserveInfo && this.data.reserveInfo.orderId)
-    setTimeout(() => {
-      if (targetId) {
-        wx.redirectTo({ url: `/pages/orderDetail/orderDetail?orderId=${targetId}` })
-      } else {
-        wx.switchTab({ url: '/pages/orderList/orderList' })
-      }
-    }, 1500)
+    // 沙箱模式：需调用确认支付接口将 PENDING → PAID
+    post('/api/order/confirm-payment', { orderId: targetId }).then(res => {
+      this.setData({ submitting: false })
+      getApp().globalData.cartItems = []
+      wx.showToast({ title: '支付成功！', icon: 'success', duration: 1500 })
+      setTimeout(() => {
+        if (targetId) {
+          wx.redirectTo({ url: `/pages/orderDetail/orderDetail?orderId=${targetId}` })
+        } else {
+          wx.switchTab({ url: '/pages/orderList/orderList' })
+        }
+      }, 1500)
+    }).catch(() => {
+      // 确认接口失败，仍跳转到订单详情让用户看到"待支付"状态，可重新支付
+      this.setData({ submitting: false })
+      wx.showToast({ title: '支付确认异常，请稍后查看订单', icon: 'none', duration: 1500 })
+      setTimeout(() => {
+        if (targetId) {
+          wx.redirectTo({ url: `/pages/orderDetail/orderDetail?orderId=${targetId}` })
+        } else {
+          wx.switchTab({ url: '/pages/orderList/orderList' })
+        }
+      }, 1500)
+    })
   },
 
   onPaymentFail(err) {
@@ -560,7 +573,16 @@ Page({
 
   onPaymentCancel() {
     this.setData({ submitting: false })
-    wx.showToast({ title: '已取消支付', icon: 'none' })
+    wx.showToast({ title: '已取消支付', icon: 'none', duration: 1500 })
+    // 跳转到订单详情页，订单显示"待支付"，用户可重新支付
+    const orderId = this.data.reserveInfo && this.data.reserveInfo.orderId
+    setTimeout(() => {
+      if (orderId) {
+        wx.redirectTo({ url: `/pages/orderDetail/orderDetail?orderId=${orderId}` })
+      } else {
+        wx.switchTab({ url: '/pages/orderList/orderList' })
+      }
+    }, 1500)
   },
 
   onSubmit() {
@@ -591,7 +613,10 @@ Page({
           return
         }
 
+        const storeName = (this.data.reserveInfo && this.data.reserveInfo.store && this.data.reserveInfo.store.name) || 'NekoCafe'
         requestWxPayment(payInfo, {
+          amount: finalAmount,
+          storeName: storeName,
           onSuccess: () => this.onPaymentSuccess(orderId),
           onFail: (err) => this.onPaymentFail(err),
           onCancel: () => this.onPaymentCancel()

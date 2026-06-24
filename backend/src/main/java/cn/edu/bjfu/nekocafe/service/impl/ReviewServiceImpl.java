@@ -9,26 +9,31 @@ import cn.edu.bjfu.nekocafe.mapper.PointsLogMapper;
 import cn.edu.bjfu.nekocafe.mapper.ReservationsMapper;
 import cn.edu.bjfu.nekocafe.mapper.ReviewsMapper;
 import cn.edu.bjfu.nekocafe.service.ReviewService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * 评价服务实现
  * 负责人：D 同学
  *
  * M-1: submitReview — 对已完成订单提交评价，验证归属+无重复，写 reviews 表，奖励积分
+ * M-2: getReviewDetail — 查看某订单的已有评价
  *
  * 注意：
  *   1. 前端传 orderId（如 "ORD0000000123"），需解析为 reservationId(Long)
  *   2. Reservations 表无 has_review 字段，通过 Reviews 表反查是否已评价
  *   3. 积分奖励 +10，写入 points_log 并更新 member_ext.total_points
+ *   4. tags 存为 JSONB，Java 层用 String 存 JSON 字符串
+ *   5. status 统一用 "VISIBLE"（与 DB 默认值一致）
  */
 @Service
 public class ReviewServiceImpl implements ReviewService {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private ReviewsMapper reviewsMapper;
@@ -46,7 +51,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public Map<String, Object> submitReview(Long userId, ReviewSubmitDTO dto) {
-        // 1. 解析 orderId → reservationId
+        // 1. 解析 orderId -> reservationId
         Long reservationId = parseOrderId(dto.getOrderId());
 
         // 2. 校验订单存在且属于当前用户
@@ -75,13 +80,26 @@ public class ReviewServiceImpl implements ReviewService {
         review.setUserId(userId);
         review.setStoreId(reservation.getStoreId());
         review.setOverallRating(dto.getRating());
+        review.setFoodRating(dto.getFoodRating());
+        review.setServiceRating(dto.getServiceRating());
+        review.setEnvironmentRating(dto.getEnvironmentRating());
+        review.setCatInteractionRating(dto.getCatInteractionRating());
         review.setContent(dto.getContent());
-        review.setStatus("published");
+        review.setStatus("VISIBLE");
         review.setCreatedAt(new Date());
+
+        // tags: List<String> -> JSON 字符串
+        if (dto.getTags() != null && !dto.getTags().isEmpty()) {
+            try {
+                review.setTags(objectMapper.writeValueAsString(dto.getTags()));
+            } catch (Exception e) {
+                review.setTags("[]");
+            }
+        }
+
         reviewsMapper.insertSelective(review);
 
         // 5. 积分奖励 +10
-        // 先查当前积分
         MemberExt member = memberExtMapper.selectByPrimaryKey(userId);
         int currentPoints = (member != null && member.getTotalPoints() != null)
                 ? member.getTotalPoints() : 0;
@@ -106,8 +124,39 @@ public class ReviewServiceImpl implements ReviewService {
         // 6. 返回结果
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("reviewId", review.getReviewId());
-        result.put("status", "published");
+        result.put("status", "VISIBLE");
         result.put("pointsEarned", 10);
+        return result;
+    }
+
+    // ==================== M-2 : 查看评价详情 ====================
+
+    @Override
+    public Map<String, Object> getReviewDetail(String orderId) {
+        Long reservationId = parseOrderId(orderId);
+
+        ReviewsExample re = new ReviewsExample();
+        re.createCriteria().andReservationIdEqualTo(reservationId);
+        List<Reviews> reviews = reviewsMapper.selectByExample(re);
+        if (reviews == null || reviews.isEmpty()) {
+            return null;
+        }
+
+        Reviews review = reviews.get(0);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("reviewId", review.getReviewId());
+        result.put("overallRating", review.getOverallRating());
+        result.put("foodRating", review.getFoodRating());
+        result.put("serviceRating", review.getServiceRating());
+        result.put("environmentRating", review.getEnvironmentRating());
+        result.put("catInteractionRating", review.getCatInteractionRating());
+        result.put("content", review.getContent());
+        result.put("tags", review.getTags());
+        result.put("reply", review.getReply());
+        result.put("replyAt", review.getReplyAt() != null ? sdf.format(review.getReplyAt()) : null);
+        result.put("createdAt", review.getCreatedAt() != null ? sdf.format(review.getCreatedAt()) : null);
         return result;
     }
 

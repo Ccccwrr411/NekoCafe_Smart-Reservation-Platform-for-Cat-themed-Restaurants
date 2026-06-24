@@ -1,5 +1,6 @@
 package cn.edu.bjfu.nekocafe.service.impl;
 
+import cn.edu.bjfu.nekocafe.config.SandboxProperties;
 import cn.edu.bjfu.nekocafe.dto.LoginDTO;
 import cn.edu.bjfu.nekocafe.dto.PhoneLoginDTO;
 import cn.edu.bjfu.nekocafe.dto.RegisterDTO;
@@ -54,6 +55,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private SandboxProperties sandboxProperties;
 
     /** 验证码在 Redis 中的 key 前缀 */
     private static final String SMS_CODE_PREFIX = "sms:";
@@ -157,10 +161,13 @@ public class AuthServiceImpl implements AuthService {
         String redisKey = SMS_CODE_PREFIX + phone;
         redisTemplate.opsForValue().set(redisKey, code, CODE_EXPIRE_MINUTES, TimeUnit.MINUTES);
 
-        // 课设沙箱模式：验证码直接返回给前端弹窗显示
-        // 正式环境应调用短信 API 发送，不再返回 code
         Map<String, Object> result = new HashMap<>();
-        result.put("code", code);
+        if (sandboxProperties.isEnabled()) {
+            // 沙箱模式：验证码直接返回给前端弹窗显示，不调用短信 API
+            result.put("code", code);
+        }
+        // 正式模式：调用短信 API 发送验证码，不返回 code 字段
+        // TODO: 接入腾讯云/阿里云短信 SDK 后在此处调用
         result.put("expireMinutes", CODE_EXPIRE_MINUTES);
         return result;
     }

@@ -36,7 +36,9 @@ function normalizePayInfo(raw) {
 }
 
 /**
- * 调起微信支付；Mock 参数时走模拟支付流程
+ * 调起微信支付；Mock 参数时走确认支付流程（仿真实微信支付弹窗）
+ * @param {object} payInfo   后端返回的支付参数
+ * @param {object} options   { onSuccess, onFail, onCancel, amount, storeName }
  */
 function requestWxPayment(payInfo, options = {}) {
   const normalized = normalizePayInfo(payInfo)
@@ -50,10 +52,17 @@ function requestWxPayment(payInfo, options = {}) {
   }
 
   if (isMockPayInfo(normalized)) {
+    // 仿微信支付确认弹窗（不暴露 mock 字样）
+    const amount = options.amount != null ? options.amount : ''
+    const storeName = options.storeName || 'NekoCafe'
+    const amountText = amount !== '' ? '¥' + Number(amount).toFixed(2) : ''
+    const content = amountText
+      ? `支付金额：${amountText}\n收款方：${storeName}`
+      : `收款方：${storeName}`
     wx.showModal({
-      title: '模拟支付',
-      content: `当前为开发/mock 模式，无法调起真实微信支付。\n\n是否模拟支付成功？`,
-      confirmText: '模拟成功',
+      title: '确认支付',
+      content: content,
+      confirmText: '确认支付',
       cancelText: '取消',
       success: (res) => {
         if (res.confirm) onSuccess()

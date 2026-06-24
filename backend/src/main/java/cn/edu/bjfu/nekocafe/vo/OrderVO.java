@@ -30,6 +30,7 @@ public class OrderVO {
     private Boolean canReschedule;
     private Boolean canRefund;
     private Boolean hasReview;
+    private ReviewVO review;
 
     // 前端展示用
     private String statusIcon;
@@ -130,6 +131,41 @@ public class OrderVO {
         public void setStatus(String status) { this.status = status; }
     }
 
+    /** 评价信息（订单详情中展示） */
+    public static class ReviewVO {
+        private Integer overallRating;
+        private Integer foodRating;
+        private Integer serviceRating;
+        private Integer environmentRating;
+        private Integer catInteractionRating;
+        private String content;
+        private String tags;
+        private String reply;
+        private String replyAt;
+        private String createdAt;
+
+        public Integer getOverallRating() { return overallRating; }
+        public void setOverallRating(Integer overallRating) { this.overallRating = overallRating; }
+        public Integer getFoodRating() { return foodRating; }
+        public void setFoodRating(Integer foodRating) { this.foodRating = foodRating; }
+        public Integer getServiceRating() { return serviceRating; }
+        public void setServiceRating(Integer serviceRating) { this.serviceRating = serviceRating; }
+        public Integer getEnvironmentRating() { return environmentRating; }
+        public void setEnvironmentRating(Integer environmentRating) { this.environmentRating = environmentRating; }
+        public Integer getCatInteractionRating() { return catInteractionRating; }
+        public void setCatInteractionRating(Integer catInteractionRating) { this.catInteractionRating = catInteractionRating; }
+        public String getContent() { return content; }
+        public void setContent(String content) { this.content = content; }
+        public String getTags() { return tags; }
+        public void setTags(String tags) { this.tags = tags; }
+        public String getReply() { return reply; }
+        public void setReply(String reply) { this.reply = reply; }
+        public String getReplyAt() { return replyAt; }
+        public void setReplyAt(String replyAt) { this.replyAt = replyAt; }
+        public String getCreatedAt() { return createdAt; }
+        public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+    }
+
     // ---- Getters & Setters ----
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -177,6 +213,8 @@ public class OrderVO {
     public void setCanRefund(Boolean canRefund) { this.canRefund = canRefund; }
     public Boolean getHasReview() { return hasReview; }
     public void setHasReview(Boolean hasReview) { this.hasReview = hasReview; }
+    public ReviewVO getReview() { return review; }
+    public void setReview(ReviewVO review) { this.review = review; }
     public String getStatusIcon() { return statusIcon; }
     public void setStatusIcon(String statusIcon) { this.statusIcon = statusIcon; }
     public String getStatusDesc() { return statusDesc; }

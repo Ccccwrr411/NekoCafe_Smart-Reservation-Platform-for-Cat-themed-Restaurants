@@ -5,37 +5,62 @@ Page({
   data: {
     orderId: '',
     rating: 5,
+    foodRating: 5,
+    serviceRating: 5,
+    environmentRating: 5,
+    catInteractionRating: 5,
     content: '',
-    tags: ['猫咪可爱', '环境舒适', '服务贴心', '菜品美味', '性价比高', '下次还来'],
-    selectedTags: [],
+    tagList: [
+      { label: '猫咪可爱', selected: false },
+      { label: '环境舒适', selected: false },
+      { label: '服务贴心', selected: false },
+      { label: '菜品美味', selected: false },
+      { label: '性价比高', selected: false },
+      { label: '下次还来', selected: false }
+    ],
     submitting: false
   },
   onLoad(options) {
     this.setData({ orderId: options.orderId || '' })
   },
   onRatingChange(e) {
-    this.setData({ rating: e.detail.value })
+    this.setData({ rating: e.currentTarget.dataset.value })
+  },
+  onFoodRatingChange(e) {
+    this.setData({ foodRating: e.currentTarget.dataset.value })
+  },
+  onServiceRatingChange(e) {
+    this.setData({ serviceRating: e.currentTarget.dataset.value })
+  },
+  onEnvironmentRatingChange(e) {
+    this.setData({ environmentRating: e.currentTarget.dataset.value })
+  },
+  onCatRatingChange(e) {
+    this.setData({ catInteractionRating: e.currentTarget.dataset.value })
   },
   onTagClick(e) {
-    const tag = e.currentTarget.dataset.tag
-    const selected = this.data.selectedTags
-    const idx = selected.indexOf(tag)
-    if (idx >= 0) selected.splice(idx, 1)
-    else selected.push(tag)
-    this.setData({ selectedTags: [...selected] })
+    const idx = e.currentTarget.dataset.index
+    const tagList = this.data.tagList
+    tagList[idx].selected = !tagList[idx].selected
+    this.setData({ tagList: [...tagList] })
   },
   onContentInput(e) {
     this.setData({ content: e.detail.value })
   },
   onSubmit() {
-    if (this.data.selectedTags.length === 0) {
+    if (!this.data.tagList.some(t => t.selected)) {
       wx.showToast({ title: '请至少选择一个标签', icon: 'none' }); return
     }
     this.setData({ submitting: true })
+    const selectedTags = this.data.tagList.filter(t => t.selected).map(t => t.label)
     post('/api/review/submit', {
       orderId: this.data.orderId,
       rating: this.data.rating,
-      tags: this.data.selectedTags,
+      foodRating: this.data.foodRating,
+      serviceRating: this.data.serviceRating,
+      environmentRating: this.data.environmentRating,
+      catInteractionRating: this.data.catInteractionRating,
+      tags: selectedTags,
       content: this.data.content
     }).then(res => {
       this.setData({ submitting: false })

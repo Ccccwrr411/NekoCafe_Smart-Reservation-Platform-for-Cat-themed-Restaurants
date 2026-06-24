@@ -22,14 +22,14 @@
           <view class="cat-info">
             <view class="cat-name-row">
               <text class="cat-name">{{item.name}}</text>
-              <view class="cat-gender {{item.gender === '母' ? 'gender-female' : 'gender-male'}}">
+              <view wx:if="{{item.gender}}" class="cat-gender {{item.gender === '母' ? 'gender-female' : 'gender-male'}}">
                 {{item.gender}}
               </view>
             </view>
             <text class="cat-breed">{{item.breed}} · {{item.age}}岁</text>
             <view class="cat-meta">
               <text class="cat-meta-item">⚖ {{item.weight}}kg</text>
-              <text class="cat-meta-item">💉 {{item.vaccineDue}}</text>
+              <text wx:if="{{item.vaccineDue}}" class="cat-meta-item">💉 {{item.vaccineDue}}</text>
             </view>
             <view class="cat-personality">
               <text
@@ -60,12 +60,12 @@
         <view class="detail-hero-info">
           <view class="detail-name-row">
             <text class="detail-name">{{catDetail.name}}</text>
-            <view class="cat-gender {{catDetail.gender === '母' ? 'gender-female' : 'gender-male'}}">
+            <view wx:if="{{catDetail.gender}}" class="cat-gender {{catDetail.gender === '母' ? 'gender-female' : 'gender-male'}}">
               {{catDetail.gender}}
             </view>
           </view>
           <text class="detail-breed-age">{{catDetail.breed}} · {{catDetail.age}}岁</text>
-          <text class="detail-desc">{{catDetail.desc}}</text>
+          <text wx:if="{{catDetail.desc}}" class="detail-desc">{{catDetail.desc}}</text>
           <view class="detail-personality">
             <text wx:for="{{catDetail.personality}}" wx:for-item="tag" wx:key="*this" class="personality-tag">{{tag}}</text>
           </view>
