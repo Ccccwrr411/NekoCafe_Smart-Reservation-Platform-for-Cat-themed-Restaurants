@@ -34,4 +34,37 @@ public class ManagerController {
         String action = (String) body.get("action");
         return Result.success(managerService.reviewException(exceptionId, action));
     }
+
+    /**
+     * 创建排班
+     * POST /api/manager/schedule
+     * Body: { storeId, staffId, workDate, shiftId, startTime?, endTime?, position?, notes? }
+     */
+    @PostMapping("/schedule")
+    public Result<Map<String, Object>> createSchedule(@RequestBody Map<String, Object> body) {
+        return Result.success(managerService.createSchedule(body));
+    }
+
+    /**
+     * 修改排班
+     * PUT /api/manager/schedule/{scheduleId}
+     * Body: { workDate?, shiftId?, startTime?, endTime?, staffId?, position?, notes? }
+     */
+    @PutMapping("/schedule/{scheduleId}")
+    public Result<Map<String, Object>> updateSchedule(
+            @PathVariable Long scheduleId,
+            @RequestBody Map<String, Object> body) {
+        return Result.success(managerService.updateSchedule(scheduleId, body));
+    }
+
+    /**
+     * 按门店搜索员工（支持姓名/昵称模糊搜索）
+     * GET /api/manager/staff?storeId=&keyword=
+     */
+    @GetMapping("/staff")
+    public Result<List<Map<String, Object>>> searchStaff(
+            @RequestParam Integer storeId,
+            @RequestParam(required = false, defaultValue = "") String keyword) {
+        return Result.success(managerService.searchStaff(storeId, keyword));
+    }
 }

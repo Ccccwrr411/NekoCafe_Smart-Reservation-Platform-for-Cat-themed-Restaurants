@@ -19,6 +19,12 @@ Page({
     // AI 推荐
     recommend: null,
     showRecommend: true,
+    recommendExpanded: false,
+    // 门店选择器
+    showStorePicker: false,
+    storePickerRange: [],
+    storePickerIndex: 0,
+    currentRecommendStoreId: null,
     // LBS 状态
     locating: false,
     locationFailed: false
@@ -45,9 +51,9 @@ Page({
     userInfo = this.fixAvatarUrl(userInfo)
     this.setData({ userInfo })
 
-    // 刷新 AI 推荐（仅登录用户）
+    // 刷新 AI 推荐（仅登录用户，使用当前选中的门店）
     if (userInfo && !this._recommendLoaded) {
-      this.loadRecommend()
+      this.loadRecommend(this.data.currentRecommendStoreId)
       this._recommendLoaded = true
     }
   },
@@ -69,10 +75,23 @@ Page({
     get('/api/stores').then(res => {
       if (res.code === 0) {
         const stores = res.data
+        // 构建门店选择器范围
+        const storePickerRange = stores.map(s => s.name)
+        // 默认选中第一家店
+        const defaultStoreId = stores.length > 0 ? stores[0].id : null
         // 先保存原始数据
-        this.setData({ stores, storesOriginal: [...stores], loading: false })
+        this.setData({
+          stores: stores,
+          storesOriginal: [...stores],
+          loading: false,
+          storePickerRange: storePickerRange,
+          storePickerIndex: 0,
+          currentRecommendStoreId: defaultStoreId
+        })
         // 自动获取定位 → 计算距离 → 排序
         this.autoSortByLocation()
+        // 加载 AI 推荐（使用默认门店）
+        this.loadRecommend(defaultStoreId)
       }
     }).catch(() => {
       this.setData({ loading: false })
@@ -150,6 +169,39 @@ Page({
   goProfile()     { wx.switchTab({ url: '/pages/profile/profile' }) },
   goMap()         { wx.navigateTo({ url: '/pages/map/map' }) },
 
+  // ── 门店选择器 ──
+
+  /** 显示门店选择器 */
+  onShowStorePicker() {
+    this.setData({ showStorePicker: true })
+  },
+
+  /** 门店 Picker 选择变更 */
+  onStorePickerChange(e) {
+    const index = Number(e.detail.value)
+    const storeId = this.data.stores[index]?.id || null
+    this.setData({
+      storePickerIndex: index,
+      currentRecommendStoreId: storeId,
+      showStorePicker: false
+    })
+    // 重新加载推荐（按新选的门店）
+    this.loadRecommend(storeId)
+  },
+
+  /** 关闭门店选择器（取消） */
+  onHideStorePicker() {
+    this.setData({ showStorePicker: false })
+  },
+
+  /** 获取当前推荐门店名称 */
+  getCurrentStoreName() {
+    const storeId = this.data.currentRecommendStoreId
+    if (!storeId) return '全部门店'
+    const store = this.data.stores.find(s => s.id === storeId)
+    return store ? store.name : '全部门店'
+  },
+
   // ── AI 推荐 ──
   // loadRecommend() {
   //   get('/api/recommend').then(res => {
@@ -159,26 +211,38 @@ Page({
   //   }).catch(() => {})
   // },
 
-  loadRecommend() {
+  loadRecommend(storeId) {
     const userInfo = wx.getStorageSync('userInfo')
     const userId = userInfo?.id || userInfo?.userId
     if (!userId) return
 
-    get(`/api/recommend?userId=${userId}`).then(res => {
+    let url = `/api/recommend?userId=${userId}`
+    if (storeId) {
+      url += `&storeId=${storeId}`
+    }
+
+    get(url).then(res => {
       if (res.code === 0) {
         this.setData({ recommend: res.data })
       }
     }).catch(() => {})
   },
 
-  // 点击推荐桌位 → 跳预约页（使用 userInfo 中的 storeId）
+  // 点击推荐猫咪 → 跳猫咪档案页
+  onRecommendCatTap(e) {
+    const storeId = this.data.currentRecommendStoreId
+    const storeName = this.getCurrentStoreName()
+    const app = getApp()
+    app.globalData.currentStore = { id: storeId, name: storeName }
+    wx.navigateTo({ url: '/pages/cats/cats' })
+  },
+
+  // 点击推荐桌位 → 跳预约页（使用当前选中的推荐门店）
   onRecommendTableTap(e) {
     const table = e.currentTarget.dataset.table
+    const storeId = this.data.currentRecommendStoreId || table.storeId
+    const storeName = this.getCurrentStoreName()
     const app = getApp()
-    const userInfo = app.globalData.userInfo || {}
-    // 优先使用推荐数据中的 storeId，其次 userInfo.storeId，最后兜底
-    const storeId = table.storeId || userInfo.storeId || (table.id < 200 ? 1 : 2)
-    const storeName = table.storeName || userInfo.storeName || ''
     app.globalData.currentStore = { id: storeId, name: storeName }
     wx.navigateTo({ url: `/pages/reservation/reservation?storeId=${storeId}&storeName=${storeName}` })
   },
@@ -196,6 +260,11 @@ Page({
   // 关闭推荐
   dismissRecommend() {
     this.setData({ showRecommend: false })
+  },
+
+  // 展开/收起推荐详情
+  onToggleRecommend() {
+    this.setData({ recommendExpanded: !this.data.recommendExpanded })
   },
 
   // ── 导航：调用微信原生 wx.openLocation ──

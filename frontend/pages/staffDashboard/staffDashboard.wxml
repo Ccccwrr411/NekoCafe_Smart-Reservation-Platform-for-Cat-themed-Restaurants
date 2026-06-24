@@ -50,36 +50,27 @@
         </view>
       </view>
 
-      <!-- 近 7 天坪效（labels+values 直接来自 spaceEfficiency） -->
+      <!-- 近 7 天坪效 折线图 -->
       <view class="info-card">
         <text class="card-title">📈 近{{metrics.spaceEfficiency.labels.length}}天坪效（元/座/天）</text>
-        <view class="metric-row">
-          <text class="metric-label" wx:for="{{metrics.spaceEfficiency.labels}}" wx:key="*this">{{item}}</text>
-        </view>
-        <view class="metric-row">
-          <text class="metric-val-blue" wx:for="{{metrics.spaceEfficiency.values}}" wx:key="*this">{{item}}</text>
+        <view class="chart-wrap">
+          <canvas type="2d" id="chart-space" class="chart-canvas"></canvas>
         </view>
       </view>
 
-      <!-- 翻台率 -->
+      <!-- 翻台率 柱状图 -->
       <view class="info-card">
         <text class="card-title">🔄 近{{metrics.turnoverRate.labels.length}}天翻台率</text>
-        <view class="metric-row">
-          <text class="metric-label" wx:for="{{metrics.turnoverRate.labels}}" wx:key="*this">{{item}}</text>
-        </view>
-        <view class="metric-row">
-          <text class="metric-val-orange" wx:for="{{metrics.turnoverRate.values}}" wx:key="*this">{{item}}x</text>
+        <view class="chart-wrap">
+          <canvas type="2d" id="chart-turnover" class="chart-canvas"></canvas>
         </view>
       </view>
 
-      <!-- 会员复购率 -->
+      <!-- 会员复购率 饼图 -->
       <view class="info-card">
         <text class="card-title">👥 会员复购率（近{{metrics.repurchaseRate.labels.length}}天）</text>
-        <view class="metric-row">
-          <text class="metric-label" wx:for="{{metrics.repurchaseRate.labels}}" wx:key="*this">{{item}}</text>
-        </view>
-        <view class="metric-row">
-          <text class="metric-val-green" wx:for="{{metrics.repurchaseRate.values}}" wx:key="*this">{{item}}%</text>
+        <view class="chart-wrap chart-wrap-pie">
+          <canvas type="2d" id="chart-repurchase" class="chart-canvas"></canvas>
         </view>
       </view>
     </block>
@@ -131,8 +122,16 @@
 
     <!-- 子 Tab1: 排班表 -->
     <block wx:if="{{!loading && scheduleSubTab === 'schedule'}}">
+      <!-- 新建排班按钮 -->
+      <view class="action-bar">
+        <view class="btn-add-schedule" bindtap="onOpenCreateSchedule">
+          <text class="btn-add-icon">＋</text>
+          <text class="btn-add-text">新建排班</text>
+        </view>
+      </view>
+
       <view wx:if="{{schedules.length === 0}}" class="empty-wrap">
-        <text>暂无排班记录</text>
+        <text>暂无排班记录，点击上方「新建排班」添加</text>
       </view>
       <view wx:else class="schedule-list">
         <view
@@ -141,8 +140,16 @@
           class="schedule-card"
         >
           <view class="sched-head">
-            <text class="sched-name">{{item.staffName}}</text>
-            <text class="sched-position">{{item.position}}</text>
+            <view class="sched-head-left">
+              <text class="sched-name">{{item.staffName}}</text>
+              <text class="sched-position">{{item.position}}</text>
+            </view>
+            <!-- 编辑按钮 -->
+            <view
+              class="sched-edit-btn"
+              bindtap="onOpenEditSchedule"
+              data-item="{{item}}"
+            >✏️ 编辑</view>
           </view>
           <view class="sched-body">
             <view class="sched-row">
@@ -159,6 +166,10 @@
                 <text wx:if="{{item.startTime}}" class="time-active">{{item.startTime}} - {{item.endTime}}</text>
                 <text wx:else class="time-pending">未签到</text>
               </text>
+            </view>
+            <view class="sched-row" wx:if="{{item.notes}}">
+              <text class="sched-label">📝 备注</text>
+              <text class="sched-val sched-notes">{{item.notes}}</text>
             </view>
           </view>
         </view>
@@ -181,7 +192,6 @@
             <text class="shift-name">{{item.shiftName}}</text>
             <text class="shift-time">{{item.startTime}} - {{item.endTime}}</text>
           </view>
-          <text class="shift-id">#{{item.shiftId}}</text>
         </view>
       </view>
     </block>
@@ -326,4 +336,130 @@
       </view>
     </view>
   </view>
+
+  <!-- ══ 排班 创建/编辑 弹窗 ══ -->
+  <view wx:if="{{showScheduleModal}}" class="modal-mask" bindtap="onCloseScheduleModal">
+    <view class="schedule-modal-card" catchtap="onScheduleModalContentTap">
+
+      <!-- 弹窗标题行 -->
+      <view class="smodal-header">
+        <text class="smodal-title">{{scheduleModalTitle}}</text>
+        <view class="smodal-close" bindtap="onCloseScheduleModal">✕</view>
+      </view>
+
+      <!-- 表单内容 -->
+      <view class="smodal-body">
+
+        <!-- 员工姓名搜索 -->
+        <view class="smodal-field smodal-field-staff">
+          <text class="smodal-label">员工姓名 <text class="required">*</text></text>
+          <view class="staff-search-wrap">
+            <input
+              class="smodal-input staff-search-input"
+              type="text"
+              placeholder="输入姓名搜索员工"
+              value="{{staffKeyword}}"
+              bindinput="onStaffNameInput"
+              confirm-type="search"
+            />
+            <!-- 已选中标记 -->
+            <view wx:if="{{scheduleForm.staffId}}" class="staff-selected-badge">✓</view>
+            <!-- 搜索下拉列表 -->
+            <view wx:if="{{staffSearchResults.length > 0}}" class="staff-dropdown">
+              <view
+                wx:for="{{staffSearchResults}}"
+                wx:key="userId"
+                class="staff-dropdown-item"
+                bindtap="onSelectStaff"
+                data-userid="{{item.userId}}"
+                data-name="{{item.displayName}}"
+              >
+                <text class="staff-dropdown-name">{{item.displayName}}</text>
+                <text class="staff-dropdown-phone" wx:if="{{item.phone}}">{{item.phone}}</text>
+              </view>
+            </view>
+            <!-- 搜索中 -->
+            <view wx:if="{{staffSearchLoading}}" class="staff-dropdown">
+              <view class="staff-dropdown-item staff-dropdown-loading">
+                <text>搜索中...</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 工作日期 -->
+        <view class="smodal-field">
+          <text class="smodal-label">工作日期 <text class="required">*</text></text>
+          <picker
+            mode="date"
+            value="{{scheduleForm.workDate}}"
+            bindchange="onScheduleFormInput"
+            data-field="workDate"
+          >
+            <view class="smodal-picker">
+              <text class="{{scheduleForm.workDate ? 'picker-val' : 'picker-placeholder'}}">
+                {{scheduleForm.workDate || '请选择日期'}}
+              </text>
+              <text class="picker-arrow">▾</text>
+            </view>
+          </picker>
+        </view>
+
+        <!-- 班次选择 -->
+        <view class="smodal-field">
+          <text class="smodal-label">班次 <text class="required">*</text></text>
+          <picker
+            range="{{shiftPickerRange}}"
+            value="{{shiftPickerIndex}}"
+            bindchange="onShiftPickerChange"
+          >
+            <view class="smodal-picker">
+              <text class="{{shiftPickerRange.length > 0 ? 'picker-val' : 'picker-placeholder'}}">
+                {{shiftPickerRange.length > 0 ? shiftPickerRange[shiftPickerIndex] : '暂无班次，请先创建班次'}}
+              </text>
+              <text class="picker-arrow">▾</text>
+            </view>
+          </picker>
+        </view>
+
+        <!-- 岗位 -->
+        <view class="smodal-field">
+          <text class="smodal-label">岗位</text>
+          <input
+            class="smodal-input"
+            type="text"
+            placeholder="如：收银、服务员（选填）"
+            value="{{scheduleForm.position}}"
+            bindinput="onScheduleFormInput"
+            data-field="position"
+          />
+        </view>
+
+        <!-- 备注 -->
+        <view class="smodal-field">
+          <text class="smodal-label">备注</text>
+          <textarea
+            class="smodal-textarea"
+            placeholder="备注信息（选填）"
+            value="{{scheduleForm.notes}}"
+            bindinput="onScheduleFormInput"
+            data-field="notes"
+            maxlength="200"
+          />
+        </view>
+
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="smodal-actions">
+        <view class="smodal-btn smodal-btn-cancel" bindtap="onCloseScheduleModal">取消</view>
+        <view
+          class="smodal-btn smodal-btn-confirm {{scheduleFormSubmitting ? 'smodal-btn-disabled' : ''}}"
+          bindtap="onSubmitScheduleForm"
+        >{{scheduleFormSubmitting ? '提交中...' : (scheduleModalMode === 'create' ? '创建排班' : '保存修改')}}</view>
+      </view>
+
+    </view>
+  </view>
+
 </view>

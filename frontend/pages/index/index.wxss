@@ -246,6 +246,62 @@
 .rec-cat-name { font-size: 24rpx; color: var(--color-text-sub); display: block; margin-bottom: 6rpx; }
 .rec-match-score { font-size: 22rpx; color: #4CAF50; font-weight: 600; display: block; margin-bottom: 4rpx; }
 .rec-match-reason { font-size: 22rpx; color: var(--color-text-sub); line-height: 1.5; white-space: normal; }
+
+/* 推荐猫咪卡片 */
+.rec-cat-card {
+  width: 260rpx;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: normal;
+  padding: 20rpx 16rpx 16rpx;
+}
+.rec-cat-avatar {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  border: 4rpx solid #F0D5C9;
+  display: block;
+  margin-bottom: 14rpx;
+}
+.rec-cat-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+.rec-cat-card .rec-cat-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2rpx;
+}
+.rec-cat-breed {
+  font-size: 22rpx;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  padding: 2rpx 14rpx;
+  border-radius: 10rpx;
+}
+.rec-cat-score-bar {
+  width: 100%;
+  height: 8rpx;
+  background: #F0F0F0;
+  border-radius: 4rpx;
+  overflow: hidden;
+  margin-top: 4rpx;
+}
+.rec-cat-score-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #E8A87C, #C97E5A);
+  border-radius: 4rpx;
+}
+.rec-cat-score-text {
+  font-size: 22rpx;
+  color: #C97E5A;
+  font-weight: 600;
+}
 .rec-dish-card { width: 200rpx; text-align: center; white-space: normal; }
 .rec-dish-img { width: 168rpx; height: 168rpx; border-radius: 12rpx; display: block; margin: 0 auto 10rpx; }
 .rec-dish-name { font-size: 26rpx; font-weight: 600; color: var(--color-text); display: block; margin-bottom: 6rpx; }
@@ -253,6 +309,65 @@
 .rec-dish-price { font-size: 28rpx; font-weight: 700; color: var(--color-primary); }
 .rec-dish-hot { font-size: 20rpx; background: #FFF3E0; color: #E65100; padding: 2rpx 8rpx; border-radius: 6rpx; }
 .rec-dish-reason { font-size: 22rpx; color: var(--color-text-sub); white-space: normal; }
+
+/* 推荐折叠/展开 */
+.recommend-preview {
+  padding: 16rpx 0;
+  border-top: 1rpx dashed #F0D5C9;
+  margin-top: 8rpx;
+}
+.recommend-preview-text {
+  font-size: 24rpx;
+  color: var(--color-text-sub);
+  line-height: 1.6;
+}
+.recommend-toggle {
+  display: flex;
+  justify-content: center;
+  padding: 16rpx 0 4rpx;
+}
+.recommend-toggle-text {
+  font-size: 24rpx;
+  color: var(--color-primary);
+  font-weight: 500;
+  padding: 8rpx 32rpx;
+  border-radius: 24rpx;
+  background: rgba(201,126,90,0.08);
+}
+.recommend-toggle:active .recommend-toggle-text {
+  background: rgba(201,126,90,0.18);
+}
+
+/* ── 门店选择器 ── */
+.store-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  margin-left: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(201,126,90,0.3);
+}
+.store-picker-btn:active { opacity: 0.8; transform: scale(0.97); }
+.store-picker-text {
+  font-weight: 600;
+  max-width: 160rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.store-picker-arrow { font-size: 18rpx; }
+.picker-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+}
 
 /* ── LBS 排序切换 ── */
 .section-title-row {

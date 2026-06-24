@@ -20,4 +20,13 @@ public interface ManagerService {
 
     /** 审批异常申请 */
     Map<String, Object> reviewException(Long exceptionId, String action);
+
+    /** 创建排班 */
+    Map<String, Object> createSchedule(Map<String, Object> body);
+
+    /** 修改排班 */
+    Map<String, Object> updateSchedule(Long scheduleId, Map<String, Object> body);
+
+    /** 按门店搜索员工（支持姓名/昵称模糊搜索） */
+    List<Map<String, Object>> searchStaff(Integer storeId, String keyword);
 }

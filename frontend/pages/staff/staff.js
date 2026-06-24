@@ -30,6 +30,24 @@ const DISPATCH_OPTIONS = [
   { key: 'occupied', label: '🔴 设为用餐中' },
   { key: 'cleaning', label: '🟡 设为待清洁' },
 ]
+const EXCEPTION_TYPE_OPTIONS = [
+  { key: 'LEAVE', label: '🏖️ 请假', desc: '事假/病假/年假等' },
+  { key: 'OVERTIME', label: '⏰ 加班', desc: '申请加班或报告加班情况' },
+  { key: 'SWAP', label: '🔄 调班', desc: '与同事换班申请' },
+]
+const EXCEPTION_TYPE_LABEL = {
+  LEAVE: '🏖️ 请假',
+  OVERTIME: '⏰ 加班',
+  SWAP: '🔄 调班',
+  NO_SHOW: '❌ 未到店'
+}
+const EXCEPTION_STATUS_LABEL = {
+  PENDING: '待审批',
+  ACKNOWLEDGED: '已知晓',
+  APPROVED: '已通过',
+  REJECTED: '已驳回',
+  RESOLVED: '已处理'
+}
 const STATUS_TO_DB = {
   available: 'IDLE',
   booked: 'RESERVED',
@@ -115,6 +133,15 @@ Page({
     showRefundModal: false,
     refundModalData: null,   // 当前审核的退款记录
     refundModalOrder: null,  // 当前审核的订单
+    // 考勤申请
+    myExceptions: [],
+    filteredMyExceptions: [],
+    exceptionFilter: 'all',  // all | pending | approved | rejected
+    showExceptionModal: false,
+    exceptionForm: { type: 'LEAVE', date: '', reason: '' },
+    exceptionTypeOptions: EXCEPTION_TYPE_OPTIONS,
+    EXCEPTION_TYPE_LABEL,
+    EXCEPTION_STATUS_LABEL,
     // 常量（供 wxml 引用）
     ORDER_STATUS_LABEL
   },
@@ -241,6 +268,7 @@ Page({
   loadData() {
     this.setData({ loading: true })
     const sid = this.data.storeId
+    const uid = (app.globalData.userInfo && app.globalData.userInfo.id) || ''
     Promise.all([
       get('/api/staff/tables?storeId=' + sid),
       get('/api/staff/alerts?storeId=' + sid),
@@ -248,8 +276,9 @@ Page({
       get('/api/staff/refunds?storeId=' + sid),
       get('/api/notifications/store?storeId=' + sid + '&page=1&size=50'),
       get('/api/notifications/unread/store?storeId=' + sid),
-      get('/api/queue/status?storeId=' + sid)
-    ]).then(([tableRes, alertRes, orderRes, refundRes, notifRes, unreadRes, queueRes]) => {
+      get('/api/queue/status?storeId=' + sid),
+      uid ? get('/api/staff/shift-exceptions/my?storeId=' + sid + '&staffId=' + uid) : Promise.resolve({ code: 0, data: [] })
+    ]).then(([tableRes, alertRes, orderRes, refundRes, notifRes, unreadRes, queueRes, excRes]) => {
       wx.stopPullDownRefresh()
       const tables = (tableRes.code === 0) ? tableRes.data : []
       const alerts = (alertRes.code === 0) ? alertRes.data : []
@@ -357,12 +386,16 @@ Page({
       const occupancyRate = Math.round((countOccupied + countBooked) / totalTables * 100) + '%'
       const todayRevenue = allOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
 
+      // 考勤申请
+      const myExceptions = (excRes && excRes.code === 0) ? excRes.data : []
+
       this.setData({
         tables: tablesWithLabel, alerts: alertsWithLabel, orders, notifications,
         allRefunds, countByStatus, countAvailable, countOccupied, countBooked, countCleaning,
         todayOrderCount, pendingCount, refundCount, occupancyRate, todayRevenue,
         unreadCount, pendingAlertCount, queueStatus, calledList, missedList,
-        calledKnownCount, calledPendingCount, hasCalledPending, loading: false
+        calledKnownCount, calledPendingCount, hasCalledPending, myExceptions,
+        loading: false
       })
       this.applyFilters()
     }).catch(() => {
@@ -417,6 +450,21 @@ Page({
       filteredTables = tables
     }
     this.setData({ filteredOrders, filteredAlerts, filteredTables })
+
+    // 考勤筛选
+    const { exceptionFilter, myExceptions } = this.data
+    let filteredMyExceptions
+    if (exceptionFilter === 'all') {
+      filteredMyExceptions = myExceptions
+    } else if (exceptionFilter === 'pending') {
+      filteredMyExceptions = myExceptions.filter(e => (e.status || '').toUpperCase() === 'PENDING')
+    } else if (exceptionFilter === 'approved') {
+      filteredMyExceptions = myExceptions.filter(e => (e.status || '').toUpperCase() === 'APPROVED')
+    } else {
+      // rejected
+      filteredMyExceptions = myExceptions.filter(e => (e.status || '').toUpperCase() === 'REJECTED')
+    }
+    this.setData({ filteredMyExceptions })
   },
 
   onFilterOrder(e) {
@@ -848,6 +896,76 @@ Page({
           }
         }).catch(() => { wx.hideLoading(); wx.showToast({ title: '网络异常', icon: 'none' }) })
       }
+    })
+  },
+
+  // ── 考勤筛选 ─────────────────────────────────
+  onFilterException(e) {
+    const filter = e.currentTarget.dataset.filter
+    this.setData({ exceptionFilter: filter })
+    this.applyFilters()
+  },
+
+  // ── 考勤申请弹窗 ─────────────────────────────
+  // 阻止弹窗内部点击事件冒泡到 mask 导致弹窗关闭
+  preventClose() {},
+  onOpenExceptionModal() {
+    const today = new Date()
+    const dateStr = today.getFullYear() + '-' +
+      String(today.getMonth() + 1).padStart(2, '0') + '-' +
+      String(today.getDate()).padStart(2, '0')
+    this.setData({
+      showExceptionModal: true,
+      exceptionForm: { type: 'LEAVE', date: dateStr, reason: '' }
+    })
+  },
+  onCloseExceptionModal() {
+    this.setData({ showExceptionModal: false })
+  },
+  onSelectExceptionType(e) {
+    const type = e.currentTarget.dataset.type
+    this.setData({ 'exceptionForm.type': type })
+  },
+  onExceptionDateChange(e) {
+    this.setData({ 'exceptionForm.date': e.detail.value })
+  },
+  onExceptionReasonInput(e) {
+    this.setData({ 'exceptionForm.reason': e.detail.value })
+  },
+  onSubmitException() {
+    const { type, date, reason } = this.data.exceptionForm
+    if (!date) {
+      wx.showToast({ title: '请选择日期', icon: 'none' })
+      return
+    }
+    if (!reason.trim()) {
+      wx.showToast({ title: '请填写申请原因', icon: 'none' })
+      return
+    }
+    const uid = (app.globalData.userInfo && app.globalData.userInfo.id)
+    if (!uid) {
+      wx.showToast({ title: '未获取到用户信息', icon: 'none' })
+      return
+    }
+    wx.showLoading({ title: '提交中...' })
+    post('/api/staff/shift-exception/submit', {
+      storeId: this.data.storeId,
+      staffId: uid,
+      exceptionDate: date,
+      type: type,
+      reason: reason.trim()
+    }).then(apiRes => {
+      wx.hideLoading()
+      if (apiRes.code === 0 && apiRes.data && apiRes.data.success) {
+        wx.showToast({ title: '提交成功', icon: 'success' })
+        this.setData({ showExceptionModal: false })
+        this.loadData()
+      } else {
+        wx.showToast({ title: (apiRes.data && apiRes.data.message) || '提交失败', icon: 'none' })
+      }
+    }).catch(() => {
+      wx.hideLoading()
+      wx.showToast({ title: '网络异常', icon: 'none' })
     })
   },
 

@@ -193,4 +193,12 @@
     where store_id = #{storeId,jdbcType=INTEGER}
       and dish_id = #{dishId,jdbcType=INTEGER}
   </update>
+
+  <!-- ========== 推荐模块自定义 SQL ========== -->
+
+  <!-- 查询指定门店所有在售菜品 ID，用于推荐候选菜品按门店过滤 -->
+  <select id="selectDishIdsByStore" resultType="java.lang.Integer">
+    SELECT dish_id FROM public.store_dishes
+    WHERE store_id = #{storeId} AND is_available = true
+  </select>
 </mapper>

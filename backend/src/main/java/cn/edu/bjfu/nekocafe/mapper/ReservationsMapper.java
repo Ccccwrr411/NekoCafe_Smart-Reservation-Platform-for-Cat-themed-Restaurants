@@ -29,6 +29,13 @@ public interface ReservationsMapper {
     int updateByPrimaryKey(Reservations row);
 
     /**
+     * 下单确认（状态护栏）：仅当预约仍为 BOOKED 时，才把状态置为 CONFIRMED 并写入金额/积分/备注。
+     * 返回受影响行数；0 表示状态已变更（重复提交 / 已被超时取消 / 已确认），调用方据此拒绝重复下单。
+     * 对 status 枚举字段显式 ::reservation_status，避免 PostgreSQL 类型不匹配。
+     */
+    int confirmOrderIfBooked(Reservations row);
+
+    /**
      * 按用户ID和状态列表查询预约记录。
      * 专用方法，对 status 字段使用 ::reservation_status 显式类型转换，
      * 解决 PostgreSQL 自定义枚举类型无法与 character varying 直接比较的问题。

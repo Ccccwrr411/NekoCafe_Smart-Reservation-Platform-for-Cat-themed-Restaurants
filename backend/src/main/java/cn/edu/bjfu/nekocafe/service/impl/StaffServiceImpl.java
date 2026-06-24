@@ -1,5 +1,6 @@
 package cn.edu.bjfu.nekocafe.service.impl;
 
+import cn.edu.bjfu.nekocafe.dto.ShiftExceptionDTO;
 import cn.edu.bjfu.nekocafe.entity.*;
 import cn.edu.bjfu.nekocafe.mapper.*;
 import cn.edu.bjfu.nekocafe.service.NotificationService;
@@ -1045,6 +1046,102 @@ public class StaffServiceImpl implements StaffService {
             case "APPROVED":      return "已通过";
             case "REJECTED":      return "已驳回";
             default:              return status;
+        }
+    }
+
+    // =========================================================
+    //  M-1  POST /api/staff/shift-exception/submit
+    // =========================================================
+    @Override
+    public Map<String, Object> submitMyException(ShiftExceptionDTO dto) {
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        // 参数校验
+        if (dto.getStoreId() == null || dto.getStaffId() == null
+                || dto.getExceptionDate() == null || dto.getType() == null) {
+            result.put("success", false);
+            result.put("message", "缺少必填参数：storeId、staffId、exceptionDate、type");
+            return result;
+        }
+
+        String type = dto.getType().toUpperCase();
+        if (!type.equals("LEAVE") && !type.equals("OVERTIME") && !type.equals("SWAP")) {
+            result.put("success", false);
+            result.put("message", "无效的申请类型：" + dto.getType() + "，仅支持 LEAVE / OVERTIME / SWAP");
+            return result;
+        }
+
+        try {
+            ShiftExceptions se = new ShiftExceptions();
+            se.setStoreId(dto.getStoreId());
+            se.setStaffId(dto.getStaffId());
+            se.setExceptionDate(new java.sql.Date(
+                    new SimpleDateFormat("yyyy-MM-dd").parse(dto.getExceptionDate()).getTime()));
+            se.setType(type);
+            se.setStatus("PENDING");
+            se.setReason(dto.getReason());
+            se.setCreatedAt(new Date());
+            shiftExceptionsMapper.insertSelective(se);
+
+            result.put("success", true);
+            result.put("message", "申请已提交，等待审批");
+            result.put("exceptionId", se.getExceptionId());
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "提交失败：" + e.getMessage());
+        }
+        return result;
+    }
+
+    // =========================================================
+    //  M-2  GET /api/staff/shift-exceptions/my?storeId=&staffId=
+    // =========================================================
+    @Override
+    public List<Map<String, Object>> getMyExceptions(Integer storeId, Long staffId) {
+        ShiftExceptionsExample example = new ShiftExceptionsExample();
+        example.setOrderByClause("created_at DESC");
+        ShiftExceptionsExample.Criteria criteria = example.createCriteria();
+        criteria.andStoreIdEqualTo(storeId);
+        criteria.andStaffIdEqualTo(staffId);
+
+        List<ShiftExceptions> exList = shiftExceptionsMapper.selectByExample(example);
+
+        SimpleDateFormat dtFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd");
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        if (exList != null) {
+            for (ShiftExceptions ex : exList) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("exceptionId", ex.getExceptionId());
+                row.put("storeId", ex.getStoreId());
+                row.put("staffId", ex.getStaffId());
+                row.put("type", ex.getType());
+                row.put("typeLabel", resolveExceptionTypeLabel(ex.getType()));
+                row.put("status", ex.getStatus());
+                row.put("statusLabel", resolveAlertStatusLabel(ex.getStatus()));
+                row.put("reason", ex.getReason());
+                row.put("exceptionDate",
+                        ex.getExceptionDate() != null ? dateFmt.format(ex.getExceptionDate()) : null);
+                row.put("createdAt",
+                        ex.getCreatedAt() != null ? dtFmt.format(ex.getCreatedAt()) : null);
+                result.add(row);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 考勤异常类型 → 中文
+     */
+    private String resolveExceptionTypeLabel(String type) {
+        if (type == null) return "未知";
+        switch (type.toUpperCase()) {
+            case "LEAVE":    return "请假";
+            case "OVERTIME": return "加班";
+            case "SWAP":     return "调班";
+            case "NO_SHOW":  return "未到店";
+            default:         return type;
         }
     }
 

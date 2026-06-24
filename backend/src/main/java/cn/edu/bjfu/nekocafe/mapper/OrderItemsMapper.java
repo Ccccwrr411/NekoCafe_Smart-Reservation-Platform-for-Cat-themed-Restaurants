@@ -35,9 +35,12 @@ public interface OrderItemsMapper {
 
     /**
      * R4: 统计用户历史点餐频次
+     * 可选按门店过滤（storeId 为 null 时查全部）
      * 返回: [{dishId, totalQuantity}]
      */
-    List<Map<String, Object>> selectDishFrequencyByUserId(@Param("userId") Long userId);
+    List<Map<String, Object>> selectDishFrequencyByUserId(
+            @Param("userId") Long userId,
+            @Param("storeId") Integer storeId);
 
     /**
      * R16 + R17: 全店销量排行（协同过滤兜底）
@@ -48,10 +51,12 @@ public interface OrderItemsMapper {
     /**
      * R16: 同偏好用户的菜品偏好（模拟协同过滤）
      * 查找与当前用户口味相同的其他用户最爱点的菜
+     * 可选按门店过滤（storeId 为 null 时查全部）
      * 返回: [{dishId, orderCount}]
      */
     List<Map<String, Object>> selectCollaborativeFilterDishes(
             @Param("currentUserId") Long currentUserId,
             @Param("flavorPreference") String flavorPreference,
-            @Param("limit") Integer limit);
+            @Param("limit") Integer limit,
+            @Param("storeId") Integer storeId);
 }

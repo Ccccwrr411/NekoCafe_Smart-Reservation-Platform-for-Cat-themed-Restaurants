@@ -2,6 +2,7 @@ package cn.edu.bjfu.nekocafe.controller;
 
 import cn.edu.bjfu.nekocafe.common.Result;
 import cn.edu.bjfu.nekocafe.dto.CatHealthRecordDTO;
+import cn.edu.bjfu.nekocafe.dto.ShiftExceptionDTO;
 import cn.edu.bjfu.nekocafe.service.CatService;
 import cn.edu.bjfu.nekocafe.service.StaffService;
 import cn.edu.bjfu.nekocafe.vo.DashboardMetricsVO;
@@ -24,6 +25,8 @@ import java.util.Map;
  *       L-8 POST /api/staff/refund/review
  *       L-9 POST /api/staff/alert/acknowledge
  *       L-10 POST /api/staff/alert/resolve
+ *       M-1 POST /api/staff/shift-exception/submit
+ *       M-2 GET /api/staff/shift-exceptions/my
  */
 @RestController
 @RequestMapping("/api")
@@ -119,6 +122,19 @@ public class StaffController {
         return Result.success(staffService.resolveAlert(exceptionId, resolution, operatorId));
     }
 
+
+    /** M-1 店员提交考勤异常申请（请假/加班/调班） */
+    @PostMapping("/staff/shift-exception/submit")
+    public Result<Map<String, Object>> submitMyException(@RequestBody ShiftExceptionDTO dto) {
+        return Result.success(staffService.submitMyException(dto));
+    }
+
+    /** M-2 查询店员本人的考勤申请历史 */
+    @GetMapping("/staff/shift-exceptions/my")
+    public Result<List<Map<String, Object>>> getMyExceptions(@RequestParam Integer storeId,
+                                                              @RequestParam Long staffId) {
+        return Result.success(staffService.getMyExceptions(storeId, staffId));
+    }
 
     /** 猫咪健康打卡（猫咪管家 cat_keeper 专用） */
     @PostMapping("/staff/cat/health")

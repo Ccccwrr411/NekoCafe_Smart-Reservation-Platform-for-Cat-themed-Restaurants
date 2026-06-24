@@ -228,7 +228,7 @@
 
   <!-- ========== 推荐模块自定义 SQL ========== -->
 
-  <!-- R4: 用户历史点餐频次统计 -->
+  <!-- R4: 用户历史点餐频次统计（可选按门店过滤）-->
   <select id="selectDishFrequencyByUserId" resultType="java.util.Map">
     SELECT oi.dish_id AS dishid,
            SUM(oi.quantity) AS totalquantity
@@ -237,6 +237,9 @@
         SELECT r.reservation_id
         FROM public.reservations r
         WHERE r.user_id = #{userId}
+          <if test="storeId != null">
+          AND r.store_id = #{storeId}
+          </if>
           AND r.status IN ('CONFIRMED'::reservation_status, 'COMPLETED'::reservation_status)
     )
     GROUP BY oi.dish_id
@@ -253,7 +256,7 @@
     LIMIT #{limit}
   </select>
 
-  <!-- R16: 同偏好协同过滤 — 找到口味偏好相同的其他用户最爱点的菜 -->
+  <!-- R16: 同偏好协同过滤 — 可选按门店过滤 -->
   <select id="selectCollaborativeFilterDishes" resultType="java.util.Map">
     SELECT oi.dish_id AS dishid,
            COUNT(*) AS ordercount
@@ -261,6 +264,9 @@
     INNER JOIN public.reservations r ON oi.reservation_id = r.reservation_id
     INNER JOIN public.member_ext me ON r.user_id = me.user_id
     WHERE r.user_id != #{currentUserId}
+      <if test="storeId != null">
+      AND r.store_id = #{storeId}
+      </if>
       AND me.preferences::text LIKE CONCAT('%', #{flavorPreference}, '%')
       AND r.status IN ('CONFIRMED'::reservation_status, 'COMPLETED'::reservation_status)
     GROUP BY oi.dish_id

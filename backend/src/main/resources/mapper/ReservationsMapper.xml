@@ -126,7 +126,8 @@
       #{pointsUsed,jdbcType=INTEGER}, #{pointsEarned,jdbcType=INTEGER}, #{createdAt,jdbcType=TIMESTAMP}, 
       #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations">
+  <insert id="insertSelective" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations"
+          useGeneratedKeys="true" keyProperty="reservationId" keyColumn="reservation_id">
     insert into public.reservations
     <trim prefix="(" suffix=")" suffixOverrides=",">
       <if test="reservationId != null">
@@ -385,6 +386,26 @@
   </update>
 
   <!--
+    下单确认（状态护栏）：仅当预约仍为 BOOKED 时才置 CONFIRMED。
+    返回受影响行数，0 表示已被处理/超时取消/状态变更 → 调用方拒绝重复提交。
+    对枚举字段显式 CAST，解决 PostgreSQL reservation_status 类型不匹配。
+  -->
+  <update id="confirmOrderIfBooked" parameterType="cn.edu.bjfu.nekocafe.entity.Reservations">
+    update public.reservations
+    <set>
+      <if test="orderAmount != null">order_amount = #{orderAmount,jdbcType=NUMERIC},</if>
+      <if test="totalAmount != null">total_amount = #{totalAmount,jdbcType=NUMERIC},</if>
+      <if test="pointsUsed != null">points_used = #{pointsUsed,jdbcType=INTEGER},</if>
+      <if test="pointsEarned != null">points_earned = #{pointsEarned,jdbcType=INTEGER},</if>
+      <if test="specialRequest != null">special_request = #{specialRequest,jdbcType=VARCHAR},</if>
+      <if test="updatedAt != null">updated_at = #{updatedAt,jdbcType=TIMESTAMP},</if>
+      status = 'CONFIRMED'::reservation_status,
+    </set>
+    where reservation_id = #{reservationId,jdbcType=BIGINT}
+      and status = 'BOOKED'::reservation_status
+  </update>
+
+  <!--
     专用查询：按 userId + status 列表筛选，对枚举字段显式 CAST 为 reservation_status，
     解决 PostgreSQL "operator does not exist: reservation_status = character varying" 问题。
   -->
@@ -427,6 +448,17 @@
   </select>
 
   <!--
+    按用户ID查询全部预约记录（用于"全部"标签）。
+  -->
+  <select id="selectByUserId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from public.reservations
+    where user_id = #{userId,jdbcType=BIGINT}
+    order by reservation_time DESC
+  </select>
+
+  <!--
     专用查询：按 tableId + status 列表查活跃预约（用于时间段冲突判断）。
   -->
   <select id="selectByTableIdAndStatuses" resultMap="BaseResultMap">
@@ -460,6 +492,20 @@
     select count(distinct user_id)
     from public.reservations
     where store_id = #{storeId,jdbcType=INTEGER}
+  </select>
+
+  <!--
+    统计某桌位除指定预约外的活跃预约数量（用于判断取消/改约时是否应释放桌位）。
+  -->
+  <select id="countActiveByTableIdExcluding" parameterType="map" resultType="int">
+    select count(*)
+    from public.reservations
+    where table_id = #{tableId,jdbcType=INTEGER}
+      and status in
+      <foreach collection="statuses" item="s" open="(" separator="," close=")">
+        #{s}::reservation_status
+      </foreach>
+      and reservation_id != #{excludeId,jdbcType=BIGINT}
   </select>
 
   <!--
