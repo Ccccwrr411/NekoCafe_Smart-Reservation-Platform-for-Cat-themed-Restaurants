@@ -1,0 +1,5497 @@
+openapi: 3.0.1
+info:
+  title: 默认模块
+  description: ''
+  version: 1.0.0
+tags: []
+paths:
+  /api/auth/login:
+    post:
+      summary: A-1 微信登录（无需 Token）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDTO'
+              description: ''
+            example:
+              code: '5'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultLoginVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      token: ''
+                      userInfo:
+                        id: 0
+                        nickName: ''
+                        avatarUrl: ''
+                        phone: ''
+                        memberLevel: ''
+                        points: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      token: ''
+                      userInfo:
+                        id: 0
+                        nickName: ''
+                        avatarUrl: ''
+                        phone: ''
+                        email: ''
+                        memberLevel: ''
+                        points: 0
+                        roleId: 0
+                        storeId: 0
+                        storeName: ''
+      security: []
+  /api/auth/wx-login:
+    post:
+      summary: A-0 微信快捷登录（仅用 wx.login code 查 openid 登录）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapString'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultLoginVO'
+              example:
+                code: 0
+                message: ''
+                data:
+                  token: ''
+                  userInfo:
+                    id: 0
+                    nickName: ''
+                    avatarUrl: ''
+                    phone: ''
+                    email: ''
+                    memberLevel: ''
+                    points: 0
+                    roleId: 0
+                    storeId: 0
+                    storeName: ''
+      security: []
+  /api/auth/send-code:
+    post:
+      summary: A-2 发送验证码（沙箱模式，验证码直接返回前端）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapString'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result%3F'
+              example:
+                code: 0
+                message: ''
+                data: null
+      security: []
+  /api/auth/register:
+    post:
+      summary: A-3 手机号注册
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultLoginVO'
+              example:
+                code: 0
+                message: ''
+                data:
+                  token: ''
+                  userInfo:
+                    id: 0
+                    nickName: ''
+                    avatarUrl: ''
+                    phone: ''
+                    email: ''
+                    memberLevel: ''
+                    points: 0
+                    roleId: 0
+                    storeId: 0
+                    storeName: ''
+      security: []
+  /api/auth/login/phone:
+    post:
+      summary: A-4 手机号密码登录
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhoneLoginDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultLoginVO'
+              example:
+                code: 0
+                message: ''
+                data:
+                  token: ''
+                  userInfo:
+                    id: 0
+                    nickName: ''
+                    avatarUrl: ''
+                    phone: ''
+                    email: ''
+                    memberLevel: ''
+                    points: 0
+                    roleId: 0
+                    storeId: 0
+                    storeName: ''
+      security: []
+  /api/cats:
+    get:
+      summary: I-1 猫咪列表（storeId 为 null 时返回全部，用于总部运营）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListCatVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: 0
+                        name: ''
+                        breed: ''
+                        age: 0
+                        gender: ''
+                        imageUrl: ''
+                        weight: 0
+                        desc: ''
+                        personality:
+                          - ''
+                        vaccineDue: ''
+                        currentWeight: 0
+                        idealWeight:
+                          min: 0
+                          max: 0
+                        weightHistory:
+                          labels:
+                            - ''
+                          values:
+                            - 0
+                        vaccines:
+                          - name: ''
+                            date: ''
+                            nextDue: ''
+                            status: ''
+                        interactions:
+                          - date: ''
+                            type: ''
+                            desc: ''
+                            mood: ''
+                        healthScore: 0
+                        healthAdvice: ''
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: 0
+                        name: ''
+                        breed: ''
+                        age: 0
+                        gender: ''
+                        imageUrl: ''
+                        weight: 0
+                        desc: ''
+                        personality:
+                          - ''
+                        vaccineDue: ''
+                        currentWeight: 0
+                        idealWeight:
+                          min: 0
+                          max: 0
+                        weightHistory:
+                          labels:
+                            - ''
+                          values:
+                            - 0
+                        vaccines:
+                          - name: ''
+                            date: ''
+                            nextDue: ''
+                            status: ''
+                        interactions:
+                          - date: ''
+                            type: ''
+                            desc: ''
+                            mood: ''
+                        healthScore: 0
+                        healthAdvice: ''
+      security: []
+  /api/cats/detail:
+    get:
+      summary: I-2 猫咪详情
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: catId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultCatVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      id: 0
+                      name: ''
+                      breed: ''
+                      age: 0
+                      gender: ''
+                      imageUrl: ''
+                      weight: 0
+                      desc: ''
+                      personality:
+                        - ''
+                      vaccineDue: ''
+                      currentWeight: 0
+                      idealWeight:
+                        min: 0
+                        max: 0
+                      weightHistory:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      vaccines:
+                        - name: ''
+                          date: ''
+                          nextDue: ''
+                          status: ''
+                      interactions:
+                        - date: ''
+                          type: ''
+                          desc: ''
+                          mood: ''
+                      healthScore: 0
+                      healthAdvice: ''
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      id: 0
+                      name: ''
+                      breed: ''
+                      age: 0
+                      gender: ''
+                      imageUrl: ''
+                      weight: 0
+                      desc: ''
+                      personality:
+                        - ''
+                      vaccineDue: ''
+                      currentWeight: 0
+                      idealWeight:
+                        min: 0
+                        max: 0
+                      weightHistory:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      vaccines:
+                        - name: ''
+                          date: ''
+                          nextDue: ''
+                          status: ''
+                      interactions:
+                        - date: ''
+                          type: ''
+                          desc: ''
+                          mood: ''
+                      healthScore: 0
+                      healthAdvice: ''
+      security: []
+  /api/coupons:
+    get:
+      summary: G-1 我的优惠券
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListCouponVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: ''
+                        name: ''
+                        type: ''
+                        value: 0
+                        maxDiscount: 0
+                        minAmount: 0
+                        expireDate: ''
+                        status: ''
+                        stackable: false
+                        ruleId: ''
+                        saving: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: ''
+                        name: ''
+                        type: ''
+                        value: 0
+                        maxDiscount: 0
+                        minAmount: 0
+                        expireDate: ''
+                        status: ''
+                        stackable: false
+                        ruleId: ''
+                        saving: 0
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: ''
+                        name: ''
+                        type: ''
+                        value: 0
+                        maxDiscount: 0
+                        minAmount: 0
+                        expireDate: ''
+                        status: ''
+                        stackable: false
+                        ruleId: ''
+                        saving: 0
+      security: []
+  /api/coupons/available:
+    get:
+      summary: G-2 下单可用优惠券
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: amount
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListCouponVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: ''
+                        name: ''
+                        type: ''
+                        value: 0
+                        maxDiscount: 0
+                        minAmount: 0
+                        expireDate: ''
+                        status: ''
+                        stackable: false
+                        ruleId: ''
+                        saving: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: ''
+                        name: ''
+                        type: ''
+                        value: 0
+                        maxDiscount: 0
+                        minAmount: 0
+                        expireDate: ''
+                        status: ''
+                        stackable: false
+                        ruleId: ''
+                        saving: 0
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: ''
+                        name: ''
+                        type: ''
+                        value: 0
+                        maxDiscount: 0
+                        minAmount: 0
+                        expireDate: ''
+                        status: ''
+                        stackable: false
+                        ruleId: ''
+                        saving: 0
+      security: []
+  /api/promotions/rules:
+    get:
+      summary: G-3 促销活动规则
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/promotions/calculate:
+    post:
+      summary: G-4 优惠试算
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionCalcDTO'
+              description: ''
+            example:
+              storeId: 1
+              amount: 300
+              couponIds: []
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/menu:
+    get:
+      summary: D-1 菜品列表
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMenuVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      categories:
+                        - id: 0
+                          name: ''
+                          icon: ''
+                      items:
+                        - id: 0
+                          categoryId: 0
+                          name: ''
+                          price: 0
+                          imageUrl: ''
+                          desc: ''
+                          sales: 0
+                          rating: 0
+                          isHot: false
+                          isNew: false
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      categories:
+                        - id: 0
+                          name: ''
+                          icon: ''
+                      items:
+                        - id: 0
+                          categoryId: 0
+                          name: ''
+                          price: 0
+                          imageUrl: ''
+                          desc: ''
+                          sales: 0
+                          rating: 0
+                          isHot: false
+                          isNew: false
+      security: []
+  /api/orders:
+    get:
+      summary: E-1 订单列表（支持状态筛选 + 搜索）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: status
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListOrderVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: ''
+                        storeId: 0
+                        storeName: ''
+                        tableId: 0
+                        tableName: ''
+                        reserveDate: ''
+                        reserveTime: ''
+                        duration: 0
+                        persons: 0
+                        status: ''
+                        totalAmount: 0
+                        discountAmount: 0
+                        finalAmount: 0
+                        createTime: ''
+                        payTime: ''
+                        payType: ''
+                        remark: ''
+                        items:
+                          - name: ''
+                            qty: 0
+                            price: 0
+                        timeline:
+                          - time: ''
+                            title: ''
+                            desc: ''
+                        canCancel: false
+                        canReschedule: false
+                        canRefund: false
+                        hasReview: false
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: ''
+                        storeId: 0
+                        storeName: ''
+                        tableId: 0
+                        tableName: ''
+                        reserveDate: ''
+                        reserveTime: ''
+                        duration: 0
+                        persons: 0
+                        status: ''
+                        totalAmount: 0
+                        discountAmount: 0
+                        finalAmount: 0
+                        createTime: ''
+                        payTime: ''
+                        payType: ''
+                        remark: ''
+                        items:
+                          - name: ''
+                            qty: 0
+                            price: 0
+                            category: ''
+                            imageUrl: ''
+                            description: ''
+                        timeline:
+                          - time: ''
+                            title: ''
+                            desc: ''
+                        canCancel: false
+                        canReschedule: false
+                        canRefund: false
+                        hasReview: false
+                        review:
+                          overallRating: 0
+                          foodRating: 0
+                          serviceRating: 0
+                          environmentRating: 0
+                          catInteractionRating: 0
+                          content: ''
+                          tags: ''
+                          reply: ''
+                          replyAt: ''
+                          createdAt: ''
+                        statusIcon: ''
+                        statusDesc: ''
+                        storeAddress: ''
+                        storePhone: ''
+                        tableCapacity: 0
+                        tableType: ''
+                        catTheme: ''
+                        tableStatus: ''
+                        paymentMethod: ''
+                        transactionId: ''
+                        paymentStatus: ''
+                        refundReason: ''
+                        refundStatus: ''
+                        refundCreatedAt: ''
+                        refundCompletedAt: ''
+                        coupons:
+                          - couponId: 0
+                            name: ''
+                            type: ''
+                            discountAmount: 0
+                            status: ''
+                        couponDiscount: 0
+                        memberLevel: 0
+                        memberPoints: 0
+                        customerName: ''
+                        customerPhone: ''
+                        customerAvatar: ''
+      security: []
+  /api/order/submit:
+    post:
+      summary: E-2 提交订单（含点单）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: 用户ID
+          required: false
+          example: 1
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderSubmitDTO'
+              description: ''
+            example:
+              storeId: 1
+              tableId: 1
+              totalAmount: 115
+              finalAmount: 115
+              discount: 0
+              remark: 测试订单
+              items:
+                - menuId: 1
+                  qty: 2
+                  price: 38
+                - menuId: 4
+                  qty: 1
+                  price: 25
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/order/detail:
+    get:
+      summary: E-3 订单详情
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: orderId
+          in: query
+          description: ''
+          required: true
+          example: ORD0000000007
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultOrderVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      id: ''
+                      storeId: 0
+                      storeName: ''
+                      tableId: 0
+                      tableName: ''
+                      reserveDate: ''
+                      reserveTime: ''
+                      duration: 0
+                      persons: 0
+                      status: ''
+                      totalAmount: 0
+                      discountAmount: 0
+                      finalAmount: 0
+                      createTime: ''
+                      payTime: ''
+                      payType: ''
+                      remark: ''
+                      items:
+                        - name: ''
+                          qty: 0
+                          price: 0
+                      timeline:
+                        - time: ''
+                          title: ''
+                          desc: ''
+                      canCancel: false
+                      canReschedule: false
+                      canRefund: false
+                      hasReview: false
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      id: ''
+                      storeId: 0
+                      storeName: ''
+                      tableId: 0
+                      tableName: ''
+                      reserveDate: ''
+                      reserveTime: ''
+                      duration: 0
+                      persons: 0
+                      status: ''
+                      totalAmount: 0
+                      discountAmount: 0
+                      finalAmount: 0
+                      createTime: ''
+                      payTime: ''
+                      payType: ''
+                      remark: ''
+                      items:
+                        - name: ''
+                          qty: 0
+                          price: 0
+                      timeline:
+                        - time: ''
+                          title: ''
+                          desc: ''
+                      canCancel: false
+                      canReschedule: false
+                      canRefund: false
+                      hasReview: false
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      id: ''
+                      storeId: 0
+                      storeName: ''
+                      tableId: 0
+                      tableName: ''
+                      reserveDate: ''
+                      reserveTime: ''
+                      duration: 0
+                      persons: 0
+                      status: ''
+                      totalAmount: 0
+                      discountAmount: 0
+                      finalAmount: 0
+                      createTime: ''
+                      payTime: ''
+                      payType: ''
+                      remark: ''
+                      items:
+                        - name: ''
+                          qty: 0
+                          price: 0
+                          category: ''
+                          imageUrl: ''
+                          description: ''
+                      timeline:
+                        - time: ''
+                          title: ''
+                          desc: ''
+                      canCancel: false
+                      canReschedule: false
+                      canRefund: false
+                      hasReview: false
+                      review:
+                        overallRating: 0
+                        foodRating: 0
+                        serviceRating: 0
+                        environmentRating: 0
+                        catInteractionRating: 0
+                        content: ''
+                        tags: ''
+                        reply: ''
+                        replyAt: ''
+                        createdAt: ''
+                      statusIcon: ''
+                      statusDesc: ''
+                      storeAddress: ''
+                      storePhone: ''
+                      tableCapacity: 0
+                      tableType: ''
+                      catTheme: ''
+                      tableStatus: ''
+                      paymentMethod: ''
+                      transactionId: ''
+                      paymentStatus: ''
+                      refundReason: ''
+                      refundStatus: ''
+                      refundCreatedAt: ''
+                      refundCompletedAt: ''
+                      coupons:
+                        - couponId: 0
+                          name: ''
+                          type: ''
+                          discountAmount: 0
+                          status: ''
+                      couponDiscount: 0
+                      memberLevel: 0
+                      memberPoints: 0
+                      customerName: ''
+                      customerPhone: ''
+                      customerAvatar: ''
+      security: []
+  /api/order/cancel:
+    post:
+      summary: E-4 取消订单
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: false
+          example: 1
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapString'
+              description: ''
+            example:
+              orderId: ORD0000000009
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/order/reschedule:
+    post:
+      summary: E-5 改约（已废弃，取消预约请使用 POST /api/order/cancel）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: false
+          example: 1
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RescheduleDTO'
+              description: ''
+            example:
+              orderId: ORD0000000013
+              newReserveDate: '2026-06-11'
+              newReserveTime: '18:00'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/order/refund:
+    post:
+      summary: E-6 申请退款
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: false
+          example: 1
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapString'
+              description: ''
+            example:
+              orderId: ORD00000000014
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/reservation/create:
+    post:
+      summary: E-7 纯预约（无点单）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: false
+          example: 1
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationCreateDTO'
+              description: ''
+            example:
+              storeId: 1
+              tableId: 1
+              reserveDate: '2026-06-11'
+              reserveTime: '14:00'
+              persons: 2
+              duration: 2
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/order/confirm-payment:
+    post:
+      summary: 确认支付（沙箱模式：用户点击"模拟支付成功"后调用，PENDING → PAID）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapString'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  '': {}
+      security: []
+  /api/reservation/current:
+    get:
+      summary: 获取用户当前 BOOKED 状态的预约列表（供点单页面选择）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListCurrentReservationVO'
+              example:
+                code: 0
+                message: ''
+                data:
+                  - orderId: ''
+                    storeId: 0
+                    storeName: ''
+                    tableId: 0
+                    tableName: ''
+                    tableType: ''
+                    tableCapacity: 0
+                    catTheme: ''
+                    catName: ''
+                    reserveDate: ''
+                    reserveTime: ''
+                    duration: 0
+                    persons: 0
+                    remark: ''
+      security: []
+  /api/order/reactivate:
+    post:
+      summary: 重新激活已取消的订单（CANCEL_ORDER → BOOKED），复用同一预约记录
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapString'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  '': {}
+      security: []
+  /api/queue/status:
+    get:
+      summary: J-1 排队状态（允许未登录查看，只是 myNumber 为空）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultQueueStatusVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      storeId: 0
+                      waitingCount: 0
+                      avgWaitMinutes: 0
+                      currentNumber: 0
+                      myNumber: 0
+                      myWaitMinutes: 0
+                      queueList:
+                        - number: 0
+                          persons: 0
+                          type: ''
+                          ahead: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      storeId: 0
+                      waitingCount: 0
+                      avgWaitMinutes: 0
+                      currentNumber: 0
+                      myNumber: 0
+                      myWaitMinutes: 0
+                      myQueueId: 0
+                      called: false
+                      queueList:
+                        - queueId: 0
+                          number: 0
+                          persons: 0
+                          type: ''
+                          ahead: 0
+                          status: ''
+                          isMine: false
+                          userName: ''
+                      calledList:
+                        - queueId: 0
+                          number: 0
+                          persons: 0
+                          type: ''
+                          ahead: 0
+                          status: ''
+                          isMine: false
+                          userName: ''
+                      missedList:
+                        - queueId: 0
+                          number: 0
+                          persons: 0
+                          type: ''
+                          ahead: 0
+                          status: ''
+                          isMine: false
+                          userName: ''
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      storeId: 0
+                      waitingCount: 0
+                      avgWaitMinutes: 0
+                      currentNumber: 0
+                      myNumber: 0
+                      myWaitMinutes: 0
+                      myQueueId: 0
+                      called: false
+                      queueList:
+                        - queueId: 0
+                          number: 0
+                          persons: 0
+                          type: ''
+                          ahead: 0
+                          status: ''
+                          isMine: false
+                          userName: ''
+                      calledList:
+                        - queueId: 0
+                          number: 0
+                          persons: 0
+                          type: ''
+                          ahead: 0
+                          status: ''
+                          isMine: false
+                          userName: ''
+                      missedList:
+                        - queueId: 0
+                          number: 0
+                          persons: 0
+                          type: ''
+                          ahead: 0
+                          status: ''
+                          isMine: false
+                          userName: ''
+      security: []
+  /api/queue/take:
+    post:
+      summary: J-2 取号
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueTakeDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/queue/call:
+    post:
+      summary: J-3 叫号 — 店员操作，将指定排队记录标记为 CALLED
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/queue/confirm:
+    post:
+      summary: J-4 确认叫号 — 用户操作，将 CALLED 改为 KNOWN
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultVoid'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: null
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: null
+      security: []
+  /api/recommend:
+    get:
+      summary: H-1 个性化推荐
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: companionCount
+          in: query
+          description: ''
+          required: false
+          example: 1
+          schema:
+            type: integer
+        - name: hasChild
+          in: query
+          description: ''
+          required: false
+          example: 'false'
+          schema:
+            type: boolean
+        - name: storeId
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/review/submit:
+    post:
+      summary: M-1 提交评价
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmitDTO'
+              description: ''
+            example:
+              orderId: ORD0000000001
+              rating: 5
+              tags:
+                - 环境好
+              content: 非常好的体验！
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/review/detail:
+    get:
+      summary: M-2 查看某订单的已有评价
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: orderId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  '': {}
+      security: []
+  /api/dashboard/metrics:
+    get:
+      summary: K-1 运营指标看板
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: range
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDashboardMetricsVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      storeId: 0
+                      range: ''
+                      spaceEfficiency:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      turnoverRate:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      repurchaseRate:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      todayOverview:
+                        revenue: 0
+                        orderCount: 0
+                        newMembers: 0
+                        avgOrderValue: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      storeId: 0
+                      range: ''
+                      spaceEfficiency:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      turnoverRate:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      repurchaseRate:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      todayOverview:
+                        revenue: 0
+                        orderCount: 0
+                        newMembers: 0
+                        avgOrderValue: 0
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      storeId: 0
+                      range: ''
+                      spaceEfficiency:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      turnoverRate:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      repurchaseRate:
+                        labels:
+                          - ''
+                        values:
+                          - 0
+                      todayOverview:
+                        revenue: 0
+                        orderCount: 0
+                        newMembers: 0
+                        avgOrderValue: 0
+                '4':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      storeId: 0
+                      range: ''
+                      chartData:
+                        labels:
+                          - ''
+                        revenuePerSeat:
+                          - 0
+                        tableTurnoverRate:
+                          - 0
+                        repurchaseRate:
+                          - 0
+                      todayOverview:
+                        revenue: 0
+                        orderCount: 0
+                        newMembers: 0
+                        avgOrderValue: 0
+      security: []
+  /api/staff/tables:
+    get:
+      summary: L-1 店员端桌位状态
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '4':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+      security: []
+  /api/staff/alerts:
+    get:
+      summary: L-2 异常告警
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '4':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+      security: []
+  /api/staff/orders:
+    get:
+      summary: L-3 门店订单列表
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+      security: []
+  /api/staff/order/accept:
+    post:
+      summary: L-4 店员接单（确认到店）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/staff/table/dispatch:
+    post:
+      summary: L-5 桌位调度
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '3':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/staff/order/progress:
+    post:
+      summary: L-6 订单进度推进
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/staff/refunds:
+    get:
+      summary: L-7 退款申请列表
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+      security: []
+  /api/staff/refund/review:
+    post:
+      summary: L-8 审核退款
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/staff/alert/acknowledge:
+    post:
+      summary: L-9 告警已知晓
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/staff/alert/resolve:
+    post:
+      summary: L-10 解决告警
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/staff/shift-exception/submit:
+    post:
+      summary: M-1 店员提交考勤异常申请（请假/加班/调班）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftExceptionDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  '': {}
+      security: []
+  /api/staff/shift-exceptions/my:
+    get:
+      summary: M-2 查询店员本人的考勤申请历史
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: staffId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  - '': {}
+      security: []
+  /api/staff/cat/health:
+    post:
+      summary: 猫咪健康打卡（猫咪管家 cat_keeper 专用）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatHealthRecordDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result%3F'
+              example:
+                code: 0
+                message: ''
+                data: null
+      security: []
+  /api/stores:
+    get:
+      summary: B-1 门店列表
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListStoreVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: 0
+                        name: ''
+                        address: ''
+                        distance: 0
+                        lat: 0
+                        lng: 0
+                        avgPrice: 0
+                        rating: 0
+                        catCount: 0
+                        imageUrl: ''
+                        tags:
+                          - ''
+                        openTime: ''
+                        status: ''
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: 0
+                        name: ''
+                        address: ''
+                        distance: 0
+                        lat: 0
+                        lng: 0
+                        avgPrice: 0
+                        rating: 0
+                        catCount: 0
+                        imageUrl: ''
+                        tags:
+                          - ''
+                        openTime: ''
+                        status: ''
+      security: []
+  /api/tables:
+    get:
+      summary: C-1 桌位列表（支持时段冲突判断）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: reserveDate
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: reserveTime
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: duration
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListTableVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: 0
+                        name: ''
+                        type: ''
+                        capacity: 0
+                        status: ''
+                        catType: ''
+                        catName: ''
+                        price: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - id: 0
+                        name: ''
+                        type: ''
+                        capacity: 0
+                        status: ''
+                        catType: ''
+                        catName: ''
+                        price: 0
+                        top: 0
+                        left: 0
+                        width: 0
+                        height: 0
+      security: []
+  /api/user/profile:
+    get:
+      summary: F-1 用户信息
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserProfileVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      id: 0
+                      nickName: ''
+                      avatarUrl: ''
+                      phone: ''
+                      memberLevel: ''
+                      memberLevelIcon: ''
+                      points: 0
+                      pointsToNext: 0
+                      nextLevel: ''
+                      totalOrders: 0
+                      totalSpent: 0
+                      couponCount: 0
+                      favoriteStores:
+                        - 0
+                      joinDate: ''
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      id: 0
+                      nickName: ''
+                      avatarUrl: ''
+                      phone: ''
+                      email: ''
+                      memberLevel: ''
+                      memberLevelIcon: ''
+                      points: 0
+                      pointsToNext: 0
+                      nextLevel: ''
+                      levelStartPoints: 0
+                      nextLevelThreshold: 0
+                      totalOrders: 0
+                      totalSpent: 0
+                      couponCount: 0
+                      favoriteStores:
+                        - 0
+                      joinDate: ''
+                      isVerified: false
+                      realName: ''
+                      idCardMask: ''
+                      storeId: 0
+                      storeName: ''
+      security: []
+    post:
+      summary: F-3 更新个人信息（昵称/头像/手机/邮箱）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultUserProfileVO'
+              example:
+                code: 0
+                message: ''
+                data:
+                  id: 0
+                  nickName: ''
+                  avatarUrl: ''
+                  phone: ''
+                  email: ''
+                  memberLevel: ''
+                  memberLevelIcon: ''
+                  points: 0
+                  pointsToNext: 0
+                  nextLevel: ''
+                  levelStartPoints: 0
+                  nextLevelThreshold: 0
+                  totalOrders: 0
+                  totalSpent: 0
+                  couponCount: 0
+                  favoriteStores:
+                    - 0
+                  joinDate: ''
+                  isVerified: false
+                  realName: ''
+                  idCardMask: ''
+                  storeId: 0
+                  storeName: ''
+      security: []
+  /api/user/realname:
+    post:
+      summary: F-2 实名认证
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealnameDTO'
+              description: ''
+            example:
+              realName: 张三
+              idCard: '110101199001011234'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/user/upload-avatar:
+    post:
+      summary: F-5 上传头像（MultipartFile）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: success
+                data:
+                  avatarUrl: ''
+                  success: true
+      security: []
+  /api/user/change-password:
+    post:
+      summary: F-4 修改密码
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapString'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  '': {}
+      security: []
+  /api/notifications/store:
+    get:
+      summary: M-1 门店通知列表（店员/店长）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: ''
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: size
+          in: query
+          description: ''
+          required: true
+          example: 30
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+      security: []
+  /api/notifications/user:
+    get:
+      summary: M-2 用户通知列表（顾客）
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          description: ''
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: size
+          in: query
+          description: ''
+          required: true
+          example: 30
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      - '': {}
+      security: []
+  /api/notifications/unread/store:
+    get:
+      summary: M-3 门店未读数量
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultInteger'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: 0
+      security: []
+  /api/notifications/unread/user:
+    get:
+      summary: M-4 用户未读数量
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: userId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultInteger'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: 0
+      security: []
+  /api/notifications/read:
+    post:
+      summary: M-5 标记单条已读
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/notifications/read-all/store:
+    post:
+      summary: M-6 门店全部已读
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/notifications/read-all/user:
+    post:
+      summary: M-7 用户全部已读
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/hq/stores-overview:
+    get:
+      summary: getStoresOverview
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultStoresOverviewVO'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      totalRevenue: 0
+                      totalOrders: 0
+                      totalMembers: 0
+                      avgDailyTurnover: 0
+                      stores:
+                        - id: 0
+                          name: ''
+                          status: ''
+                          manager: ''
+                          managerPhone: ''
+                          rating: 0
+                          todayRevenue: 0
+                          todayOrders: 0
+                          tableCount: 0
+                          availableTables: 0
+                          occupancyRate: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      totalRevenue: 0
+                      totalOrders: 0
+                      totalMembers: 0
+                      avgDailyTurnover: 0
+                      stores:
+                        - id: 0
+                          name: ''
+                          status: ''
+                          manager: ''
+                          managerPhone: ''
+                          rating: 0
+                          todayRevenue: 0
+                          todayOrders: 0
+                          tableCount: 0
+                          availableTables: 0
+                          occupancyRate: 0
+      security: []
+  /api/hq/stats/refresh:
+    post:
+      summary: refreshDailyStats
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultString'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: ''
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: ''
+      security: []
+  /api/hq/promotions:
+    get:
+      summary: listPromotions
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: type
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: isActive
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: ''
+          required: true
+          example: 1
+          schema:
+            type: integer
+        - name: pageSize
+          in: query
+          description: ''
+          required: true
+          example: 20
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: success
+                    data:
+                      list:
+                        - promoId: 0
+                          name: ''
+                          type: ''
+                          ruleJson: {}
+                          startTime: ''
+                          endTime: ''
+                          applicableStores: {}
+                          isActive: false
+                      total: 0
+                      page: 0
+                      pageSize: 0
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: success
+                    data:
+                      list:
+                        - promoId: 0
+                          name: ''
+                          type: ''
+                          ruleJson: {}
+                          startTime: ''
+                          endTime: ''
+                          applicableStores: {}
+                          isActive: false
+                      total: 0
+                      page: 0
+                      pageSize: 0
+      security: []
+    post:
+      summary: createPromotion
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePromotionDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPromotions'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      promoId: 0
+                      name: ''
+                      type: ''
+                      ruleJson: {}
+                      startTime: ''
+                      endTime: ''
+                      applicableStores: {}
+                      isActive: false
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      promoId: 0
+                      name: ''
+                      type: ''
+                      ruleJson: {}
+                      startTime: ''
+                      endTime: ''
+                      applicableStores: {}
+                      isActive: false
+      security: []
+  /api/hq/promotions/{promoId}:
+    put:
+      summary: updatePromotion
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: promoId
+          in: path
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePromotionDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPromotions'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      promoId: 0
+                      name: ''
+                      type: ''
+                      ruleJson: {}
+                      startTime: ''
+                      endTime: ''
+                      applicableStores: {}
+                      isActive: false
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      promoId: 0
+                      name: ''
+                      type: ''
+                      ruleJson: {}
+                      startTime: ''
+                      endTime: ''
+                      applicableStores: {}
+                      isActive: false
+      security: []
+    delete:
+      summary: deletePromotion
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: promoId
+          in: path
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultString'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: ''
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: ''
+      security: []
+  /api/hq/promotions/{promoId}/toggle:
+    patch:
+      summary: togglePromotion
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: promoId
+          in: path
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultString'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: ''
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data: ''
+      security: []
+  /api/hq/coupons/send:
+    post:
+      summary: sendCoupon
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCouponDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/hq/coupons/batch-send:
+    post:
+      summary: batchSendCoupon
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSendCouponDTO'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              examples:
+                '1':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+                '2':
+                  summary: 成功示例
+                  value:
+                    code: 0
+                    message: ''
+                    data:
+                      '': {}
+      security: []
+  /api/manager/schedules:
+    get:
+      summary: getSchedules
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  - '': {}
+      security: []
+  /api/manager/shifts:
+    get:
+      summary: getShifts
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  - '': {}
+      security: []
+  /api/manager/exceptions:
+    get:
+      summary: getExceptions
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  - '': {}
+      security: []
+  /api/manager/exception/review:
+    post:
+      summary: reviewException
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  '': {}
+      security: []
+  /api/manager/schedule:
+    post:
+      summary: 创建排班
+      deprecated: false
+      description: >-
+        POST /api/manager/schedule
+
+        Body:{ storeId, staffId, workDate, shiftId, startTime?, endTime?,
+        position?, notes?}
+      tags: []
+      parameters:
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  '': {}
+      security: []
+  /api/manager/schedule/{scheduleId}:
+    put:
+      summary: 修改排班
+      deprecated: false
+      description: >-
+        PUT /api/manager/schedule/{scheduleId}
+
+        Body:{ workDate?, shiftId?, startTime?, endTime?, staffId?, position?,
+        notes?}
+      tags: []
+      parameters:
+        - name: scheduleId
+          in: path
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MapObject'
+              description: ''
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  '': {}
+      security: []
+  /api/manager/staff:
+    get:
+      summary: 按门店搜索员工（支持姓名/昵称模糊搜索）
+      deprecated: false
+      description: GET /api/manager/staff?storeId=&keyword=
+      tags: []
+      parameters:
+        - name: storeId
+          in: query
+          description: ''
+          required: true
+          schema:
+            type: integer
+        - name: keyword
+          in: query
+          description: ''
+          required: false
+          example: ''
+          schema:
+            type: string
+        - name: Authorization
+          in: header
+          description: ''
+          example: Bearer {{token}}
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultListMapObject'
+              example:
+                code: 0
+                message: ''
+                data:
+                  - '': {}
+      security: []
+components:
+  schemas:
+    UserInfoVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ''
+          format: int64
+        nickName:
+          type: string
+          description: ''
+        avatarUrl:
+          type: string
+          description: ''
+        phone:
+          type: string
+          description: ''
+        email:
+          type: string
+          description: ''
+        memberLevel:
+          type: string
+          description: ''
+        points:
+          type: integer
+          description: ''
+        roleId:
+          type: integer
+          description: 当前角色ID
+        storeId:
+          type: integer
+          description: 所属门店ID（总部运营为null）
+        storeName:
+          type: string
+          description: 所属门店名称
+    IdealWeightVO:
+      type: object
+      properties:
+        min:
+          type: number
+          description: ''
+        max:
+          type: number
+          description: ''
+    ResultMapObject:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/MapObject'
+          description: 具体的业务数据
+    CategoryVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ''
+        name:
+          type: string
+          description: ''
+        icon:
+          type: string
+          description: ''
+    OrderItemVO:
+      type: object
+      properties:
+        name:
+          type: string
+          description: ''
+        qty:
+          type: integer
+          description: ''
+        price:
+          type: integer
+          description: ''
+        category:
+          type: string
+          description: ''
+        imageUrl:
+          type: string
+          description: ''
+        description:
+          type: string
+          description: ''
+    QueueItemVO:
+      type: object
+      properties:
+        queueId:
+          type: integer
+          description: ''
+          format: int64
+        number:
+          type: integer
+          description: ''
+        persons:
+          type: integer
+          description: ''
+        type:
+          type: string
+          description: ''
+        ahead:
+          type: integer
+          description: ''
+        status:
+          type: string
+          description: WAITING/CALLED/KNOWN/MISSED
+        isMine:
+          type: boolean
+          description: 是否当前用户的排队号
+        userName:
+          type: string
+          description: 用户昵称（店员端显示用）
+    TrendVO: &ref_0
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+          description: ''
+        values:
+          type: array
+          items:
+            type: number
+          description: ''
+    StoreVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: storeId
+        name:
+          type: string
+          description: ''
+        address:
+          type: string
+          description: ''
+        distance:
+          type: number
+          description: 距离 km（可由前端传经纬度后端计算）
+        lat:
+          type: number
+          description: ''
+        lng:
+          type: number
+          description: ''
+        avgPrice:
+          type: integer
+          description: ''
+        rating:
+          type: number
+          description: ''
+        catCount:
+          type: integer
+          description: ''
+        imageUrl:
+          type: string
+          description: 完整 URL：http://host/uploads/stores/store_{id}.jpg
+        tags:
+          type: array
+          items:
+            type: string
+          description: ''
+        openTime:
+          type: string
+          description: 来自 businessHours 字段
+        status:
+          type: string
+          description: 1→"open" / 0→"closed"
+    TableVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: tableId
+        name:
+          type: string
+          description: tableNo
+        type:
+          type: string
+          description: tableType
+        capacity:
+          type: integer
+          description: ''
+        status:
+          type: string
+          description: available / booked / maintenance
+        catType:
+          type: string
+          description: catTheme（品种）
+        catName:
+          type: string
+          description: 关联猫咪名字（需联查 cat_profiles）
+        price:
+          type: integer
+          description: 包间附加费（暂为 0）
+        top:
+          type: number
+          description: 实景平面图布局字段（单位：rpx，由后端基于数据库配置返回）
+        left:
+          type: number
+          description: ''
+        width:
+          type: number
+          description: ''
+        height:
+          type: number
+          description: ''
+    StoreCardVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ''
+        name:
+          type: string
+          description: ''
+        status:
+          type: string
+          description: '"open" | "closed"'
+        manager:
+          type: string
+          description: ''
+        managerPhone:
+          type: string
+          description: ''
+        rating:
+          type: number
+          description: ''
+        todayRevenue:
+          type: integer
+          description: ''
+        todayOrders:
+          type: integer
+          description: ''
+        tableCount:
+          type: integer
+          description: ''
+        availableTables:
+          type: integer
+          description: ''
+        occupancyRate:
+          type: number
+          description: 0.0 ~ 1.0
+    ChartDataVO:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+          description: ''
+        revenuePerSeat:
+          type: array
+          items:
+            type: number
+          description: ''
+        tableTurnoverRate:
+          type: array
+          items:
+            type: number
+          description: ''
+        repurchaseRate:
+          type: array
+          items:
+            type: number
+          description: ''
+    LoginVO:
+      type: object
+      properties:
+        token:
+          type: string
+          description: ''
+        userInfo:
+          $ref: '#/components/schemas/UserInfoVO'
+          description: ''
+    WeightHistoryVO: *ref_0
+    ResultListCouponVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CouponVO'
+            description: |-
+              VO - 优惠券响应体（对应接口 G-1 / G-2）
+              entity UserCoupons + Promotions 联查组装
+          description: 具体的业务数据
+    MenuItemVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ''
+        categoryId:
+          type: integer
+          description: ''
+        name:
+          type: string
+          description: ''
+        price:
+          type: integer
+          description: ''
+        imageUrl:
+          type: string
+          description: ''
+        desc:
+          type: string
+          description: ''
+        sales:
+          type: integer
+          description: ''
+        rating:
+          type: number
+          description: ''
+        isHot:
+          type: boolean
+          description: ''
+        isNew:
+          type: boolean
+          description: ''
+    TimelineVO:
+      type: object
+      properties:
+        time:
+          type: string
+          description: ''
+        title:
+          type: string
+          description: ''
+        desc:
+          type: string
+          description: ''
+    QueueStatusVO:
+      type: object
+      properties:
+        storeId:
+          type: integer
+          description: ''
+        waitingCount:
+          type: integer
+          description: ''
+        avgWaitMinutes:
+          type: integer
+          description: ''
+        currentNumber:
+          type: integer
+          description: ''
+        myNumber:
+          type: integer
+          description: 未取号时为 null
+        myWaitMinutes:
+          type: integer
+          description: ''
+        myQueueId:
+          type: integer
+          description: 我的排队记录ID（用于确认叫号）
+          format: int64
+        called:
+          type: boolean
+          description: 是否刚被叫号（店员已叫到该用户）
+        queueList:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueItemVO'
+            description: cn.edu.bjfu.nekocafe.vo.QueueStatusVO.QueueItemVO
+          description: ''
+        calledList:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueItemVO'
+            description: cn.edu.bjfu.nekocafe.vo.QueueStatusVO.QueueItemVO
+          description: 已叫号（CALLED / KNOWN）
+        missedList:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueItemVO'
+            description: cn.edu.bjfu.nekocafe.vo.QueueStatusVO.QueueItemVO
+          description: 已过号（MISSED）
+    TodayOverviewVO:
+      type: object
+      properties:
+        revenue:
+          type: integer
+          description: ''
+        orderCount:
+          type: integer
+          description: ''
+        newMembers:
+          type: integer
+          description: ''
+        avgOrderValue:
+          type: integer
+          description: ''
+    ResultListStoreVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreVO'
+            description: |-
+              VO - 门店列表响应体（对应接口 B-1）
+              entity Stores → 需要补充 rating / catCount / tags / imageUrl 等
+              （这些字段在 stores 表中暂无，需联查或单独维护）
+          description: 具体的业务数据
+    ResultListTableVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableVO'
+            description: |-
+              VO - 桌位列表响应体（对应接口 C-1）
+              entity Tables + TableStatus → 组合桌位基本信息与实时状态
+          description: 具体的业务数据
+    UserProfileVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ''
+          format: int64
+        nickName:
+          type: string
+          description: ''
+        avatarUrl:
+          type: string
+          description: ''
+        phone:
+          type: string
+          description: 脱敏手机号，如 138****8888
+        email:
+          type: string
+          description: 邮箱（用户绑定后才有值）
+        memberLevel:
+          type: string
+          description: MemberExt.level 枚举转文字
+        memberLevelIcon:
+          type: string
+          description: 等级图标 emoji
+        points:
+          type: integer
+          description: totalPoints
+        pointsToNext:
+          type: integer
+          description: 距下一级所需积分
+        nextLevel:
+          type: string
+          description: ''
+        levelStartPoints:
+          type: integer
+          description: 当前等级起始积分（进度条起点）
+        nextLevelThreshold:
+          type: integer
+          description: 下一级积分阈值（进度条终点）
+        totalOrders:
+          type: integer
+          description: ''
+        totalSpent:
+          type: integer
+          description: cumulativeAmount 取整
+        couponCount:
+          type: integer
+          description: ''
+        favoriteStores:
+          type: array
+          items:
+            type: integer
+          description: ''
+        joinDate:
+          type: string
+          description: Users.createdAt 格式化
+        isVerified:
+          type: boolean
+          description: 是否已完成实名认证
+        realName:
+          type: string
+          description: 实名认证姓名（未认证为 null）
+        idCardMask:
+          type: string
+          description: 脱敏身份证号（未认证为 null）
+        storeId:
+          type: integer
+          description: 用户绑定的门店 ID
+        storeName:
+          type: string
+          description: 用户绑定的门店名称
+    StoresOverviewVO:
+      type: object
+      properties:
+        totalRevenue:
+          type: integer
+          description: ''
+        totalOrders:
+          type: integer
+          description: ''
+        totalMembers:
+          type: integer
+          description: ''
+        avgDailyTurnover:
+          type: number
+          description: ''
+        stores:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreCardVO'
+            description: >-
+              总部运营 · 单门店卡片 VO
+
+
+              字段与 dashboard.wxml 全部门店概览 UI 一一对应：
+
+              hqOverview.stores[i].{ name, status, manager, managerPhone,
+              rating,
+                todayRevenue, todayOrders, tableCount, availableTables, occupancyRate}
+          description: ''
+    ResultLoginVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/LoginVO'
+          description: 具体的业务数据
+    VaccineVO:
+      type: object
+      properties:
+        name:
+          type: string
+          description: ''
+        date:
+          type: string
+          description: ''
+        nextDue:
+          type: string
+          description: ''
+        status:
+          type: string
+          description: valid / expiring / expired
+    MenuVO:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryVO'
+            description: 菜品分类
+          description: ''
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MenuItemVO'
+            description: 单个菜品
+          description: ''
+    ResultQueueStatusVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/QueueStatusVO'
+          description: 具体的业务数据
+    DashboardMetricsVO:
+      type: object
+      properties:
+        storeId:
+          type: integer
+          description: ''
+        range:
+          type: string
+          description: ''
+        chartData:
+          $ref: '#/components/schemas/ChartDataVO'
+          description: ''
+        todayOverview:
+          $ref: '#/components/schemas/TodayOverviewVO'
+          description: ''
+    ResultUserProfileVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/UserProfileVO'
+          description: 具体的业务数据
+    ResultStoresOverviewVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/StoresOverviewVO'
+          description: 具体的业务数据
+    ReviewVO:
+      type: object
+      properties:
+        overallRating:
+          type: integer
+          description: ''
+        foodRating:
+          type: integer
+          description: ''
+        serviceRating:
+          type: integer
+          description: ''
+        environmentRating:
+          type: integer
+          description: ''
+        catInteractionRating:
+          type: integer
+          description: ''
+        content:
+          type: string
+          description: ''
+        tags:
+          type: string
+          description: ''
+        reply:
+          type: string
+          description: ''
+        replyAt:
+          type: string
+          description: ''
+        createdAt:
+          type: string
+          description: ''
+    LoginDTO:
+      type: object
+      properties:
+        code:
+          type: string
+          description: wx.login() 返回的临时 code
+        phone:
+          type: string
+          description: 手机号（微信授权获取或用户手动输入）
+        smsCode:
+          type: string
+          description: 短信验证码（微信登录时用于身份验证）
+        roleId:
+          type: integer
+          description: 角色 ID（前端选择的角色，对应 roles 表）
+        storeId:
+          type: integer
+          description: 门店 ID（非顾客角色必填）
+        nickname:
+          type: string
+          description: 昵称（微信登录新用户可自定义）
+    InteractionVO:
+      type: object
+      properties:
+        date:
+          type: string
+          description: ''
+        type:
+          type: string
+          description: ''
+        desc:
+          type: string
+          description: ''
+        mood:
+          type: string
+          description: happy / neutral / grumpy
+    CouponVO:
+      type: object
+      properties:
+        couponId:
+          type: integer
+          description: ''
+          format: int64
+        name:
+          type: string
+          description: ''
+        type:
+          type: string
+          description: discount / cashback / freebie
+        discountAmount:
+          type: integer
+          description: ''
+        status:
+          type: string
+          description: unused / used / expired
+    key: &ref_2
+      type: object
+      properties: {}
+    ResultMenuVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/MenuVO'
+          description: 具体的业务数据
+    ReviewSubmitDTO:
+      type: object
+      properties:
+        orderId:
+          type: string
+          description: ''
+        rating:
+          type: integer
+          description: ''
+        tags:
+          type: array
+          items:
+            type: string
+          description: ''
+        content:
+          type: string
+          description: ''
+        foodRating:
+          type: integer
+          description: ''
+        serviceRating:
+          type: integer
+          description: ''
+        environmentRating:
+          type: integer
+          description: ''
+        catInteractionRating:
+          type: integer
+          description: ''
+    ResultDashboardMetricsVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/DashboardMetricsVO'
+          description: 具体的业务数据
+    ResultInteger:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: integer
+          description: 具体的业务数据
+    ResultString:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: string
+          description: 具体的业务数据
+    CatVO:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: '--- 列表字段 ---'
+        name:
+          type: string
+          description: ''
+        breed:
+          type: string
+          description: ''
+        age:
+          type: integer
+          description: 由 birthDate 计算
+        gender:
+          type: string
+          description: ''
+        imageUrl:
+          type: string
+          description: ''
+        weight:
+          type: number
+          description: ''
+        desc:
+          type: string
+          description: ''
+        personality:
+          type: array
+          items:
+            type: string
+          description: CatProfiles.personality 字段按逗号分割
+        vaccineDue:
+          type: string
+          description: ''
+        currentWeight:
+          type: number
+          description: '--- 详情额外字段 ---'
+        idealWeight:
+          $ref: '#/components/schemas/IdealWeightVO'
+          description: ''
+        weightHistory:
+          $ref: '#/components/schemas/WeightHistoryVO'
+          description: ''
+        vaccines:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaccineVO'
+            description: cn.edu.bjfu.nekocafe.vo.CatVO.VaccineVO
+          description: ''
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionVO'
+            description: cn.edu.bjfu.nekocafe.vo.CatVO.InteractionVO
+          description: ''
+        healthScore:
+          type: integer
+          description: ''
+        healthAdvice:
+          type: string
+          description: ''
+    MapObject:
+      type: object
+      properties:
+        key:
+          $ref: '#/components/schemas/key'
+    OrderVO:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ORD + reservationId 格式
+        storeId:
+          type: integer
+          description: ''
+        storeName:
+          type: string
+          description: ''
+        tableId:
+          type: integer
+          description: ''
+        tableName:
+          type: string
+          description: ''
+        reserveDate:
+          type: string
+          description: yyyy-MM-dd
+        reserveTime:
+          type: string
+          description: HH:mm
+        duration:
+          type: integer
+          description: 小时（durationMin / 60）
+        persons:
+          type: integer
+          description: partySize
+        status:
+          type: string
+          description: pending/confirmed/completed/cancelled/refunding/refunded
+        totalAmount:
+          type: integer
+          description: ''
+        discountAmount:
+          type: integer
+          description: ''
+        finalAmount:
+          type: integer
+          description: ''
+        createTime:
+          type: string
+          description: ''
+        payTime:
+          type: string
+          description: ''
+        payType:
+          type: string
+          description: ''
+        remark:
+          type: string
+          description: specialRequest
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemVO'
+            description: 菜品明细
+          description: ''
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineVO'
+            description: 时间线节点
+          description: ''
+        canCancel:
+          type: boolean
+          description: ''
+        canReschedule:
+          type: boolean
+          description: ''
+        canRefund:
+          type: boolean
+          description: ''
+        hasReview:
+          type: boolean
+          description: ''
+        review:
+          $ref: '#/components/schemas/ReviewVO'
+          description: ''
+        statusIcon:
+          type: string
+          description: 前端展示用
+        statusDesc:
+          type: string
+          description: ''
+        storeAddress:
+          type: string
+          description: stores 扩展
+        storePhone:
+          type: string
+          description: ''
+        tableCapacity:
+          type: integer
+          description: tables 扩展
+        tableType:
+          type: string
+          description: ''
+        catTheme:
+          type: string
+          description: ''
+        tableStatus:
+          type: string
+          description: table_status
+        paymentMethod:
+          type: string
+          description: payments 扩展
+        transactionId:
+          type: string
+          description: ''
+        paymentStatus:
+          type: string
+          description: ''
+        refundReason:
+          type: string
+          description: refund_records
+        refundStatus:
+          type: string
+          description: ''
+        refundCreatedAt:
+          type: string
+          description: ''
+        refundCompletedAt:
+          type: string
+          description: ''
+        coupons:
+          type: array
+          items:
+            $ref: '#/components/schemas/CouponVO'
+            description: 优惠券信息
+          description: coupon 汇总
+        couponDiscount:
+          type: integer
+          description: ''
+        memberLevel:
+          type: integer
+          description: member_ext
+        memberPoints:
+          type: integer
+          description: ''
+        customerName:
+          type: string
+          description: users
+        customerPhone:
+          type: string
+          description: ''
+        customerAvatar:
+          type: string
+          description: ''
+    list: &ref_1
+      type: object
+      properties:
+        promoId:
+          type: integer
+          description: ''
+        name:
+          type: string
+          description: ''
+        type:
+          type: string
+          description: ''
+        ruleJson:
+          type: object
+          properties: {}
+          description: ''
+        startTime:
+          type: string
+          description: ''
+        endTime:
+          type: string
+          description: ''
+        applicableStores:
+          type: object
+          properties: {}
+          description: ''
+        isActive:
+          type: boolean
+          description: ''
+    ResultListCatVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatVO'
+            description: |-
+              VO - 猫咪列表 & 详情响应体（对应接口 I-1 / I-2）
+              entity CatProfiles + CatHealthRecords 联查组装
+          description: 具体的业务数据
+    PromotionCalcDTO:
+      type: object
+      properties:
+        storeId:
+          type: integer
+          description: ''
+        amount:
+          type: integer
+          description: ''
+        couponIds:
+          type: array
+          items:
+            type: string
+          description: ''
+    ResultListOrderVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderVO'
+            description: |-
+              VO - 订单列表 & 详情响应体（对应接口 E-1 / E-3）
+              entity Reservations + OrderItems
+          description: 具体的业务数据
+    RealnameDTO:
+      type: object
+      properties:
+        realName:
+          type: string
+          description: ''
+        idCard:
+          type: string
+          description: ''
+    ResultCatVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/CatVO'
+          description: 具体的业务数据
+    QueueTakeDTO:
+      type: object
+      properties:
+        storeId:
+          type: integer
+          description: ''
+        persons:
+          type: integer
+          description: ''
+        type:
+          type: string
+          description: 桌型，如"双人桌"
+    ResultListMapObject:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapObject'
+          description: 具体的业务数据
+    Promotions: *ref_1
+    RegisterDTO:
+      type: object
+      properties:
+        phone:
+          type: string
+          description: 手机号
+        password:
+          type: string
+          description: 密码（明文，后端 BCrypt 加密后存储）
+        code:
+          type: string
+          description: 短信验证码（沙箱模式：前端直接显示，用户手填）
+        nickname:
+          type: string
+          description: 昵称
+        email:
+          type: string
+          description: 邮箱
+        roleId:
+          type: integer
+          description: 角色 ID（对应 roles 表：1=顾客, 2=店员, 3=店长, 4=总部运营, 5=猫咪管家），默认 1=顾客
+        storeId:
+          type: integer
+          description: 门店 ID（非顾客角色必填，顾客可为空）
+    UserUpdateDTO:
+      type: object
+      properties:
+        nickName:
+          type: string
+          description: ''
+        avatarUrl:
+          type: string
+          description: ''
+        phone:
+          type: string
+          description: ''
+        email:
+          type: string
+          description: ''
+    MapString:
+      type: object
+      properties:
+        key:
+          type: string
+    key1: *ref_2
+    ResultPromotions:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/Promotions'
+          description: 具体的业务数据
+    PhoneLoginDTO:
+      type: object
+      properties:
+        phone:
+          type: string
+          description: 手机号
+        password:
+          type: string
+          description: 密码
+    ResultVoid: &ref_3
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          description: 具体的业务数据
+          type: 'null'
+    OrderItemDTO:
+      type: object
+      properties:
+        menuId:
+          type: integer
+          description: ''
+        name:
+          type: string
+          description: ''
+        price:
+          type: integer
+          description: ''
+        qty:
+          type: integer
+          description: ''
+    ShiftExceptionDTO:
+      type: object
+      properties:
+        storeId:
+          type: integer
+          description: ''
+        staffId:
+          type: integer
+          description: ''
+          format: int64
+        exceptionDate:
+          type: string
+          description: yyyy-MM-dd
+        type:
+          type: string
+          description: LEAVE / OVERTIME / SWAP
+        reason:
+          type: string
+          description: ''
+    OrderSubmitDTO:
+      type: object
+      properties:
+        storeId:
+          type: integer
+          description: ''
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemDTO'
+            description: cn.edu.bjfu.nekocafe.dto.OrderSubmitDTO.OrderItemDTO
+          description: ''
+        totalAmount:
+          type: integer
+          description: ''
+        finalAmount:
+          type: integer
+          description: ''
+        discount:
+          type: integer
+          description: ''
+        couponIds:
+          type: array
+          items:
+            type: string
+          description: ''
+        remark:
+          type: string
+          description: ''
+        tableId:
+          type: integer
+          description: ''
+        orderId:
+          type: string
+          description: ''
+    CreatePromotionDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          description: ''
+        type:
+          type: string
+          description: DISCOUNT | VOUCHER
+        ruleJson:
+          $ref: '#/components/schemas/MapObject'
+          description: ''
+        startTime:
+          type: string
+          description: ''
+        endTime:
+          type: string
+          description: ''
+        applicableStores:
+          type: array
+          items:
+            type: integer
+          description: ''
+        isActive:
+          type: boolean
+          description: ''
+    Result?: *ref_3
+    ResultOrderVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          $ref: '#/components/schemas/OrderVO'
+          description: 具体的业务数据
+    CatHealthRecordDTO:
+      type: object
+      properties:
+        catId:
+          type: integer
+          description: ''
+        recordType:
+          type: string
+          description: 记录类型：WEIGHT / VACCINE / INTERACTION
+        recordValue:
+          type: string
+          description: 记录值：体重如"4.6kg"、疫苗名如"猫三联"、互动类型如"梳毛"
+        note:
+          type: string
+          description: 备注：疫苗的 nextDue=yyyy-MM-dd、互动的 mood=happy|描述
+        recordDate:
+          type: string
+          description: 记录日期，不传则默认当天
+        staffId:
+          type: integer
+          description: 操作人 staffId（从前端传入或从 token 解析）
+          format: int64
+    SendCouponDTO:
+      type: object
+      properties:
+        promoId:
+          type: integer
+          description: ''
+        userId:
+          type: integer
+          description: ''
+          format: int64
+        expireTime:
+          type: string
+          description: 过期时间（不传则用活动结束时间）
+    RescheduleDTO:
+      type: object
+      properties:
+        orderId:
+          type: string
+          description: ''
+        newReserveDate:
+          type: string
+          description: ''
+        newReserveTime:
+          type: string
+          description: ''
+    BatchSendCouponDTO:
+      type: object
+      properties:
+        promoId:
+          type: integer
+          description: ''
+        targetType:
+          type: string
+          description: ''
+        targetValue:
+          type: string
+          description: ''
+        userIds:
+          type: array
+          items:
+            type: integer
+          description: ''
+        expireTime:
+          type: string
+          description: ''
+    ReservationCreateDTO:
+      type: object
+      properties:
+        storeId:
+          type: integer
+          description: ''
+        tableId:
+          type: integer
+          description: ''
+        reserveDate:
+          type: string
+          description: yyyy-MM-dd
+        reserveTime:
+          type: string
+          description: HH:mm
+        persons:
+          type: integer
+          description: ''
+        duration:
+          type: integer
+          description: 小时
+    CurrentReservationVO:
+      type: object
+      properties:
+        orderId:
+          type: string
+          description: ORD + reservationId 格式
+        storeId:
+          type: integer
+          description: ''
+        storeName:
+          type: string
+          description: ''
+        tableId:
+          type: integer
+          description: ''
+        tableName:
+          type: string
+          description: ''
+        tableType:
+          type: string
+          description: ''
+        tableCapacity:
+          type: integer
+          description: ''
+        catTheme:
+          type: string
+          description: ''
+        catName:
+          type: string
+          description: ''
+        reserveDate:
+          type: string
+          description: yyyy-MM-dd
+        reserveTime:
+          type: string
+          description: HH:mm
+        duration:
+          type: integer
+          description: 小时
+        persons:
+          type: integer
+          description: 人数
+        remark:
+          type: string
+          description: specialRequest
+    ResultListCurrentReservationVO:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 状态码：0为成功，非0为失败
+        message:
+          type: string
+          description: 提示信息
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrentReservationVO'
+            description: |-
+              VO - 当前预约信息（供点单页面展示）
+              查询用户当前 BOOKED 状态的预约，返回门店、桌位、时间等信息
+          description: 具体的业务数据
+  responses: {}
+  securitySchemes: {}
+servers:
+  - url: http://localhost:8081
+    description: nekocofe环境
+security: []
